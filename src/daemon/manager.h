@@ -26,6 +26,7 @@ Q_SIGNALS:
     void CredentialsChanged(const QString &service_id, uint account_id);
 
 private:
+    bool canAccess(const QString &service_id);
     bool checkAccess(const QString &service_id);
     QString getPeerSecurityContext();
     std::unique_ptr<Private> p;

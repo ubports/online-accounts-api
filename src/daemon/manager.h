@@ -8,22 +8,35 @@
 #include <QVariantMap>
 #include <QDBusContext>
 
+struct AccountData {
+    quint32 accountId;
+    QVariantMap details;
+};
+
 class Manager : public QObject, protected QDBusContext {
     Q_OBJECT
     struct Private;
 public:
+    enum ChangeType {
+      Enabled = 0,
+      Disabled,
+      Deleted,
+      Changed,
+    };
+
     explicit Manager(QObject *parent=nullptr);
     ~Manager();
 
 public Q_SLOTS:
-    QList<uint> GetAccounts(const QString &service_id);
-    QVariantMap GetAccountInfo(const QString &service_id, uint account_id);
-    QVariantMap Authenticate(const QString &service_id, uint account_id, bool interactive, bool invalidate);
-    uint Register(const QString &service_id, QVariantMap &details, QVariantMap &credentials);
+    QList<AccountData> GetAccounts(const QVariantMap &filters);
+    QVariantMap Authenticate(quint32 accountId, const QString &serviceId,
+                             bool interactive, bool invalidate,
+                             const QVariantMap &parameters);
+    AccountData RequestAccess(const QString &applicationId,
+                              const QString &serviceId);
 
 Q_SIGNALS:
-    void AccountChanged(const QString &service_id, uint account_id, bool enabled);
-    void CredentialsChanged(const QString &service_id, uint account_id);
+    void AccountChanged(uint account_id, ChangeType changeType);
 
 private:
     bool canAccess(const QString &service_id);

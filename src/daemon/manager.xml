@@ -5,24 +5,14 @@
   <interface name="com.ubuntu.OnlineAccounts.Manager">
 
     <!--
-        GetAccounts: returns a list of account IDs that provide the
-        given service.
+        GetAccounts: returns a list of account IDs that satisfy the given
+        filters.
     -->
     <method name="GetAccounts">
-      <arg name="service_id" type="s" direction="in" />
-      <arg name="accounts" type="au" direction="out"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0"
-                  value="QList&lt;uint&gt;"/>
-    </method>
-
-    <!--
-        GetAccountInfo: return information about a given account ID
-    -->
-    <method name="GetAccountInfo">
-      <arg name="service_id" type="s" direction="in" />
-      <arg name="account_id" type="u" direction="in" />
-      <arg name="details" type="a{sv}" direction="out" />
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg name="filters" type="a{sv}" direction="in" />
+      <arg name="details" type="a(ua{sv})" direction="out" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QList&lt;AccountData>"/>
     </method>
 
     <!--
@@ -36,63 +26,44 @@
         If "invalidate" is true, any stored credentials will be
         ignored and new credentials will be requested from the account
         provider.
-
-        The result or error will be delivered over the socket provided
-        by the client.
     -->
     <method name="Authenticate">
-      <arg name="service_id" type="s" direction="in" />
-      <arg name="account_id" type="u" direction="in" />
+      <arg name="accountId" type="u" direction="in" />
+      <arg name="serviceId" type="s" direction="in" />
       <arg name="interactive" type="b" direction="in" />
       <arg name="invalidate" type="b" direction="in" />
-      <!-- <arg name="reply_socket" type="h" direction="in" /> -->
+      <arg name="parameters" type="a{sv}" direction="in" />
       <arg name="credentials" type="a{sv}" direction="out" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In4" value="QVariantMap"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
     </method>
 
     <!--
-        Register: register a new account for use with the given
+        RequestAccess: register a new account for use with the given
         service.
 
         The result or error will be delivered over the socket provided
         by the client.
     -->
-    <method name="Register">
-      <arg name="service_id" type="s" direction="in" />
-      <!-- <arg name="reply_socket" type="h" direction="in" /> -->
-      <arg name="account_id" type="u" direction="out" />
-      <arg name="details" type="a{sv}" direction="out" />
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="QVariantMap"/>
-      <arg name="credentials" type="a{sv}" direction="out" />
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="QVariantMap"/>
+    <method name="RequestAccess">
+      <arg name="applicationId" type="s" direction="in" />
+      <arg name="serviceId" type="s" direction="in" />
+      <arg name="details" type="(ua{sv})" direction="out" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="AccountData"/>
     </method>
 
     <!--
         AccountChanged: emitted when account details are changed.
 
-        This signal will be emitted when new accounts are enabled, and
-        when existing accounts are disabled.  Clients can detect these
-        cases by checking the "enabled" flag and comparing the account
-        ID with the list of accounts they currently know about.
-
         The actual changed account details can be retrieved with
-        GetAccountInfo().
+        GetAccounts().
     -->
     <signal name="AccountChanged">
-      <arg name="service_id" type="s" />
-      <arg name="account_id" type="u" />
-      <arg name="enabled" type="b" />
-    </signal>
-
-    <!--
-        CredentialsChanged: emitted when the credentials for the given
-        service ID on the given account change.
-
-        The new credentials can be retrieved with Authenticate().
-    -->
-    <signal name="CredentialsChanged">
-      <arg name="service_id" type="s" />
-      <arg name="account_id" type="u" />
+      <arg name="accountId" type="u" />
+      <!-- Change types
+          enum { enabled, disabled, deleted, changed }
+      -->
+      <arg name="changeType" type="u" /> 
     </signal>
 
   </interface>

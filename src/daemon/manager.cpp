@@ -55,34 +55,32 @@ bool Manager::checkAccess(const QString &service_id) {
     return has_access;
 }
 
-QList<uint> Manager::GetAccounts(const QString &service_id) {
-    if (!checkAccess(service_id)) {
-        return QList<uint>();
-    }
+QList<AccountData> Manager::GetAccounts(const QVariantMap &filters) {
+    Q_UNUSED(filters);
 
-    return QList<uint>();
+    return QList<AccountData>();
 }
 
-QVariantMap Manager::GetAccountInfo(const QString &service_id, uint account_id) {
-    if (!checkAccess(service_id)) {
+QVariantMap Manager::Authenticate(quint32 accountId, const QString &serviceId,
+                                  bool interactive, bool invalidate,
+                                  const QVariantMap &parameters) {
+    Q_UNUSED(accountId);
+    Q_UNUSED(interactive);
+    Q_UNUSED(invalidate);
+    Q_UNUSED(parameters);
+    if (!checkAccess(serviceId)) {
         return QVariantMap();
     }
 
     return QVariantMap();
 }
 
-QVariantMap Manager::Authenticate(const QString &service_id, uint account_id, bool interactive, bool invalidate) {
-    if (!checkAccess(service_id)) {
-        return QVariantMap();
+AccountData Manager::RequestAccess(const QString &applicationId,
+                                   const QString &serviceId) {
+    Q_UNUSED(applicationId);
+    if (!checkAccess(serviceId)) {
+        return AccountData();
     }
 
-    return QVariantMap();
-}
-
-uint Manager::Register(const QString &service_id, QVariantMap &details, QVariantMap &credentials) {
-    if (!checkAccess(service_id)) {
-        return 0;
-    }
-
-    return 0;
+    return AccountData();
 }

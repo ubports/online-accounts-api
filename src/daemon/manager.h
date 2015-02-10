@@ -1,48 +1,54 @@
-
 #ifndef MANAGER_H
 #define MANAGER_H
 
-#include <memory>
+#include <QDBusArgument>
+#include <QDBusContext>
 #include <QList>
 #include <QObject>
 #include <QVariantMap>
-#include <QDBusContext>
 
-struct AccountData {
+struct AccountInfo {
     quint32 accountId;
     QVariantMap details;
+
+    AccountInfo(): accountId(0) {}
+    AccountInfo(uint accountId, const QVariantMap &details):
+        accountId(accountId), details(details) {}
 };
+Q_DECLARE_METATYPE(AccountInfo)
 
-class Manager : public QObject, protected QDBusContext {
+QDBusArgument &operator<<(QDBusArgument &argument, const AccountInfo &info);
+const QDBusArgument &operator>>(const QDBusArgument &argument,
+                                AccountInfo &info);
+
+class ManagerPrivate;
+class Manager: public QObject, protected QDBusContext
+{
     Q_OBJECT
-    struct Private;
-public:
-    enum ChangeType {
-      Enabled = 0,
-      Disabled,
-      Deleted,
-      Changed,
-    };
 
-    explicit Manager(QObject *parent=nullptr);
+public:
+    explicit Manager(QObject *parent = 0);
     ~Manager();
 
 public Q_SLOTS:
-    QList<AccountData> GetAccounts(const QVariantMap &filters);
+    QList<AccountInfo> GetAccounts(const QVariantMap &filters);
     QVariantMap Authenticate(quint32 accountId, const QString &serviceId,
                              bool interactive, bool invalidate,
                              const QVariantMap &parameters);
-    AccountData RequestAccess(const QString &applicationId,
-                              const QString &serviceId);
+    AccountInfo RequestAccess(const QString &serviceId,
+                              const QVariantMap &parameters,
+                              QVariantMap &credentials);
 
 Q_SIGNALS:
-    void AccountChanged(uint account_id, ChangeType changeType);
+    void AccountChanged(AccountInfo accountInfo);
 
 private:
-    bool canAccess(const QString &service_id);
-    bool checkAccess(const QString &service_id);
+    bool canAccess(const QString &serviceId);
+    bool checkAccess(const QString &serviceId);
     QString getPeerSecurityContext();
-    std::unique_ptr<Private> p;
+
+    Q_DECLARE_PRIVATE(Manager)
+    ManagerPrivate *d_ptr;
 };
 
 #endif

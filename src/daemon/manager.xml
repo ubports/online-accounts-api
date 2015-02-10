@@ -10,9 +10,10 @@
     -->
     <method name="GetAccounts">
       <arg name="filters" type="a{sv}" direction="in" />
-      <arg name="details" type="a(ua{sv})" direction="out" />
+      <arg name="accounts" type="a(ua{sv})" direction="out" />
       <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QList&lt;AccountData>"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0"
+                  value="QList&lt;AccountInfo&gt;"/>
     </method>
 
     <!--
@@ -41,29 +42,26 @@
     <!--
         RequestAccess: register a new account for use with the given
         service.
-
-        The result or error will be delivered over the socket provided
-        by the client.
     -->
     <method name="RequestAccess">
-      <arg name="applicationId" type="s" direction="in" />
       <arg name="serviceId" type="s" direction="in" />
-      <arg name="details" type="(ua{sv})" direction="out" />
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="AccountData"/>
+      <arg name="parameters" type="a{sv}" direction="in" />
+      <arg name="account" type="(ua{sv})" direction="out" />
+      <arg name="credentials" type="a{sv}" direction="out" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="AccountInfo"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="QVariantMap"/>
     </method>
 
     <!--
         AccountChanged: emitted when account details are changed.
-
-        The actual changed account details can be retrieved with
-        GetAccounts().
     -->
     <signal name="AccountChanged">
-      <arg name="accountId" type="u" />
-      <!-- Change types
-          enum { enabled, disabled, deleted, changed }
+      <!-- the dictionary  ontains a changeType key, type "u", whose value is
+          enum { enabled, disabled, changed }
       -->
-      <arg name="changeType" type="u" /> 
+      <arg name="account" type="(ua{sv})" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="AccountInfo"/>
     </signal>
 
   </interface>

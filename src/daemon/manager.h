@@ -48,7 +48,7 @@ private:
     QString getPeerSecurityContext();
 
     Q_DECLARE_PRIVATE(Manager)
-    mutable ManagerPrivate *d_ptr;
+    ManagerPrivate *d_ptr;
 };
 
 #endif

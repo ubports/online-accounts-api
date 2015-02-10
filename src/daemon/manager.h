@@ -6,7 +6,22 @@
 #include <QList>
 #include <QObject>
 #include <QVariantMap>
+#include <QDBusArgument>
 #include <QDBusContext>
+
+struct AccountInfo {
+    uint account_id = 0;
+    QVariantMap details;
+
+    AccountInfo() {}
+    AccountInfo(uint account_id, const QVariantMap &details)
+        : account_id(account_id), details(details) {}
+
+};
+Q_DECLARE_METATYPE(AccountInfo)
+
+QDBusArgument &operator<<(QDBusArgument &argument, const AccountInfo &info);
+const QDBusArgument &operator>>(const QDBusArgument &argument, AccountInfo &info);
 
 class Manager : public QObject, protected QDBusContext {
     Q_OBJECT
@@ -16,10 +31,10 @@ public:
     ~Manager();
 
 public Q_SLOTS:
-    QList<uint> GetAccounts(const QString &service_id);
-    QVariantMap GetAccountInfo(const QString &service_id, uint account_id);
+    QList<AccountInfo> GetAccounts(const QStringList &service_ids);
+    AccountInfo GetAccountInfo(const QString &service_id, uint account_id);
     QVariantMap Authenticate(const QString &service_id, uint account_id, bool interactive, bool invalidate);
-    uint Register(const QString &service_id, QVariantMap &details, QVariantMap &credentials);
+    AccountInfo Register(const QString &service_id, QVariantMap &credentials);
 
 Q_SIGNALS:
     void AccountChanged(const QString &service_id, uint account_id, bool enabled);

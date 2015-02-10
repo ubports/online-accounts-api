@@ -4,6 +4,9 @@
 int main(int argc, char **argv) {
     QCoreApplication app(argc, argv);
 
+    qDBusRegisterMetaType<AccountInfo>();
+    qDBusRegisterMetaType<QList<AccountInfo>>();
+
     auto server = new Manager();
     new ManagerAdaptor(server);
 

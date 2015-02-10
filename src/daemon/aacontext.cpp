@@ -19,19 +19,15 @@ QString AppArmorContext::getPeerSecurityContext(const QDBusConnection &bus, cons
     }
 
     QString peer_address = message.service();
-    qWarning() << "Peer address is " << peer_address;
-
     try {
         return contexts.at(peer_address);
     } catch (const std::out_of_range &e) {
     }
 
-    qWarning() << "Address wasn't in cache";
     QDBusMessage msg = QDBusMessage::createMethodCall(
         "org.freedesktop.DBus", "/org/freedesktop/DBus",
         "org.freedesktop.DBus", "GetConnectionAppArmorSecurityContext");
     msg << peer_address;
-    qWarning() << "Calling GetConnectionAppArmorSecurityContext";
     QDBusMessage reply = bus.call(msg, QDBus::Block);
 
     QString context;

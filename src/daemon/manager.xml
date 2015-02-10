@@ -9,10 +9,10 @@
         given service.
     -->
     <method name="GetAccounts">
-      <arg name="service_id" type="s" direction="in" />
-      <arg name="accounts" type="au" direction="out"/>
+      <arg name="service_ids" type="as" direction="in" />
+      <arg name="accounts" type="a(ua{sv})" direction="out" />
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0"
-                  value="QList&lt;uint&gt;"/>
+                  value="QList&lt;AccountInfo&gt;"/>
     </method>
 
     <!--
@@ -21,8 +21,8 @@
     <method name="GetAccountInfo">
       <arg name="service_id" type="s" direction="in" />
       <arg name="account_id" type="u" direction="in" />
-      <arg name="details" type="a{sv}" direction="out" />
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
+      <arg name="details" type="(ua{sv})" direction="out" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="AccountInfo"/>
     </method>
 
     <!--
@@ -60,11 +60,10 @@
     <method name="Register">
       <arg name="service_id" type="s" direction="in" />
       <!-- <arg name="reply_socket" type="h" direction="in" /> -->
-      <arg name="account_id" type="u" direction="out" />
-      <arg name="details" type="a{sv}" direction="out" />
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="QVariantMap"/>
+      <arg name="account" type="(ua{sv})" direction="out" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="AccountInfo"/>
       <arg name="credentials" type="a{sv}" direction="out" />
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="QVariantMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="QVariantMap"/>
     </method>
 
     <!--

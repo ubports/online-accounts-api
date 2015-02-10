@@ -37,6 +37,7 @@ QString AppArmorContext::getPeerSecurityContext(const QDBusConnection &bus, cons
     QString context;
     if (reply.type() == QDBusMessage::ReplyMessage) {
         context = reply.arguments().value(0).value<QString>();
+        qWarning() << "Context is: " << context;
     } else {
         qWarning() << "Could not determine AppArmor context: "
                    << reply.errorName() << ": " << reply.errorMessage();

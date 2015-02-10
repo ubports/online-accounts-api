@@ -7,6 +7,21 @@ using namespace std;
 
 static const char FORBIDDEN_ERROR[] = "com.ubuntu.OnlineAccounts.Error.Forbidden";
 
+QDBusArgument &operator<<(QDBusArgument &argument, const AccountInfo &info) {
+    argument.beginStructure();
+    argument << info.account_id << info.details;
+    argument.endStructure();
+    return argument;
+}
+
+const QDBusArgument &operator>>(const QDBusArgument &argument, AccountInfo &info) {
+    argument.beginStructure();
+    argument >> info.account_id >> info.details;
+    argument.endStructure();
+    return argument;
+}
+
+
 struct Manager::Private {
     AppArmorContext apparmor;
 };
@@ -55,20 +70,22 @@ bool Manager::checkAccess(const QString &service_id) {
     return has_access;
 }
 
-QList<uint> Manager::GetAccounts(const QString &service_id) {
-    if (!checkAccess(service_id)) {
-        return QList<uint>();
+QList<AccountInfo> Manager::GetAccounts(const QStringList &service_ids) {
+    for (const auto &service_id : service_ids) {
+        if (!checkAccess(service_id)) {
+            return QList<AccountInfo>();
+        }
     }
 
-    return QList<uint>();
+    return QList<AccountInfo>({AccountInfo(0, QVariantMap())});
 }
 
-QVariantMap Manager::GetAccountInfo(const QString &service_id, uint account_id) {
+AccountInfo Manager::GetAccountInfo(const QString &service_id, uint account_id) {
     if (!checkAccess(service_id)) {
-        return QVariantMap();
+        return AccountInfo();
     }
 
-    return QVariantMap();
+    return AccountInfo(account_id, QVariantMap());
 }
 
 QVariantMap Manager::Authenticate(const QString &service_id, uint account_id, bool interactive, bool invalidate) {
@@ -79,10 +96,10 @@ QVariantMap Manager::Authenticate(const QString &service_id, uint account_id, bo
     return QVariantMap();
 }
 
-uint Manager::Register(const QString &service_id, QVariantMap &details, QVariantMap &credentials) {
+AccountInfo Manager::Register(const QString &service_id, QVariantMap &credentials) {
     if (!checkAccess(service_id)) {
-        return 0;
+        return AccountInfo();
     }
 
-    return 0;
+    return AccountInfo();
 }

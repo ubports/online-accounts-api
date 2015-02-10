@@ -5,8 +5,8 @@
   <interface name="com.ubuntu.OnlineAccounts.Manager">
 
     <!--
-        GetAccounts: returns a list of account IDs that provide the
-        given service.
+        GetAccounts: returns a list containing account information for
+        accounts that provide one of a list of service IDs.
     -->
     <method name="GetAccounts">
       <arg name="service_ids" type="as" direction="in" />
@@ -36,9 +36,6 @@
         If "invalidate" is true, any stored credentials will be
         ignored and new credentials will be requested from the account
         provider.
-
-        The result or error will be delivered over the socket provided
-        by the client.
     -->
     <method name="Authenticate">
       <arg name="service_id" type="s" direction="in" />
@@ -53,9 +50,6 @@
     <!--
         Register: register a new account for use with the given
         service.
-
-        The result or error will be delivered over the socket provided
-        by the client.
     -->
     <method name="Register">
       <arg name="service_id" type="s" direction="in" />

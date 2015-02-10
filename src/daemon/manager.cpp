@@ -1,40 +1,48 @@
-#include "manager.h"
-#include <QDebug>
 #include <QDBusMessage>
+#include <QDebug>
 #include "aacontext.h"
-
-using namespace std;
+#include "manager.h"
 
 static const char FORBIDDEN_ERROR[] = "com.ubuntu.OnlineAccounts.Error.Forbidden";
 
-QDBusArgument &operator<<(QDBusArgument &argument, const AccountInfo &info) {
+QDBusArgument &operator<<(QDBusArgument &argument, const AccountInfo &info)
+{
     argument.beginStructure();
-    argument << info.account_id << info.details;
+    argument << info.accountId << info.details;
     argument.endStructure();
     return argument;
 }
 
-const QDBusArgument &operator>>(const QDBusArgument &argument, AccountInfo &info) {
+const QDBusArgument &operator>>(const QDBusArgument &argument,
+                                AccountInfo &info)
+{
     argument.beginStructure();
-    argument >> info.account_id >> info.details;
+    argument >> info.accountId >> info.details;
     argument.endStructure();
     return argument;
 }
 
-
-struct Manager::Private {
-    AppArmorContext apparmor;
+class ManagerPrivate {
+public:
+    AppArmorContext m_apparmor;
 };
 
-Manager::Manager(QObject *parent)
-    : QObject(parent), p(new Private) {
+Manager::Manager(QObject *parent):
+    QObject(parent),
+    d_ptr(new ManagerPrivate)
+{
 }
 
-Manager::~Manager() {
+Manager::~Manager()
+{
 }
 
-bool Manager::canAccess(const QString &service_id) {
-    QString context = p->apparmor.getPeerSecurityContext(connection(), message());
+bool Manager::canAccess(const QString &serviceId)
+{
+    Q_D(Manager);
+
+    QString context = d->m_apparmor.getPeerSecurityContext(connection(),
+                                                           message());
     // Could not determine peer's AppArmor context, so deny access
     if (context.isEmpty()) {
         return false;
@@ -55,24 +63,27 @@ bool Manager::canAccess(const QString &service_id) {
     // Do the same on the service ID: we are only dealing with
     // confined apps at this point, so only $pkgname prefixed
     // services are accessible.
-    pos = service_id.indexOf('_');
+    pos = serviceId.indexOf('_');
     if (pos < 0) {
         return false;
     }
-    return service_id.left(pos) == pkgname;
+    return serviceId.left(pos) == pkgname;
 }
 
-bool Manager::checkAccess(const QString &service_id) {
-    bool has_access = canAccess(service_id);
-    if (!has_access) {
-        sendErrorReply(FORBIDDEN_ERROR, QString("Access to service ID %1 forbidden").arg(service_id));
+bool Manager::checkAccess(const QString &serviceId)
+{
+    bool hasAccess = canAccess(serviceId);
+    if (!hasAccess) {
+        sendErrorReply(FORBIDDEN_ERROR,
+                       QString("Access to service ID %1 forbidden").arg(serviceId));
     }
-    return has_access;
+    return hasAccess;
 }
 
-QList<AccountInfo> Manager::GetAccounts(const QStringList &service_ids) {
-    for (const auto &service_id : service_ids) {
-        if (!checkAccess(service_id)) {
+QList<AccountInfo> Manager::GetAccounts(const QStringList &serviceIds)
+{
+    Q_FOREACH(const QString &serviceId, serviceIds) {
+        if (!checkAccess(serviceId)) {
             return QList<AccountInfo>();
         }
     }
@@ -80,24 +91,36 @@ QList<AccountInfo> Manager::GetAccounts(const QStringList &service_ids) {
     return QList<AccountInfo>({AccountInfo(0, QVariantMap())});
 }
 
-AccountInfo Manager::GetAccountInfo(const QString &service_id, uint account_id) {
-    if (!checkAccess(service_id)) {
+AccountInfo Manager::GetAccountInfo(const QString &serviceId, uint accountId)
+{
+    Q_UNUSED(accountId);
+
+    if (!checkAccess(serviceId)) {
         return AccountInfo();
     }
 
-    return AccountInfo(account_id, QVariantMap());
+    return AccountInfo(accountId, QVariantMap());
 }
 
-QVariantMap Manager::Authenticate(const QString &service_id, uint account_id, bool interactive, bool invalidate) {
-    if (!checkAccess(service_id)) {
+QVariantMap Manager::Authenticate(const QString &serviceId, uint accountId,
+                                  bool interactive, bool invalidate)
+{
+    Q_UNUSED(accountId);
+    Q_UNUSED(interactive);
+    Q_UNUSED(invalidate);
+
+    if (!checkAccess(serviceId)) {
         return QVariantMap();
     }
 
     return QVariantMap();
 }
 
-AccountInfo Manager::Register(const QString &service_id, QVariantMap &credentials) {
-    if (!checkAccess(service_id)) {
+AccountInfo Manager::Register(const QString &serviceId, QVariantMap &credentials)
+{
+    Q_UNUSED(credentials);
+
+    if (!checkAccess(serviceId)) {
         return AccountInfo();
     }
 

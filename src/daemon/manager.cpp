@@ -1,7 +1,8 @@
+#include "manager.h"
+
 #include <QDBusMessage>
 #include <QDebug>
 #include "aacontext.h"
-#include "manager.h"
 
 static const char FORBIDDEN_ERROR[] = "com.ubuntu.OnlineAccounts.Error.Forbidden";
 
@@ -35,6 +36,7 @@ Manager::Manager(QObject *parent):
 
 Manager::~Manager()
 {
+    delete d_ptr;
 }
 
 bool Manager::canAccess(const QString &serviceId)

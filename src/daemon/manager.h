@@ -6,13 +6,12 @@
 #include <QList>
 #include <QObject>
 #include <QVariantMap>
-#include <memory>
 
 struct AccountInfo {
-    uint accountId = 0;
+    uint accountId;
     QVariantMap details;
 
-    AccountInfo() {}
+    AccountInfo(): accountId(0) {}
     AccountInfo(uint accountId, const QVariantMap &details):
         accountId(accountId), details(details) {}
 };

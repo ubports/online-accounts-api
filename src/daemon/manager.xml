@@ -26,29 +26,29 @@
     -->
 
     <!--
-        GetAccounts: returns a list of account IDs that satisfy the given
-        filters.
+      GetAccounts: returns a list of account IDs that satisfy the given
+      filters.
 
-        Allowed keys for the "filters" parameter (any combination is allowed,
-        though not all combinations might make sense):
+      Allowed keys for the "filters" parameter (any combination is allowed,
+      though not all combinations might make sense):
 
-        - "applicationId" ("s"): the "<package>_<app>" of the client. An
-          unconfined application can specify this in order to restrict the set
-          of results to only those accounts that the application has been
-          authorized to use. For confined apps, OA will deduce the
-          applicationId from the apparmor label of the caller.
+      - "applicationId" ("s"): the "<package>_<app>" of the client. An
+        unconfined application can specify this in order to restrict the set
+        of results to only those accounts that the application has been
+        authorized to use. For confined apps, OA will deduce the
+        applicationId from the apparmor label of the caller.
 
-        - "serviceId" ("s"): if the application wants to list only those
-          accounts coming from a specific provider (e.g., "Facebook").
+      - "serviceId" ("s"): if the application wants to list only those
+        accounts coming from a specific provider (e.g., "Facebook").
 
-        - "accountId" ("u"): the ID of an account.
+      - "accountId" ("u"): the ID of an account.
 
-        In any case, an application will receive only those accounts which the
-        user has authorized the application to use. See
-          http://wiki.ubuntu.com/OnlineAccounts
-        for an overview of the UI experience.
+      In any case, an application will receive only those accounts which the
+      user has authorized the application to use. See
+        http://wiki.ubuntu.com/OnlineAccounts
+      for an overview of the UI experience.
 
-        Disabled accounts will not be returned.
+      Disabled accounts will not be returned.
     -->
     <method name="GetAccounts">
       <arg name="filters" type="a{sv}" direction="in" />
@@ -107,10 +107,10 @@
     </method>
 
     <!--
-        RequestAccess: register a new account for use with the given
-        service.
-        This method also performs the authentication, since that's what apps
-        would do as soon as they get the account.
+      RequestAccess: register a new account for use with the given
+      service.
+      This method also performs the authentication, since that's what apps
+      would do as soon as they get the account.
     -->
     <method name="RequestAccess">
       <arg name="serviceId" type="s" direction="in" />
@@ -123,29 +123,30 @@
     </method>
 
     <!--
-        AccountChanged: emitted when account details are changed.
+      AccountChanged: emitted when account details are changed.
 
-        The apparmor policy will NOT ALLOW confined applications to receive
-        this signal on the account manager object path (which might be
-        /com/ubuntu/OnlineAccounts/Manager). Only unconfined applications will
-        be able to listen to this signal from that object path.
+      The apparmor policy will NOT ALLOW confined applications to receive
+      this signal on the account manager object path (which might be
+      /com/ubuntu/OnlineAccounts/Manager). Only unconfined applications will
+      be able to listen to this signal from that object path.
 
-        Confined apps will have to catch this signal from a different object path:
-        /com/ubuntu/OnlineAccounts/Manager/@{APP_PKGNAME_DBUS}, which will
-        deliver the signal only for those accounts which the app has been
-        authorized to use.
+      Confined apps will have to catch this signal from a different object path:
+      /com/ubuntu/OnlineAccounts/Manager/@{APP_PKGNAME_DBUS}, which will
+      deliver the signal only for those accounts which the app has been
+      authorized to use.
     -->
     <signal name="AccountChanged">
       <!--
-          The serviceId will also be included in the "account" dictionary. The
-          reason for having it also here is to allow clients to filter D-Bus
-          messages by arg0. This can be important for unconfined clients, which
-          would otherwise be woken up by any account change, even those not
+        The serviceId will also be included in the "account" dictionary. The
+        reason for having it also here is to allow clients to filter D-Bus
+        messages by arg0. This can be important for unconfined clients, which
+        would otherwise be woken up by any account change, even those not
           relevant to them.
       -->
       <arg name="serviceId" type="s" />
-      <!-- the dictionary  ontains a changeType key, type "u", whose value is
-          enum { enabled, disabled, changed }
+      <!--
+        The dictionary contains a changeType key, type "u", whose value is
+        enum { enabled, disabled, changed }
       -->
       <arg name="account" type="(ua{sv})" />
       <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="AccountInfo"/>

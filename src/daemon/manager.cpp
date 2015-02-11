@@ -89,7 +89,7 @@ QList<AccountInfo> Manager::GetAccounts(const QVariantMap &filters)
     return QList<AccountInfo>();
 }
 
-QVariantMap Manager::Authenticate(quint32 accountId, const QString &serviceId,
+QVariantMap Manager::Authenticate(uint accountId, const QString &serviceId,
                                   bool interactive, bool invalidate,
                                   const QVariantMap &parameters)
 {

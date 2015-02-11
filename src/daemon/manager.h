@@ -8,7 +8,7 @@
 #include <QVariantMap>
 
 struct AccountInfo {
-    quint32 accountId;
+    uint accountId;
     QVariantMap details;
 
     AccountInfo(): accountId(0) {}
@@ -32,7 +32,7 @@ public:
 
 public Q_SLOTS:
     QList<AccountInfo> GetAccounts(const QVariantMap &filters);
-    QVariantMap Authenticate(quint32 accountId, const QString &serviceId,
+    QVariantMap Authenticate(uint accountId, const QString &serviceId,
                              bool interactive, bool invalidate,
                              const QVariantMap &parameters);
     AccountInfo RequestAccess(const QString &serviceId,
@@ -40,7 +40,7 @@ public Q_SLOTS:
                               QVariantMap &credentials);
 
 Q_SIGNALS:
-    void AccountChanged(AccountInfo accountInfo);
+    void AccountChanged(const QString &serviceId, AccountInfo accountInfo);
 
 private:
     bool canAccess(const QString &serviceId);

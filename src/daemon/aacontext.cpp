@@ -1,7 +1,8 @@
+#include "aacontext.h"
+
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDebug>
-#include "aacontext.h"
 #include <sys/apparmor.h>
 
 const int maxCacheSize = 50;

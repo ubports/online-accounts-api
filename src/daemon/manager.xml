@@ -8,10 +8,7 @@
       Global concepts:
 
       Clients are identified by their "applicationId", which is the
-      "<package>_<app>" of the client. While we require the <app> component to
-      be present (in order to identify the app on the Online Accounts UI), the
-      access control checks will only take the <package> component into
-      account.
+      "<package>_<app>" of the client.
 
       The "serviceId" is an application-specific name for an account provider.
       That is, the "serviceId" contains the information about the application

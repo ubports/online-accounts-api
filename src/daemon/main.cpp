@@ -1,7 +1,8 @@
 #include "manager.h"
 #include "manageradaptor.h"
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     QCoreApplication app(argc, argv);
 
     qDBusRegisterMetaType<AccountInfo>();

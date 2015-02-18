@@ -1,9 +1,9 @@
 #ifndef AACONTEXT_H
 #define AACONTEXT_H
 
-#include <map>
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QHash>
 #include <QString>
 
 class AppArmorContext {
@@ -14,7 +14,7 @@ public:
     QString getPeerSecurityContext(const QDBusConnection &bus, const QDBusMessage &message);
 
 private:
-    std::map<QString,QString> contexts;
+    QHash<QString,QString> m_contexts;
 };
 
 #endif

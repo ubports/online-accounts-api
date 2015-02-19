@@ -43,6 +43,8 @@ public:
     Error(): m_code(NoError) {}
     Error(Code code, const QString &text): m_code(code), m_text(text) {}
 
+    bool isValid() const { return m_code != NoError; }
+
     Code code() const { return m_code; }
     QString text() const { return m_text; }
 

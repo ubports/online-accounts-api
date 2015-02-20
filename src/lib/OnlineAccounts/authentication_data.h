@@ -63,6 +63,7 @@ class ONLINE_ACCOUNTS_EXPORT AuthenticationReply
 public:
     virtual ~AuthenticationReply();
 
+    bool hasError() const { return error().isValid(); }
     Error error() const;
 
 protected:

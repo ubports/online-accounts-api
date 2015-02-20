@@ -28,6 +28,7 @@
 
 namespace OnlineAccounts {
 
+class Account;
 class AuthenticationData;
 
 class ManagerPrivate;
@@ -39,7 +40,7 @@ public:
     explicit Manager(const QString &applicationId, QObject *parent = 0);
     ~Manager();
 
-    QList<AccountId> listAccounts(const QString &service = QString());
+    QList<Account*> availableAccounts(const QString &service = QString());
 
     void requestAccess(const QString &service,
                        const AuthenticationData &authData);
@@ -49,6 +50,7 @@ Q_SIGNALS:
 
 private:
     Q_DECLARE_PRIVATE(Manager)
+    Q_DISABLE_COPY(Manager)
     ManagerPrivate *d_ptr;
 };
 

@@ -21,11 +21,11 @@
 #ifndef ONLINE_ACCOUNTS_ACCOUNT_H
 #define ONLINE_ACCOUNTS_ACCOUNT_H
 
+#include <QFuture>
 #include <QObject>
 #include <QVariant>
 
 #include "global.h"
-#include "pending_call.h"
 
 namespace OnlineAccounts {
 
@@ -41,13 +41,17 @@ public:
     explicit Account(Manager *manager, AccountId id, QObject *parent = 0);
     ~Account();
 
+    /* Returns false if account deleted or disabled */
+    bool isValid() const;
+
+    AccountId id() const;
     QString displayName() const;
     QString serviceId() const;
     AuthenticationMethod authenticationMethod() const;
 
     QVariant setting(const QString &key) const;
 
-    PendingCall authenticate(const AuthenticationData &authData);
+    template<class T> QFuture<T> authenticate(const AuthenticationData &authData);
 
 Q_SIGNALS:
     void changed();
@@ -55,6 +59,7 @@ Q_SIGNALS:
 
 private:
     Q_DECLARE_PRIVATE(Account)
+    Q_DISABLE_COPY(Account)
     AccountPrivate *d_ptr;
 };
 

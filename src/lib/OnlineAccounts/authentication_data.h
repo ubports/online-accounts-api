@@ -27,8 +27,7 @@
 
 #include "error.h"
 #include "global.h"
-
-class QVariantMap;
+#include "pending_call.h"
 
 namespace OnlineAccounts {
 
@@ -61,6 +60,7 @@ class AuthenticationReplyPrivate;
 class ONLINE_ACCOUNTS_EXPORT AuthenticationReply
 {
 public:
+    AuthenticationReply(const PendingCall &call);
     virtual ~AuthenticationReply();
 
     bool hasError() const { return error().isValid(); }
@@ -97,6 +97,7 @@ class OAuth2ReplyPrivate;
 class ONLINE_ACCOUNTS_EXPORT OAuth2Reply: public AuthenticationReply
 {
 public:
+    OAuth2Reply(const PendingCall &call);
     ~OAuth2Reply();
 
     QString accessToken() const;
@@ -106,7 +107,6 @@ public:
 private:
     Q_DECLARE_PRIVATE(OAuth2Reply)
     Q_DISABLE_COPY(OAuth2Reply)
-    OAuth2Reply(const QVariantMap &replyData);
 };
 
 /* OAuth 1.0a */
@@ -127,6 +127,7 @@ class OAuth1ReplyPrivate;
 class ONLINE_ACCOUNTS_EXPORT OAuth1Reply: public AuthenticationReply
 {
 public:
+    OAuth1Reply(const PendingCall &call);
     ~OAuth1Reply();
 
     QByteArray consumerKey() const;
@@ -138,7 +139,6 @@ public:
 private:
     Q_DECLARE_PRIVATE(OAuth1Reply)
     Q_DISABLE_COPY(OAuth1Reply)
-    OAuth1Reply(const QVariantMap &replyData);
 };
 
 /* Password */
@@ -153,6 +153,7 @@ class PasswordReplyPrivate;
 class ONLINE_ACCOUNTS_EXPORT PasswordReply: public AuthenticationReply
 {
 public:
+    PasswordReply(const PendingCall &call);
     ~PasswordReply();
 
     QByteArray userName() const;
@@ -161,7 +162,6 @@ public:
 private:
     Q_DECLARE_PRIVATE(PasswordReply)
     Q_DISABLE_COPY(PasswordReply)
-    PasswordReply(const QVariantMap &replyData);
 };
 
 } // namespace

@@ -21,11 +21,11 @@
 #ifndef ONLINE_ACCOUNTS_ACCOUNT_H
 #define ONLINE_ACCOUNTS_ACCOUNT_H
 
-#include <QFuture>
 #include <QObject>
 #include <QVariant>
 
 #include "global.h"
+#include "pending_call.h"
 
 namespace OnlineAccounts {
 
@@ -51,7 +51,7 @@ public:
 
     QVariant setting(const QString &key) const;
 
-    template<class T> QFuture<T> authenticate(const AuthenticationData &authData);
+    PendingCall authenticate(const AuthenticationData &authData);
 
 Q_SIGNALS:
     void changed();
@@ -59,7 +59,6 @@ Q_SIGNALS:
 
 private:
     Q_DECLARE_PRIVATE(Account)
-    Q_DISABLE_COPY(Account)
     AccountPrivate *d_ptr;
 };
 

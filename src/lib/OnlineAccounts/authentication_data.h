@@ -73,7 +73,6 @@ protected:
 private:
     Q_DECLARE_PRIVATE(AuthenticationReply)
     Q_DISABLE_COPY(AuthenticationReply)
-    AuthenticationReply();
 };
 
 /* OAuth 2.0 */

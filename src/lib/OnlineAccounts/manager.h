@@ -24,7 +24,9 @@
 #include <QList>
 #include <QObject>
 
+#include "error.h"
 #include "global.h"
+#include "pending_call.h"
 
 namespace OnlineAccounts {
 
@@ -42,8 +44,8 @@ public:
 
     QList<Account*> availableAccounts(const QString &service = QString());
 
-    void requestAccess(const QString &service,
-                       const AuthenticationData &authData);
+    PendingCall requestAccess(const QString &service,
+                              const AuthenticationData &authData);
 
 Q_SIGNALS:
     void accountEnabled(AccountId account);
@@ -52,6 +54,24 @@ private:
     Q_DECLARE_PRIVATE(Manager)
     Q_DISABLE_COPY(Manager)
     ManagerPrivate *d_ptr;
+};
+
+class RequestAccessReplyPrivate;
+class ONLINE_ACCOUNTS_EXPORT RequestAccessReply
+{
+public:
+    RequestAccessReply(const PendingCall &call);
+    virtual ~RequestAccessReply();
+
+    bool hasError() const { return error().isValid(); }
+    Error error() const;
+
+    Account *account() const;
+
+private:
+    Q_DECLARE_PRIVATE(RequestAccessReply)
+    Q_DISABLE_COPY(RequestAccessReply)
+    RequestAccessReplyPrivate *d_ptr;
 };
 
 } // namespace

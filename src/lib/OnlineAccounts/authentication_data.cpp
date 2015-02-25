@@ -19,3 +19,120 @@
  */
 
 #include "authentication_data.h"
+
+#include <QSharedData>
+
+using namespace OnlineAccounts;
+
+#define AD_D(Class) Class##Private * const d = priv<Class##Private>()
+
+namespace OnlineAccounts {
+
+class AuthenticationDataPrivate: public QSharedData
+{
+public:
+    inline AuthenticationDataPrivate();
+    virtual ~AuthenticationDataPrivate() {};
+
+    virtual AuthenticationDataPrivate *clone() = 0;
+
+    friend class AuthenticationData;
+
+    AuthenticationMethod m_method;
+    bool m_interactive;
+    bool m_invalidateCachedReply;
+};
+
+} // namespace
+
+AuthenticationDataPrivate::AuthenticationDataPrivate():
+    m_method(AuthenticationMethodUnknown),
+    m_interactive(true),
+    m_invalidateCachedReply(false)
+{
+}
+
+template<> AuthenticationDataPrivate *
+QSharedDataPointer<AuthenticationDataPrivate>::clone()
+{
+    return d->clone();
+}
+
+AuthenticationData::AuthenticationData(AuthenticationDataPrivate *priv):
+    d(priv)
+{
+}
+
+AuthenticationData::AuthenticationData(const AuthenticationData &other):
+    d(other.d)
+{
+}
+
+AuthenticationData::~AuthenticationData()
+{
+}
+
+AuthenticationMethod AuthenticationData::method() const
+{
+    return d->m_method;
+}
+
+void AuthenticationData::setInteractive(bool interactive)
+{
+    d->m_interactive = interactive;
+}
+
+bool AuthenticationData::interactive() const
+{
+    return d->m_interactive;
+}
+
+void AuthenticationData::invalidateCachedReply()
+{
+    d->m_invalidateCachedReply = true;
+}
+
+namespace OnlineAccounts {
+
+class OAuth2DataPrivate: public AuthenticationDataPrivate
+{
+    friend class OAuth2Data;
+
+public:
+    OAuth2DataPrivate();
+
+    AuthenticationDataPrivate *clone() Q_DECL_OVERRIDE;
+
+private:
+    QByteArray m_clientId;
+    QByteArray m_clientSecret;
+    QList<QByteArray> m_scopes;
+};
+
+} // namespace
+
+OAuth2DataPrivate::OAuth2DataPrivate()
+{
+}
+
+AuthenticationDataPrivate *OAuth2DataPrivate::clone()
+{
+    return new OAuth2DataPrivate(*this);
+}
+
+OAuth2Data::OAuth2Data():
+    AuthenticationData(new OAuth2DataPrivate)
+{
+}
+
+void OAuth2Data::setClientId(const QByteArray &id)
+{
+    AD_D(OAuth2Data);
+    d->m_clientId = id;
+}
+
+QByteArray OAuth2Data::clientId() const
+{
+    AD_D(const OAuth2Data);
+    return d->m_clientId;
+}

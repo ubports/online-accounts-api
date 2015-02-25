@@ -4,8 +4,10 @@ include_directories(. ${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(OnlineAccounts SHARED
     account.cpp
+    account_info.cpp
     authentication_data.cpp
     authentication_reply.cpp
+    dbus_interface.cpp
     manager.cpp
     pending_call.cpp
 )

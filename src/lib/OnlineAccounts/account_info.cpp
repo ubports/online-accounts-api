@@ -18,29 +18,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "manager_p.h"
+#include "account_info.h"
 
-#include <QDBusMessage>
-#include <QDBusPendingCallWatcher>
+#include <QDBusArgument>
 
 using namespace OnlineAccounts;
 
-ManagerPrivate::ManagerPrivate(Manager *q, const QString &applicationId):
-    QObject(),
-    m_applicationId(applicationId),
-    m_conn(QDBusConnection::sessionBus()),
-    m_getAccountsCall(0),
-    q_ptr(q)
+namespace OnlineAccounts {
+
+QDBusArgument &operator<<(QDBusArgument &argument, const AccountInfo &info)
 {
+    argument.beginStructure();
+    argument << info.accountId << info.details;
+    argument.endStructure();
+    return argument;
 }
 
-ManagerPrivate::~ManagerPrivate()
+const QDBusArgument &operator>>(const QDBusArgument &argument, AccountInfo &info)
 {
+    argument.beginStructure();
+    argument >> info.accountId >> info.details;
+    argument.endStructure();
+    return argument;
 }
-
-void ManagerPrivate::retrieveAccounts()
-{
-    if (Q_UNLIKELY(m_getAccountsCall)) return;
-
 
 }

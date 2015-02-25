@@ -50,6 +50,13 @@ public:
 
     QDBusPendingCall requestAccess(const QString &service,
                                    const QVariantMap &parameters);
+
+Q_SIGNALS:
+    void accountChanged(const QString &service, const AccountInfo &info);
+
+private:
+    bool connect(const char *signal, const char *signature,
+                 QObject *receiver, const char *slot);
 };
 
 }

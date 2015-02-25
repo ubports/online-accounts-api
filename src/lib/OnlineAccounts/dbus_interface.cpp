@@ -20,6 +20,8 @@
 
 #include "dbus_interface.h"
 
+#include <QDBusMetaType>
+#include <QDebug>
 #include <climits>
 
 using namespace OnlineAccounts;
@@ -32,6 +34,15 @@ DBusInterface::DBusInterface(const QString &service,
     QDBusAbstractInterface(service, path, interface, connection, parent)
 {
     setTimeout(INT_MAX);
+
+    qDBusRegisterMetaType<AccountInfo>();
+    qDBusRegisterMetaType<QList<AccountInfo>>();
+
+    bool ok = connect("AccountChanged", "s(ua{sv})",
+                      this, SIGNAL(accountChanged(const QString&,const AccountInfo&)));
+    if (Q_UNLIKELY(!ok)) {
+        qCritical() << "Connection to remove AccountChanged signal failed";
+    }
 }
 
 DBusInterface::~DBusInterface()
@@ -58,4 +69,13 @@ QDBusPendingCall DBusInterface::requestAccess(const QString &service,
                                               const QVariantMap &parameters)
 {
     return asyncCall(QStringLiteral("RequestAccess"), service, parameters);
+}
+
+bool DBusInterface::connect(const char *signal, const char *signature,
+                            QObject *receiver, const char *slot)
+{
+    return connection().connect(service(), path(), interface(),
+                                QLatin1String(signal),
+                                QLatin1String(signature),
+                                receiver, slot);
 }

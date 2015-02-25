@@ -42,6 +42,8 @@ public:
     explicit Manager(const QString &applicationId, QObject *parent = 0);
     ~Manager();
 
+    void waitForReady();
+
     QList<Account*> availableAccounts(const QString &service = QString());
     Account *account(AccountId accountId);
 
@@ -49,6 +51,7 @@ public:
                               const AuthenticationData &authData);
 
 Q_SIGNALS:
+    void ready();
     void accountAvailable(Account *account);
 
 private:

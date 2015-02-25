@@ -48,7 +48,7 @@ public:
                               const AuthenticationData &authData);
 
 Q_SIGNALS:
-    void accountAvailable(AccountId account);
+    void accountAvailable(Account *account);
 
 private:
     Q_DECLARE_PRIVATE(Manager)

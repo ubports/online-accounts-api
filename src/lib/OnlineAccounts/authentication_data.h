@@ -99,7 +99,7 @@ public:
     OAuth2Reply(const PendingCall &call);
     ~OAuth2Reply();
 
-    QString accessToken() const;
+    QByteArray accessToken() const;
     int expiresIn() const;
     QList<QByteArray> grantedScopes() const;
 

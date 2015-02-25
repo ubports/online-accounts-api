@@ -43,6 +43,7 @@ public:
     ~Manager();
 
     QList<Account*> availableAccounts(const QString &service = QString());
+    Account *account(AccountId accountId);
 
     PendingCall requestAccess(const QString &service,
                               const AuthenticationData &authData);

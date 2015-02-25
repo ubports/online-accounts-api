@@ -38,7 +38,6 @@ class ONLINE_ACCOUNTS_EXPORT Account: public QObject
     Q_OBJECT
 
 public:
-    explicit Account(Manager *manager, AccountId id, QObject *parent = 0);
     ~Account();
 
     /* Returns false if account deleted or disabled */
@@ -57,7 +56,11 @@ Q_SIGNALS:
     void changed();
     void disabled();
 
+protected:
+    explicit Account(Manager *manager, AccountId id, QObject *parent = 0);
+
 private:
+    friend class Manager;
     Q_DECLARE_PRIVATE(Account)
     AccountPrivate *d_ptr;
 };

@@ -43,12 +43,13 @@ public:
     ~Manager();
 
     QList<Account*> availableAccounts(const QString &service = QString());
+    Account *account(AccountId accountId);
 
     PendingCall requestAccess(const QString &service,
                               const AuthenticationData &authData);
 
 Q_SIGNALS:
-    void accountAvailable(AccountId account);
+    void accountAvailable(Account *account);
 
 private:
     Q_DECLARE_PRIVATE(Manager)

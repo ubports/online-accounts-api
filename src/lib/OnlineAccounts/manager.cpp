@@ -20,27 +20,42 @@
 
 #include "manager_p.h"
 
+#include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
 
 using namespace OnlineAccounts;
 
+#define ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME \
+    "com.ubuntu.OnlineAccounts.Manager"
+#define ONLINE_ACCOUNTS_MANAGER_PATH "/com/ubuntu/OnlineAccounts/Manager"
+#define ONLINE_ACCOUNTS_MANAGER_INTERFACE ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME
+
 ManagerPrivate::ManagerPrivate(Manager *q, const QString &applicationId):
     QObject(),
     m_applicationId(applicationId),
-    m_conn(QDBusConnection::sessionBus()),
+    m_daemon(ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME,
+             ONLINE_ACCOUNTS_MANAGER_PATH,
+             ONLINE_ACCOUNTS_MANAGER_INTERFACE,
+             QDBusConnection::sessionBus()),
     m_getAccountsCall(0),
     q_ptr(q)
 {
+    retrieveAccounts();
 }
 
 ManagerPrivate::~ManagerPrivate()
 {
+    delete m_getAccountsCall;
+    m_getAccountsCall = 0;
 }
 
 void ManagerPrivate::retrieveAccounts()
 {
     if (Q_UNLIKELY(m_getAccountsCall)) return;
 
-
+    QVariantMap filters;
+    filters["applicationId"] = m_applicationId;
+    m_getAccountsCall =
+        new QDBusPendingCallWatcher(m_daemon.getAccounts(filters));
 }

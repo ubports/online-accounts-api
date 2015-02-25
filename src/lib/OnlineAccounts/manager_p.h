@@ -23,8 +23,8 @@
 
 #include "manager.h"
 
-#include <QDBusConnection>
 #include <QObject>
+#include "dbus_interface.h"
 
 class QDBusPendingCallWatcher;
 
@@ -49,7 +49,7 @@ private:
 
 private:
     QString m_applicationId;
-    QDBusConnection m_conn;
+    DBusInterface m_daemon;
     QDBusPendingCallWatcher *m_getAccountsCall;
     QList<Account*> m_accounts;
     mutable Manager *q_ptr;

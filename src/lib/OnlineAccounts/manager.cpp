@@ -25,13 +25,10 @@
 #include <QDBusPendingCallWatcher>
 #include <QDebug>
 #include "account_p.h"
+#include "authentication_data_p.h"
+#include "dbus_constants.h"
 
 using namespace OnlineAccounts;
-
-#define ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME \
-    "com.ubuntu.OnlineAccounts.Manager"
-#define ONLINE_ACCOUNTS_MANAGER_PATH "/com/ubuntu/OnlineAccounts/Manager"
-#define ONLINE_ACCOUNTS_MANAGER_INTERFACE ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME
 
 ManagerPrivate::ManagerPrivate(Manager *q, const QString &applicationId):
     QObject(),
@@ -149,4 +146,11 @@ Account *Manager::account(AccountId accountId)
     }
 
     return accountData.account;
+}
+
+PendingCall Manager::requestAccess(const QString &service,
+                                   const AuthenticationData &authData)
+{
+    Q_D(Manager);
+    return d->requestAccess(service, authData.d->m_parameters);
 }

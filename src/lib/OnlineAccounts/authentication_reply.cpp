@@ -21,6 +21,7 @@
 #include "authentication_data.h"
 
 #include <QDBusMessage>
+#include "dbus_constants.h"
 #include "pending_call_p.h"
 
 using namespace OnlineAccounts;
@@ -119,19 +120,19 @@ OAuth2Reply::OAuth2Reply(const PendingCall &call):
 QByteArray OAuth2Reply::accessToken() const
 {
     Q_D(const AuthenticationReply);
-    return d->data().value("AccessToken").toByteArray();
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_ACCESS_TOKEN).toByteArray();
 }
 
 int OAuth2Reply::expiresIn() const
 {
     Q_D(const AuthenticationReply);
-    return d->data().value("ExpiresIn").toInt();
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_EXPIRES_IN).toInt();
 }
 
 QList<QByteArray> OAuth2Reply::grantedScopes() const
 {
     Q_D(const AuthenticationReply);
-    return d->data().value("GrantedScopes").value<QList<QByteArray> >();
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_GRANTED_SCOPES).value<QList<QByteArray> >();
 }
 
 /* OAuth 1.0a */
@@ -144,31 +145,31 @@ OAuth1Reply::OAuth1Reply(const PendingCall &call):
 QByteArray OAuth1Reply::consumerKey() const
 {
     Q_D(const AuthenticationReply);
-    return d->data().value("ConsumerKey").toByteArray();
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_CONSUMER_KEY).toByteArray();
 }
 
 QByteArray OAuth1Reply::consumerSecret() const
 {
     Q_D(const AuthenticationReply);
-    return d->data().value("ConsumerSecret").toByteArray();
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_CONSUMER_SECRET).toByteArray();
 }
 
 QByteArray OAuth1Reply::token() const
 {
     Q_D(const AuthenticationReply);
-    return d->data().value("Token").toByteArray();
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_TOKEN).toByteArray();
 }
 
 QByteArray OAuth1Reply::tokenSecret() const
 {
     Q_D(const AuthenticationReply);
-    return d->data().value("TokenSecret").toByteArray();
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_TOKEN_SECRET).toByteArray();
 }
 
 QByteArray OAuth1Reply::signatureMethod() const
 {
     Q_D(const AuthenticationReply);
-    return d->data().value("SignatureMethod").toByteArray();
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_SIGNATURE_METHOD).toByteArray();
 }
 
 /* Password */
@@ -178,14 +179,14 @@ PasswordReply::PasswordReply(const PendingCall &call):
 {
 }
 
-QByteArray PasswordReply::userName() const
+QByteArray PasswordReply::username() const
 {
     Q_D(const AuthenticationReply);
-    return d->data().value("UserName").toByteArray();
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_USERNAME).toByteArray();
 }
 
 QByteArray PasswordReply::password() const
 {
     Q_D(const AuthenticationReply);
-    return d->data().value("Password").toByteArray();
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_PASSWORD).toByteArray();
 }

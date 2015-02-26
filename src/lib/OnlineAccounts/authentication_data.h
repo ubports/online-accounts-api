@@ -31,6 +31,8 @@
 
 namespace OnlineAccounts {
 
+class Manager;
+
 class AuthenticationDataPrivate;
 class ONLINE_ACCOUNTS_EXPORT AuthenticationData
 {
@@ -47,13 +49,11 @@ public:
 
 protected:
     AuthenticationData(AuthenticationDataPrivate *priv);
-    template<class T> T *priv() { return static_cast<T*>(d.data()); }
-    template<class T> const T *priv() const { return static_cast<const T*>(d.constData()); }
+    QSharedDataPointer<AuthenticationDataPrivate> d;
 
 private:
+    friend class Manager;
     AuthenticationData();
-
-    QSharedDataPointer<AuthenticationDataPrivate> d;
 };
 
 class AuthenticationReplyPrivate;
@@ -86,7 +86,7 @@ public:
     QByteArray clientId() const;
 
     void setClientSecret(const QByteArray &secret);
-    QByteArray clientSecret();
+    QByteArray clientSecret() const;
 
     void setScopes(const QList<QByteArray> &scopes);
     QList<QByteArray> scopes() const;
@@ -155,7 +155,7 @@ public:
     PasswordReply(const PendingCall &call);
     ~PasswordReply();
 
-    QByteArray userName() const;
+    QByteArray username() const;
     QByteArray password() const;
 
 private:

@@ -32,10 +32,13 @@ public:
     AccountPrivate(Manager *manager, const AccountInfo &info);
     ~AccountPrivate();
 
+    void setInvalid();
+
 private:
     Q_DECLARE_PUBLIC(Account)
     Manager *m_manager;
     AccountInfo m_info;
+    bool m_isValid;
     mutable Account *q_ptr;
 };
 

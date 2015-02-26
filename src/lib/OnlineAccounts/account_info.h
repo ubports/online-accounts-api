@@ -23,6 +23,7 @@
 
 #include <QVariantMap>
 
+#include "dbus_constants.h"
 #include "global.h"
 
 class QDBusArgument;
@@ -37,9 +38,18 @@ public:
 
     AccountId id() const { return accountId; }
     QString displayName() const {
-        return details.value("displayName").toString();
+        return details.value(ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME).toString();
     }
-    QString service() const { return details.value("service").toString(); }
+    QString service() const {
+        return details.value(ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID).toString();
+    }
+    AuthenticationMethod authenticationMethod() const {
+        return AuthenticationMethod(details.value(ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD).toInt());
+    }
+
+    QVariant setting(const QString &key) const {
+        return details.value(ONLINE_ACCOUNTS_INFO_KEY_SETTINGS + key);
+    }
 
 private:
     friend QDBusArgument &operator<<(QDBusArgument &, const AccountInfo &);

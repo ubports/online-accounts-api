@@ -27,6 +27,12 @@
 #define ONLINE_ACCOUNTS_MANAGER_PATH "/com/ubuntu/OnlineAccounts/Manager"
 #define ONLINE_ACCOUNTS_MANAGER_INTERFACE ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME
 
+/* Keys for the account info dictionary */
+#define ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME "displayName"
+#define ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID "serviceId"
+#define ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD "authMethod"
+#define ONLINE_ACCOUNTS_INFO_KEY_SETTINGS "settings/"
+
 /* Keys for the authentication data dictionaries */
 #define ONLINE_ACCOUNTS_AUTH_KEY_CLIENT_ID "ClientId"
 #define ONLINE_ACCOUNTS_AUTH_KEY_CLIENT_SECRET "ClientSecret"

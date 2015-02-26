@@ -25,12 +25,20 @@ using namespace OnlineAccounts;
 AccountPrivate::AccountPrivate(Manager *manager, const AccountInfo &info):
     m_manager(manager),
     m_info(info),
+    m_isValid(true),
     q_ptr(0)
 {
 }
 
 AccountPrivate::~AccountPrivate()
 {
+}
+
+void AccountPrivate::setInvalid()
+{
+    Q_Q(Account);
+    m_isValid = false;
+    Q_EMIT q->disabled();
 }
 
 Account::Account(AccountPrivate *priv, QObject *parent):
@@ -44,4 +52,40 @@ Account::~Account()
 {
     delete d_ptr;
     d_ptr = 0;
+}
+
+bool Account::isValid() const
+{
+    Q_D(const Account);
+    return d->m_isValid;
+}
+
+AccountId Account::id() const
+{
+    Q_D(const Account);
+    return d->m_info.id();
+}
+
+QString Account::displayName() const
+{
+    Q_D(const Account);
+    return d->m_info.displayName();
+}
+
+QString Account::serviceId() const
+{
+    Q_D(const Account);
+    return d->m_info.service();
+}
+
+AuthenticationMethod Account::authenticationMethod() const
+{
+    Q_D(const Account);
+    return d->m_info.authenticationMethod();
+}
+
+QVariant Account::setting(const QString &key) const
+{
+    Q_D(const Account);
+    return d->m_info.setting(key);
 }

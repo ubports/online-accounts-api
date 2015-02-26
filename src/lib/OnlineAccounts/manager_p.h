@@ -23,16 +23,27 @@
 
 #include "manager.h"
 
+#include <QHash>
 #include <QObject>
+#include <QPointer>
+#include "account_info.h"
 #include "dbus_interface.h"
 
 class QDBusPendingCallWatcher;
 
 namespace OnlineAccounts {
 
+struct AccountData {
+    AccountInfo info;
+    QPointer<Account> account;
+
+    AccountData(const AccountInfo &info): info(info) {}
+};
+
 class ManagerPrivate: public QObject
 {
     Q_OBJECT
+    Q_DECLARE_PUBLIC(Manager)
 
 public:
     inline ManagerPrivate(Manager *q, const QString &applicationId);
@@ -47,11 +58,14 @@ public:
 private:
     void retrieveAccounts();
 
+private Q_SLOTS:
+    void onGetAccountsFinished();
+
 private:
     QString m_applicationId;
     DBusInterface m_daemon;
     QDBusPendingCallWatcher *m_getAccountsCall;
-    QList<Account*> m_accounts;
+    QHash<AccountId,AccountData> m_accounts;
     mutable Manager *q_ptr;
 };
 

@@ -23,6 +23,8 @@
 #include <QDBusConnection>
 #include <QDBusMessage>
 #include <QDBusPendingCallWatcher>
+#include <QDebug>
+#include "account_p.h"
 
 using namespace OnlineAccounts;
 
@@ -58,4 +60,93 @@ void ManagerPrivate::retrieveAccounts()
     filters["applicationId"] = m_applicationId;
     m_getAccountsCall =
         new QDBusPendingCallWatcher(m_daemon.getAccounts(filters));
+    QObject::connect(m_getAccountsCall,
+                     SIGNAL(finished(QDBusPendingCallWatcher*)),
+                     this, SLOT(onGetAccountsFinished()));
+}
+
+void ManagerPrivate::onGetAccountsFinished()
+{
+    Q_Q(Manager);
+
+    Q_ASSERT(m_getAccountsCall);
+
+    QDBusPendingReply<QList<AccountInfo> > reply = *m_getAccountsCall;
+    if (Q_UNLIKELY(reply.isError())) {
+        qWarning() << "GetAccounts call failed:" << reply.error();
+        /* No special handling of the error: the Manager will simply not have
+         * any account */
+    } else {
+        QList<AccountInfo> accountInfos = reply.argumentAt<0>();
+        Q_FOREACH(const AccountInfo &info, accountInfos) {
+            m_accounts.insert(info.id(), AccountData(info));
+        }
+    }
+    m_getAccountsCall->deleteLater();
+    m_getAccountsCall = 0;
+
+    Q_EMIT q->ready();
+}
+
+Manager::Manager(const QString &applicationId, QObject *parent):
+    QObject(parent),
+    d_ptr(new ManagerPrivate(this, applicationId))
+{
+}
+
+Manager::~Manager()
+{
+    delete d_ptr;
+    d_ptr = 0;
+}
+
+bool Manager::isReady() const
+{
+    Q_D(const Manager);
+    return !d->m_getAccountsCall;
+}
+
+void Manager::waitForReady()
+{
+    Q_D(Manager);
+    if (d->m_getAccountsCall) {
+        d->m_getAccountsCall->waitForFinished();
+    }
+}
+
+QList<Account*> Manager::availableAccounts(const QString &service)
+{
+    Q_D(Manager);
+
+    QList<Account*> result;
+    for (QHash<AccountId,AccountData>::iterator i = d->m_accounts.begin();
+         i != d->m_accounts.end(); i++) {
+        AccountData &accountData = i.value();
+        if (!service.isEmpty() && accountData.info.service() != service) continue;
+
+        if (!accountData.account) {
+            accountData.account =
+                new Account(new AccountPrivate(this, accountData.info), this);
+        }
+
+        result.append(accountData.account);
+    }
+
+    return result;
+}
+
+Account *Manager::account(AccountId accountId)
+{
+    Q_D(Manager);
+
+    QHash<AccountId,AccountData>::iterator i = d->m_accounts.find(accountId);
+    if (Q_UNLIKELY(i == d->m_accounts.end())) return 0;
+
+    AccountData &accountData = i.value();
+    if (!accountData.account) {
+        accountData.account =
+            new Account(new AccountPrivate(this, accountData.info), this);
+    }
+
+    return accountData.account;
 }

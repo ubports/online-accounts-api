@@ -42,7 +42,7 @@ public:
                   QObject *parent = 0);
     virtual ~DBusInterface();
 
-    QDBusPendingReply<QList<AccountInfo> > getAccounts(const QVariantMap &filters);
+    QDBusPendingCall getAccounts(const QVariantMap &filters);
 
     QDBusPendingCall authenticate(AccountId accountId, const QString &service,
                                   bool interactive, bool invalidate,

@@ -49,8 +49,7 @@ DBusInterface::~DBusInterface()
 {
 }
 
-QDBusPendingReply<QList<AccountInfo> >
-DBusInterface::getAccounts(const QVariantMap &filters)
+QDBusPendingCall DBusInterface::getAccounts(const QVariantMap &filters)
 {
     return asyncCall(QStringLiteral("GetAccounts"), filters);
 }

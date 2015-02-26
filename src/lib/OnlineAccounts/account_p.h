@@ -18,30 +18,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "account_p.h"
+#ifndef ONLINE_ACCOUNTS_ACCOUNT_P_H
+#define ONLINE_ACCOUNTS_ACCOUNT_P_H
 
-using namespace OnlineAccounts;
+#include "account.h"
+#include "account_info.h"
 
-AccountPrivate::AccountPrivate(Manager *manager, const AccountInfo &info):
-    m_manager(manager),
-    m_info(info),
-    q_ptr(0)
+namespace OnlineAccounts {
+
+class AccountPrivate
 {
-}
+public:
+    AccountPrivate(Manager *manager, const AccountInfo &info);
+    ~AccountPrivate();
 
-AccountPrivate::~AccountPrivate()
-{
-}
+private:
+    Q_DECLARE_PUBLIC(Account)
+    Manager *m_manager;
+    AccountInfo m_info;
+    mutable Account *q_ptr;
+};
 
-Account::Account(AccountPrivate *priv, QObject *parent):
-    QObject(parent),
-    d_ptr(priv)
-{
-    priv->q_ptr = this;
-}
+} // namespace
 
-Account::~Account()
-{
-    delete d_ptr;
-    d_ptr = 0;
-}
+#endif // ONLINE_ACCOUNTS_ACCOUNT_P_H

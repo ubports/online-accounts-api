@@ -42,6 +42,7 @@ public:
     explicit Manager(const QString &applicationId, QObject *parent = 0);
     ~Manager();
 
+    bool isReady() const;
     void waitForReady();
 
     QList<Account*> availableAccounts(const QString &service = QString());

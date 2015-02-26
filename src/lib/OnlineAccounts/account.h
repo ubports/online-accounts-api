@@ -57,7 +57,7 @@ Q_SIGNALS:
     void disabled();
 
 protected:
-    explicit Account(Manager *manager, AccountId id, QObject *parent = 0);
+    explicit Account(AccountPrivate *priv, QObject *parent);
 
 private:
     friend class Manager;

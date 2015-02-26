@@ -39,6 +39,7 @@ public:
     QString displayName() const {
         return details.value("displayName").toString();
     }
+    QString service() const { return details.value("service").toString(); }
 
 private:
     friend QDBusArgument &operator<<(QDBusArgument &, const AccountInfo &);

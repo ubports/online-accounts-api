@@ -20,6 +20,8 @@
 
 #include "pending_call_p.h"
 
+#include <QDBusPendingCallWatcher>
+
 using namespace OnlineAccounts;
 
 PendingCallPrivate::PendingCallPrivate(Manager *manager,
@@ -61,4 +63,36 @@ bool PendingCall::isFinished() const
 void PendingCall::waitForFinished()
 {
     d->m_call.waitForFinished();
+}
+
+namespace OnlineAccounts {
+
+class PendingCallWatcherPrivate
+{
+public:
+    PendingCallWatcherPrivate(PendingCallWatcher *q);
+
+private:
+    QDBusPendingCallWatcher m_watcher;
+};
+
+} // namespace
+
+PendingCallWatcherPrivate::PendingCallWatcherPrivate(PendingCallWatcher *q):
+    m_watcher(q->d->dbusCall())
+{
+    QObject::connect(&m_watcher, SIGNAL(finished(QDBusPendingCallWatcher *)),
+                     q, SIGNAL(finished()));
+}
+
+PendingCallWatcher::PendingCallWatcher(const PendingCall &call,
+                                       QObject *parent):
+    QObject(parent),
+    PendingCall(call),
+    d_ptr(new PendingCallWatcherPrivate(this))
+{
+}
+
+PendingCallWatcher::~PendingCallWatcher()
+{
 }

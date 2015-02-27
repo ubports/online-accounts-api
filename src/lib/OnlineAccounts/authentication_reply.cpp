@@ -35,7 +35,7 @@ public:
                                       const PendingCall &call);
     virtual ~AuthenticationReplyPrivate() {};
 
-    void setError(const Error &error);
+    void setError(const Error &error) { m_error = error; }
 
     const QVariantMap &data() const { return m_replyData; }
 
@@ -99,6 +99,11 @@ AuthenticationReply::AuthenticationReply(const PendingCall &call):
 {
 }
 
+AuthenticationReply::AuthenticationReply(AuthenticationReplyPrivate *priv):
+    d_ptr(priv)
+{
+}
+
 AuthenticationReply::~AuthenticationReply()
 {
     delete d_ptr;
@@ -114,6 +119,10 @@ Error AuthenticationReply::error() const
 
 OAuth2Reply::OAuth2Reply(const PendingCall &call):
     AuthenticationReply(new AuthenticationReplyPrivate(AuthenticationMethodOAuth2, call))
+{
+}
+
+OAuth2Reply::~OAuth2Reply()
 {
 }
 
@@ -139,6 +148,10 @@ QList<QByteArray> OAuth2Reply::grantedScopes() const
 
 OAuth1Reply::OAuth1Reply(const PendingCall &call):
     AuthenticationReply(new AuthenticationReplyPrivate(AuthenticationMethodOAuth1, call))
+{
+}
+
+OAuth1Reply::~OAuth1Reply()
 {
 }
 
@@ -176,6 +189,10 @@ QByteArray OAuth1Reply::signatureMethod() const
 
 PasswordReply::PasswordReply(const PendingCall &call):
     AuthenticationReply(new AuthenticationReplyPrivate(AuthenticationMethodPassword, call))
+{
+}
+
+PasswordReply::~PasswordReply()
 {
 }
 

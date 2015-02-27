@@ -64,6 +64,16 @@ PendingCall ManagerPrivate::authenticate(const AccountInfo &info,
                                               authData.method()));
 }
 
+PendingCall ManagerPrivate::requestAccess(const QString &service,
+                                          const QVariantMap &parameters)
+{
+    Q_Q(Manager);
+    QDBusPendingCall call = m_daemon.requestAccess(service, parameters);
+    return PendingCall(new PendingCallPrivate(q, call,
+                                              PendingCallPrivate::RequestAccess,
+                                              AuthenticationMethodUnknown));
+}
+
 Account *ManagerPrivate::ensureAccount(const AccountInfo &info)
 {
     QHash<AccountId,AccountData>::iterator i = m_accounts.find(info.id());

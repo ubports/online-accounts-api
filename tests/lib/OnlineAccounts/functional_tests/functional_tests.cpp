@@ -18,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "OnlineAccounts/Account"
 #include "OnlineAccounts/Manager"
 #include "OnlineAccounts/dbus_constants.h"
 #include <QDBusConnection>
@@ -52,6 +53,8 @@ public:
 private Q_SLOTS:
     void testManagerReady_data();
     void testManagerReady();
+    void testManagerAvailableAccounts_data();
+    void testManagerAvailableAccounts();
 
 private:
     QtDBusTest::DBusTestRunner m_dbus;
@@ -91,6 +94,44 @@ void FunctionalTests::testManagerReady()
     manager.waitForReady();
     QVERIFY(manager.isReady());
     QCOMPARE(ready.count(), 1);
+}
+
+void FunctionalTests::testManagerAvailableAccounts_data()
+{
+    QTest::addColumn<QString>("reply");
+    QTest::addColumn<QList<int> >("expectedIds");
+    QTest::addColumn<QStringList>("expectedDisplayNames");
+
+    QTest::newRow("no accounts") <<
+        "ret = []" <<
+        QList<int>() <<
+        QStringList();
+
+    QTest::newRow("one account, no data") <<
+        "ret = [(1, {'displayName': 'Tom'}]" <<
+        (QList<int>() << 1) <<
+        (QStringList() << "Tom");
+}
+
+void FunctionalTests::testManagerAvailableAccounts()
+{
+    QFETCH(QString, reply);
+    QFETCH(QList<int>, expectedIds);
+    QFETCH(QStringList, expectedDisplayNames);
+
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})", reply);
+    OnlineAccounts::Manager manager("my-app");
+
+    manager.waitForReady();
+    QList<int> ids;
+    QStringList displayNames;
+    Q_FOREACH(OnlineAccounts::Account *account, manager.availableAccounts()) {
+        ids.append(account->id());
+        displayNames.append(account->displayName());
+    }
+
+    QCOMPARE(ids, expectedIds);
+    QCOMPARE(displayNames, expectedDisplayNames);
 }
 
 QTEST_MAIN(FunctionalTests)

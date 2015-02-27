@@ -29,6 +29,7 @@
 namespace OnlineAccounts {
 
 class AuthenticationReplyPrivate;
+class ManagerPrivate;
 
 class PendingCallPrivate;
 class ONLINE_ACCOUNTS_EXPORT PendingCall
@@ -45,10 +46,12 @@ protected:
     friend class PendingCallPrivate;
     friend class PendingCallWatcher;
     friend class AuthenticationReplyPrivate;
+    friend class RequestAccessReplyPrivate;
+    friend class ManagerPrivate;
     QExplicitlySharedDataPointer<PendingCallPrivate> d;
 
 private:
-    PendingCall();
+    PendingCall(PendingCallPrivate *priv);
 };
 
 class PendingCallWatcherPrivate;

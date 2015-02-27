@@ -66,6 +66,11 @@ void AuthenticationData::invalidateCachedReply()
     d->m_invalidateCachedReply = true;
 }
 
+bool AuthenticationData::mustInvalidateCachedReply() const
+{
+    return d->m_invalidateCachedReply;
+}
+
 /* OAuth 2.0 */
 
 OAuth2Data::OAuth2Data():

@@ -49,11 +49,12 @@ public:
     inline ManagerPrivate(Manager *q, const QString &applicationId);
     ~ManagerPrivate();
 
-    PendingCall authenticate(AccountId accountId, const QString &service,
-                             bool interactive, bool invalidate,
-                             const QVariantMap &parameters);
+    PendingCall authenticate(const AccountInfo &info,
+                             const AuthenticationData &authData);
     PendingCall requestAccess(const QString &service,
                               const QVariantMap &parameters);
+
+    Account *ensureAccount(const AccountInfo &info);
 
 private:
     void retrieveAccounts();

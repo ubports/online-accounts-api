@@ -28,6 +28,8 @@ namespace OnlineAccounts {
 
 class AccountPrivate
 {
+    Q_DECLARE_PUBLIC(Account)
+
 public:
     AccountPrivate(Manager *manager, const AccountInfo &info);
     ~AccountPrivate();
@@ -35,7 +37,6 @@ public:
     void setInvalid();
 
 private:
-    Q_DECLARE_PUBLIC(Account)
     Manager *m_manager;
     AccountInfo m_info;
     bool m_isValid;

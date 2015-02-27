@@ -32,6 +32,7 @@ namespace OnlineAccounts {
 
 class Account;
 class AuthenticationData;
+class RequestAccessReplyPrivate;
 
 class ManagerPrivate;
 class ONLINE_ACCOUNTS_EXPORT Manager: public QObject
@@ -56,12 +57,13 @@ Q_SIGNALS:
     void accountAvailable(Account *account);
 
 private:
+    friend class Account;
+    friend class RequestAccessReplyPrivate;
     Q_DECLARE_PRIVATE(Manager)
     Q_DISABLE_COPY(Manager)
     ManagerPrivate *d_ptr;
 };
 
-class RequestAccessReplyPrivate;
 class ONLINE_ACCOUNTS_EXPORT RequestAccessReply
 {
 public:
@@ -71,7 +73,7 @@ public:
     bool hasError() const { return error().isValid(); }
     Error error() const;
 
-    Account *account() const;
+    Account *account();
 
 private:
     Q_DECLARE_PRIVATE(RequestAccessReply)

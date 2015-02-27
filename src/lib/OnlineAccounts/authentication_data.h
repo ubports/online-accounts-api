@@ -46,6 +46,7 @@ public:
     bool interactive() const;
 
     void invalidateCachedReply();
+    bool mustInvalidateCachedReply() const;
 
 protected:
     AuthenticationData(AuthenticationDataPrivate *priv);
@@ -53,6 +54,7 @@ protected:
 
 private:
     friend class Manager;
+    friend class ManagerPrivate;
     AuthenticationData();
 };
 

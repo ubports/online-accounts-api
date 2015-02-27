@@ -18,4 +18,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "pending_call.h"
+#include "pending_call_p.h"
+
+using namespace OnlineAccounts;
+
+PendingCallPrivate::PendingCallPrivate(Manager *manager,
+                                       const QDBusPendingCall &call,
+                                       InvokedMethod method,
+                                       AuthenticationMethod authMethod):
+    m_manager(manager),
+    m_call(call),
+    m_invokedMethod(method),
+    m_authenticationMethod(authMethod)
+{
+}
+
+PendingCall::PendingCall(PendingCallPrivate *priv):
+    d(priv)
+{
+}
+
+PendingCall::PendingCall(const PendingCall &other):
+    d(other.d)
+{
+}
+
+PendingCall::~PendingCall()
+{
+}
+
+PendingCall &PendingCall::operator=(const PendingCall &other)
+{
+    d = other.d;
+    return *this;
+}
+
+bool PendingCall::isFinished() const
+{
+    return d->m_call.isFinished();
+}
+
+void PendingCall::waitForFinished()
+{
+    d->m_call.waitForFinished();
+}

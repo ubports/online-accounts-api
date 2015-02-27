@@ -27,6 +27,7 @@
 #include "account_p.h"
 #include "authentication_data_p.h"
 #include "dbus_constants.h"
+#include "pending_call_p.h"
 
 using namespace OnlineAccounts;
 
@@ -47,6 +48,36 @@ ManagerPrivate::~ManagerPrivate()
 {
     delete m_getAccountsCall;
     m_getAccountsCall = 0;
+}
+
+PendingCall ManagerPrivate::authenticate(const AccountInfo &info,
+                                         const AuthenticationData &authData)
+{
+    Q_Q(Manager);
+    QDBusPendingCall call = m_daemon.authenticate(info.id(),
+                                                  info.service(),
+                                                  authData.interactive(),
+                                                  authData.mustInvalidateCachedReply(),
+                                                  authData.d->m_parameters);
+    return PendingCall(new PendingCallPrivate(q, call,
+                                              PendingCallPrivate::Authenticate,
+                                              authData.method()));
+}
+
+Account *ManagerPrivate::ensureAccount(const AccountInfo &info)
+{
+    QHash<AccountId,AccountData>::iterator i = m_accounts.find(info.id());
+    if (i == m_accounts.end()) {
+        i = m_accounts.insert(info.id(), AccountData(info));
+    }
+
+    AccountData &accountData = i.value();
+    if (!accountData.account) {
+        accountData.account =
+            new Account(new AccountPrivate(q_ptr, accountData.info), this);
+    }
+
+    return accountData.account;
 }
 
 void ManagerPrivate::retrieveAccounts()

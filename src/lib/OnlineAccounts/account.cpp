@@ -20,6 +20,8 @@
 
 #include "account_p.h"
 
+#include "manager_p.h"
+
 using namespace OnlineAccounts;
 
 AccountPrivate::AccountPrivate(Manager *manager, const AccountInfo &info):
@@ -88,4 +90,11 @@ QVariant Account::setting(const QString &key) const
 {
     Q_D(const Account);
     return d->m_info.setting(key);
+}
+
+PendingCall Account::authenticate(const AuthenticationData &authData)
+{
+    Q_D(Account);
+    ManagerPrivate *mPriv = d->m_manager->d_ptr;
+    return mPriv->authenticate(d->m_info, authData);
 }

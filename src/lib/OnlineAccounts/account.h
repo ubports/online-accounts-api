@@ -61,6 +61,7 @@ protected:
 
 private:
     friend class Manager;
+    friend class ManagerPrivate;
     Q_DECLARE_PRIVATE(Account)
     AccountPrivate *d_ptr;
 };

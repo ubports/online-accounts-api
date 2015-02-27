@@ -10,6 +10,7 @@ add_library(OnlineAccounts SHARED
     dbus_interface.cpp
     manager.cpp
     pending_call.cpp
+    request_access_reply.cpp
 )
 qt5_use_modules(OnlineAccounts DBus)
 set_target_properties(OnlineAccounts PROPERTIES AUTOMOC TRUE)

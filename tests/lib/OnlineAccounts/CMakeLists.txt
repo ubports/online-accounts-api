@@ -1,0 +1,1 @@
+add_subdirectory(tst_authentication_data)

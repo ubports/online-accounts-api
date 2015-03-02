@@ -8,6 +8,7 @@ pkg_check_modules(QTDBUSTEST REQUIRED libqtdbustest-1)
 
 add_executable(${TEST} ${SOURCES})
 include_directories(
+    ${CMAKE_CURRENT_BINARY_DIR}
     ${OnlineAccounts_SOURCE_DIR}/..
     ${QTDBUSMOCK_INCLUDE_DIRS}
     ${QTDBUSTEST_INCLUDE_DIRS}

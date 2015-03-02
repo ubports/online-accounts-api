@@ -108,7 +108,7 @@ void FunctionalTests::testManagerAvailableAccounts_data()
         QStringList();
 
     QTest::newRow("one account, no data") <<
-        "ret = [(1, {'displayName': 'Tom'}]" <<
+        "ret = [(1, {'displayName': 'Tom'})]" <<
         (QList<int>() << 1) <<
         (QStringList() << "Tom");
 }

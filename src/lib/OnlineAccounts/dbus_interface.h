@@ -34,6 +34,8 @@ namespace OnlineAccounts {
  */
 class DBusInterface: public QDBusAbstractInterface
 {
+    Q_OBJECT
+
 public:
     DBusInterface(const QString &service,
                   const QString &path,
@@ -53,6 +55,10 @@ public:
 
 Q_SIGNALS:
     void accountChanged(const QString &service, const AccountInfo &info);
+
+private Q_SLOTS:
+    void onAccountChanged(const QString &service,
+                          const OnlineAccounts::AccountInfo &info);
 
 private:
     bool connect(const char *signal, const char *signature,

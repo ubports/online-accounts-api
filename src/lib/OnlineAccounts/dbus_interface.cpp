@@ -39,9 +39,9 @@ DBusInterface::DBusInterface(const QString &service,
     qDBusRegisterMetaType<QList<AccountInfo>>();
 
     bool ok = connect("AccountChanged", "s(ua{sv})",
-                      this, SIGNAL(accountChanged(const QString&,const AccountInfo&)));
+                      this, SLOT(onAccountChanged(const QString&,const OnlineAccounts::AccountInfo&)));
     if (Q_UNLIKELY(!ok)) {
-        qCritical() << "Connection to remove AccountChanged signal failed";
+        qCritical() << "Connection to AccountChanged signal failed";
     }
 }
 
@@ -68,6 +68,12 @@ QDBusPendingCall DBusInterface::requestAccess(const QString &service,
                                               const QVariantMap &parameters)
 {
     return asyncCall(QStringLiteral("RequestAccess"), service, parameters);
+}
+
+void DBusInterface::onAccountChanged(const QString &service,
+                                     const AccountInfo &info)
+{
+    Q_EMIT accountChanged(service, info);
 }
 
 bool DBusInterface::connect(const char *signal, const char *signature,

@@ -80,6 +80,8 @@ private Q_SLOTS:
     void testAccountChanges();
     void testPendingCallWatcher();
     void testAuthentication();
+    void testAuthenticationErrors_data();
+    void testAuthenticationErrors();
 
 private:
     QtDBusTest::DBusTestRunner m_dbus;
@@ -516,6 +518,76 @@ void FunctionalTests::testAuthentication()
     /* Test the copy constructor */
     OnlineAccounts::OAuth2Data copy(oauth2data);
     QCOMPARE(copy.clientId(), QByteArray("a client"));
+    /* Trigger the copy on write */
+    copy.setClientId("new client");
+    QCOMPARE(copy.clientId(), QByteArray("new client"));
+    QCOMPARE(oauth2data.clientId(), QByteArray("a client"));
+}
+
+void FunctionalTests::testAuthenticationErrors_data()
+{
+    QTest::addColumn<QString>("reply");
+    QTest::addColumn<int>("errorCode");
+    QTest::addColumn<QString>("errorMessage");
+
+    QTest::newRow("random dbus error") <<
+        "raise dbus.exceptions.DBusException('not foobarized', name='org.foo.bar')" <<
+        int(OnlineAccounts::Error::PermissionDenied) <<
+        "not foobarized";
+
+    QTest::newRow("no account") <<
+        "raise dbus.exceptions.DBusException('Not there',"
+        "name='" ONLINE_ACCOUNTS_ERROR_NO_ACCOUNT "')" <<
+        int(OnlineAccounts::Error::NoAccount) <<
+        "Not there";
+
+    QTest::newRow("user canceled") <<
+        "raise dbus.exceptions.DBusException('Sorry',"
+        "name='" ONLINE_ACCOUNTS_ERROR_USER_CANCELED "')" <<
+        int(OnlineAccounts::Error::UserCanceled) <<
+        "Sorry";
+
+    QTest::newRow("permission denied") <<
+        "raise dbus.exceptions.DBusException('Nope',"
+        "name='" ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED "')" <<
+        int(OnlineAccounts::Error::PermissionDenied) <<
+        "Nope";
+
+    QTest::newRow("Interaction required") <<
+        "raise dbus.exceptions.DBusException('Ask the user',"
+        "name='" ONLINE_ACCOUNTS_ERROR_INTERACTION_REQUIRED "')" <<
+        int(OnlineAccounts::Error::InteractionRequired) <<
+        "Ask the user";
+}
+
+void FunctionalTests::testAuthenticationErrors()
+{
+    QFETCH(QString, reply);
+    QFETCH(int, errorCode);
+    QFETCH(QString, errorMessage);
+
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
+                    "ret = [(1, {"
+                    "  'displayName': 'Bob',"
+                    "  'serviceId': 'MyService0',"
+                    "  'authMethod': 2,"
+                    "})]");
+    addMockedMethod("Authenticate", "usbba{sv}", "a{sv}", reply);
+    OnlineAccounts::Manager manager("my-app");
+    manager.waitForReady();
+
+    OnlineAccounts::Account *account = manager.account(1);
+    QVERIFY(account);
+
+    OnlineAccounts::OAuth2Data oauth2data;
+    oauth2data.setClientId("a client");
+    oauth2data.setClientSecret("a secret");
+    oauth2data.setScopes(QList<QByteArray>() << "one" << "two");
+
+    OnlineAccounts::OAuth2Reply r(account->authenticate(oauth2data));
+    QVERIFY(r.hasError());
+    QCOMPARE(int(r.error().code()), errorCode);
+    QCOMPARE(r.error().text(), errorMessage);
 }
 
 QTEST_MAIN(FunctionalTests)

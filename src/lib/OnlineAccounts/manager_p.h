@@ -61,6 +61,8 @@ private:
 
 private Q_SLOTS:
     void onGetAccountsFinished();
+    void onAccountChanged(const QString &service,
+                          const OnlineAccounts::AccountInfo &info);
 
 private:
     QString m_applicationId;

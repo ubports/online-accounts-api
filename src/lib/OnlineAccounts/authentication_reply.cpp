@@ -20,11 +20,37 @@
 
 #include "authentication_data.h"
 
+#include <QDBusArgument>
 #include <QDBusMessage>
+#include <QDebug>
 #include "dbus_constants.h"
+#include "error_p.h"
 #include "pending_call_p.h"
 
 using namespace OnlineAccounts;
+
+static QVariant expandDBusArguments(const QVariant &variant)
+{
+    if (variant.userType() == qMetaTypeId<QDBusArgument>()) {
+        QDBusArgument argument = variant.value<QDBusArgument>();
+        if (argument.currentType() == QDBusArgument::MapType) {
+            /* Assume that all maps are a{sv} */
+            QVariantMap map = qdbus_cast<QVariantMap>(argument);
+            QVariantMap expandedMap;
+            QMapIterator<QString, QVariant> it(map);
+            while (it.hasNext()) {
+                it.next();
+                expandedMap.insert(it.key(), expandDBusArguments(it.value()));
+            }
+            return expandedMap;
+        } else {
+            /* We don't know how to handle other types */
+            return argument.asVariant();
+        }
+    } else {
+        return variant;
+    }
+}
 
 namespace OnlineAccounts {
 
@@ -69,6 +95,7 @@ AuthenticationReplyPrivate::AuthenticationReplyPrivate(AuthenticationMethod meth
     const PendingCallPrivate *pCall = call.d.constData();
 
     if (m_authenticationMethod != AuthenticationMethodUnknown &&
+        pCall->authenticationMethod() != AuthenticationMethodUnknown &&
         m_authenticationMethod != pCall->authenticationMethod()) {
         setError(Error(Error::WrongType, "Authentication method mismatch"));
         return;
@@ -79,19 +106,20 @@ AuthenticationReplyPrivate::AuthenticationReplyPrivate(AuthenticationMethod meth
     }
 
     if (Q_UNLIKELY(pCall->dbusCall().isError())) {
-        // TODO: handle error
+        setError(errorFromDBus(pCall->dbusCall().error()));
         return;
     }
 
     QDBusMessage msg = pCall->dbusCall().reply();
     PendingCallPrivate::InvokedMethod invokedMethod = pCall->invokedMethod();
     if (invokedMethod == PendingCallPrivate::Authenticate) {
-        m_replyData = msg.arguments().at(0).toMap();
+        m_replyData = expandDBusArguments(msg.arguments().at(0)).toMap();
     } else if (invokedMethod == PendingCallPrivate::RequestAccess) {
-        m_replyData = msg.arguments().at(1).toMap();
+        m_replyData = expandDBusArguments(msg.arguments().at(1)).toMap();
     } else {
         qFatal("Unknown invoked method %d", invokedMethod);
     }
+    qDebug() << "reply data:" << m_replyData;
 }
 
 AuthenticationReply::AuthenticationReply(const PendingCall &call):

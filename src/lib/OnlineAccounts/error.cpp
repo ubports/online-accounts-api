@@ -18,32 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ONLINE_ACCOUNTS_ACCOUNT_P_H
-#define ONLINE_ACCOUNTS_ACCOUNT_P_H
+#include "error_p.h"
 
-#include "account.h"
-#include "account_info.h"
+#include <QDBusError>
+#include "dbus_constants.h"
 
 namespace OnlineAccounts {
 
-class AccountPrivate
+Error errorFromDBus(const QDBusError &dbusError)
 {
-    Q_DECLARE_PUBLIC(Account)
-
-public:
-    AccountPrivate(Manager *manager, const AccountInfo &info);
-    ~AccountPrivate();
-
-    void setInvalid();
-    void update(const AccountInfo &info);
-
-private:
-    Manager *m_manager;
-    AccountInfo m_info;
-    bool m_isValid;
-    mutable Account *q_ptr;
-};
+    Error::Code code = Error::PermissionDenied;
+    QString name = dbusError.name();
+    if (name == ONLINE_ACCOUNTS_ERROR_NO_ACCOUNT) {
+        code = Error::NoAccount;
+    } else if (name == ONLINE_ACCOUNTS_ERROR_USER_CANCELED) {
+        code = Error::UserCanceled;
+    } else if (name == ONLINE_ACCOUNTS_ERROR_INTERACTION_REQUIRED) {
+        code = Error::InteractionRequired;
+    }
+    return Error(code, dbusError.message());
+}
 
 } // namespace
-
-#endif // ONLINE_ACCOUNTS_ACCOUNT_P_H

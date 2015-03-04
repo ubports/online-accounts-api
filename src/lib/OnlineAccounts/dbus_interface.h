@@ -54,7 +54,8 @@ public:
                                    const QVariantMap &parameters);
 
 Q_SIGNALS:
-    void accountChanged(const QString &service, const AccountInfo &info);
+    void accountChanged(const QString &service,
+                        const OnlineAccounts::AccountInfo &info);
 
 private Q_SLOTS:
     void onAccountChanged(const QString &service,

@@ -18,32 +18,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ONLINE_ACCOUNTS_ACCOUNT_P_H
-#define ONLINE_ACCOUNTS_ACCOUNT_P_H
+#ifndef ONLINE_ACCOUNTS_ERROR_P_H
+#define ONLINE_ACCOUNTS_ERROR_P_H
 
-#include "account.h"
-#include "account_info.h"
+#include "error.h"
+
+class QDBusError;
 
 namespace OnlineAccounts {
 
-class AccountPrivate
-{
-    Q_DECLARE_PUBLIC(Account)
-
-public:
-    AccountPrivate(Manager *manager, const AccountInfo &info);
-    ~AccountPrivate();
-
-    void setInvalid();
-    void update(const AccountInfo &info);
-
-private:
-    Manager *m_manager;
-    AccountInfo m_info;
-    bool m_isValid;
-    mutable Account *q_ptr;
-};
+Error errorFromDBus(const QDBusError &dbusError);
 
 } // namespace
 
-#endif // ONLINE_ACCOUNTS_ACCOUNT_P_H
+#endif // ONLINE_ACCOUNTS_ERROR_P_H

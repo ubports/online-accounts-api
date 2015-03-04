@@ -32,6 +32,11 @@ namespace OnlineAccounts {
 
 class AccountInfo {
 public:
+    enum ChangeType {
+        Enabled,
+        Disabled,
+        Updated,
+    };
     AccountInfo(): accountId(0) {}
     AccountInfo(AccountId accountId, const QVariantMap &details):
         accountId(accountId), details(details) {}
@@ -46,9 +51,30 @@ public:
     AuthenticationMethod authenticationMethod() const {
         return AuthenticationMethod(details.value(ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD).toInt());
     }
+    ChangeType changeType() const {
+        switch (details.value(ONLINE_ACCOUNTS_INFO_KEY_CHANGE_TYPE).toUInt()) {
+        case ONLINE_ACCOUNTS_INFO_CHANGE_ENABLED: return Enabled;
+        case ONLINE_ACCOUNTS_INFO_CHANGE_DISABLED: return Disabled;
+        default: return Updated;
+        }
+    }
 
     QVariant setting(const QString &key) const {
         return details.value(ONLINE_ACCOUNTS_INFO_KEY_SETTINGS + key);
+    }
+
+    AccountInfo stripMetadata() const {
+        AccountInfo stripped = *this;
+        stripped.details.remove(ONLINE_ACCOUNTS_INFO_KEY_CHANGE_TYPE);
+        return stripped;
+    }
+
+    bool operator==(const AccountInfo &other) const {
+        return accountId == other.accountId && details == other.details;
+    }
+
+    bool operator!=(const AccountInfo &other) const {
+        return !(*this == other);
     }
 
 private:

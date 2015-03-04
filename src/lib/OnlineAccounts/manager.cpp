@@ -41,6 +41,12 @@ ManagerPrivate::ManagerPrivate(Manager *q, const QString &applicationId):
     m_getAccountsCall(0),
     q_ptr(q)
 {
+    qRegisterMetaType<Account*>();
+
+    QObject::connect(&m_daemon,
+                     SIGNAL(accountChanged(const QString&, const OnlineAccounts::AccountInfo&)),
+                     this,
+                     SLOT(onAccountChanged(const QString&, const OnlineAccounts::AccountInfo&)));
     retrieveAccounts();
 }
 
@@ -76,15 +82,21 @@ PendingCall ManagerPrivate::requestAccess(const QString &service,
 
 Account *ManagerPrivate::ensureAccount(const AccountInfo &info)
 {
+    if (Q_UNLIKELY(info.id() == 0)) return 0;
+
     QHash<AccountId,AccountData>::iterator i = m_accounts.find(info.id());
     if (i == m_accounts.end()) {
         i = m_accounts.insert(info.id(), AccountData(info));
     }
 
     AccountData &accountData = i.value();
+    accountData.info = info.stripMetadata();
     if (!accountData.account) {
         accountData.account =
             new Account(new AccountPrivate(q_ptr, accountData.info), this);
+    } else {
+        /* Update the account information */
+        accountData.account->d_ptr->update(accountData.info);
     }
 
     return accountData.account;
@@ -124,6 +136,28 @@ void ManagerPrivate::onGetAccountsFinished()
     m_getAccountsCall = 0;
 
     Q_EMIT q->ready();
+}
+
+void ManagerPrivate::onAccountChanged(const QString &service,
+                                      const AccountInfo &info)
+{
+    Q_Q(Manager);
+    Q_UNUSED(service);
+
+    Account *account = ensureAccount(info);
+    if (info.changeType() == AccountInfo::Enabled) {
+        Q_EMIT q->accountAvailable(account);
+    } else if (info.changeType() == AccountInfo::Disabled) {
+        account->d_ptr->setInvalid();
+        /* We don't delete the account, since the client might be using it, but
+         * we remove it from our list so that we won't return it to the client
+         * anymore.
+         */
+        m_accounts.remove(info.id());
+    }
+
+    /* No need to handle the Update change type: ensureAccount already updates
+     * the account and emits the necessary notification */
 }
 
 Manager::Manager(const QString &applicationId, QObject *parent):

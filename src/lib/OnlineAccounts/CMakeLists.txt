@@ -9,6 +9,7 @@ add_library(OnlineAccounts SHARED
     authentication_data.cpp
     authentication_reply.cpp
     dbus_interface.cpp
+    error.cpp
     manager.cpp
     pending_call.cpp
     request_access_reply.cpp

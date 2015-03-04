@@ -43,6 +43,16 @@ void AccountPrivate::setInvalid()
     Q_EMIT q->disabled();
 }
 
+void AccountPrivate::update(const AccountInfo &info)
+{
+    Q_Q(Account);
+
+    if (info != m_info) {
+        m_info = info;
+        Q_EMIT q->changed();
+    }
+}
+
 Account::Account(AccountPrivate *priv, QObject *parent):
     QObject(parent),
     d_ptr(priv)

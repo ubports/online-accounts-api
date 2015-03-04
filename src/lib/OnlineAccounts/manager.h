@@ -54,7 +54,7 @@ public:
 
 Q_SIGNALS:
     void ready();
-    void accountAvailable(Account *account);
+    void accountAvailable(OnlineAccounts::Account *account);
 
 private:
     friend class Account;

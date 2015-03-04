@@ -43,6 +43,16 @@ static QVariant expandDBusArguments(const QVariant &variant)
                 expandedMap.insert(it.key(), expandDBusArguments(it.value()));
             }
             return expandedMap;
+        } else if (argument.currentType() == QDBusArgument::ArrayType) {
+            if (argument.currentSignature() == "aay") {
+                QList<QByteArray> arrayList;
+                argument >> arrayList;
+                return QVariant::fromValue(arrayList);
+            } else {
+                /* We don't know how to handle other types */
+                qWarning() << "unhandled type" << argument.currentSignature();
+                return argument.asVariant();
+            }
         } else {
             /* We don't know how to handle other types */
             return argument.asVariant();

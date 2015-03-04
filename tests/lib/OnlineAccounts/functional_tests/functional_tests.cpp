@@ -20,7 +20,9 @@
 
 #include "OnlineAccounts/Account"
 #include "OnlineAccounts/Manager"
+#include "OnlineAccounts/OAuth1Data"
 #include "OnlineAccounts/OAuth2Data"
+#include "OnlineAccounts/PasswordData"
 #include "OnlineAccounts/account_info.h"
 #include "OnlineAccounts/dbus_constants.h"
 #include <QDBusConnection>
@@ -77,6 +79,7 @@ private Q_SLOTS:
     void testAccountData();
     void testAccountChanges();
     void testPendingCallWatcher();
+    void testAuthentication();
 
 private:
     QtDBusTest::DBusTestRunner m_dbus;
@@ -411,6 +414,108 @@ void FunctionalTests::testAccountChanges()
     QCOMPARE(changed.count(), 0);
     QCOMPARE(disabled.count(), 1);
     QVERIFY(!account->isValid());
+}
+
+void FunctionalTests::testAuthentication()
+{
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
+                    "ret = ["
+                    "(1, {"
+                    "  'displayName': 'Bob',"
+                    "  'serviceId': 'MyService0',"
+                    "  'authMethod': 1,"
+                    "}),"
+                    "(2, {"
+                    "  'displayName': 'Tom',"
+                    "  'serviceId': 'MyService1',"
+                    "  'authMethod': 2,"
+                    "}),"
+                    "(3, {"
+                    "  'displayName': 'Sam',"
+                    "  'serviceId': 'MyService2',"
+                    "  'authMethod': 3,"
+                    "}),"
+                    "]");
+    addMockedMethod("Authenticate", "usbba{sv}", "a{sv}",
+                    "if args[0] == 1:\n"
+                    "  ret = {"
+                    "    'ConsumerKey': args[4]['ConsumerKey'],"
+                    "    'ConsumerSecret': args[4]['ConsumerSecret'],"
+                    "    'Token': 'a token',"
+                    "    'TokenSecret': 'a token secret',"
+                    "    'SignatureMethod': 'PLAIN',"
+                    "  }\n"
+                    "elif args[0] == 2:\n"
+                    "  ret = {"
+                    "    'AccessToken': 'my token',"
+                    "    'ExpiresIn': 3600,"
+                    "    'GrantedScopes': args[4]['Scopes'],"
+                    "  }\n"
+                    "elif args[0] == 3:\n"
+                    "  ret = {"
+                    "    'Username': 'admin',"
+                    "    'Password': 'rootme',"
+                    "  }\n"
+                    "else:\n"
+                    "  ret = {}");
+    OnlineAccounts::Manager manager("my-app");
+    manager.waitForReady();
+
+    /* Test OAuth 1.0 */
+    OnlineAccounts::Account *account = manager.account(1);
+    QVERIFY(account);
+    QCOMPARE(account->authenticationMethod(),
+             OnlineAccounts::AuthenticationMethodOAuth1);
+    OnlineAccounts::OAuth1Data oauth1data;
+    oauth1data.setInteractive(false);
+    oauth1data.setConsumerKey("a key");
+    QCOMPARE(oauth1data.consumerKey(), QByteArray("a key"));
+    oauth1data.setConsumerSecret("a secret");
+    QCOMPARE(oauth1data.consumerSecret(), QByteArray("a secret"));
+
+    OnlineAccounts::OAuth1Reply oauth1reply(account->authenticate(oauth1data));
+    QCOMPARE(oauth1reply.consumerKey(), QByteArray("a key"));
+    QCOMPARE(oauth1reply.consumerSecret(), QByteArray("a secret"));
+    QCOMPARE(oauth1reply.token(), QByteArray("a token"));
+    QCOMPARE(oauth1reply.tokenSecret(), QByteArray("a token secret"));
+    QCOMPARE(oauth1reply.signatureMethod(), QByteArray("PLAIN"));
+
+    /* Test OAuth 2.0 */
+    account = manager.account(2);
+    QVERIFY(account);
+    QCOMPARE(account->authenticationMethod(),
+             OnlineAccounts::AuthenticationMethodOAuth2);
+    OnlineAccounts::OAuth2Data oauth2data;
+    oauth2data.invalidateCachedReply();
+    QVERIFY(oauth2data.mustInvalidateCachedReply());
+    oauth2data.setClientId("a client");
+    QCOMPARE(oauth2data.clientId(), QByteArray("a client"));
+    oauth2data.setClientSecret("a secret");
+    QCOMPARE(oauth2data.clientSecret(), QByteArray("a secret"));
+    QList<QByteArray> scopes =
+        QList<QByteArray>() << "one" << "two" << "three";
+    oauth2data.setScopes(scopes);
+    QCOMPARE(oauth2data.scopes(), scopes);
+
+    OnlineAccounts::OAuth2Reply oauth2reply(account->authenticate(oauth2data));
+    QCOMPARE(oauth2reply.accessToken(), QByteArray("my token"));
+    QCOMPARE(oauth2reply.expiresIn(), 3600);
+    QCOMPARE(oauth2reply.grantedScopes(), scopes);
+
+    /* Test Password */
+    account = manager.account(3);
+    QVERIFY(account);
+    QCOMPARE(account->authenticationMethod(),
+             OnlineAccounts::AuthenticationMethodPassword);
+    OnlineAccounts::PasswordData pwdata;
+
+    OnlineAccounts::PasswordReply pwreply(account->authenticate(pwdata));
+    QCOMPARE(pwreply.username(), QByteArray("admin"));
+    QCOMPARE(pwreply.password(), QByteArray("rootme"));
+
+    /* Test the copy constructor */
+    OnlineAccounts::OAuth2Data copy(oauth2data);
+    QCOMPARE(copy.clientId(), QByteArray("a client"));
 }
 
 QTEST_MAIN(FunctionalTests)

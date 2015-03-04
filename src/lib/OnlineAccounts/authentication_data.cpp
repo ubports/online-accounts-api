@@ -20,7 +20,7 @@
 
 #include "authentication_data_p.h"
 
-#include <QSharedData>
+#include <QDBusMetaType>
 #include "dbus_constants.h"
 
 using namespace OnlineAccounts;
@@ -76,6 +76,7 @@ bool AuthenticationData::mustInvalidateCachedReply() const
 OAuth2Data::OAuth2Data():
     AuthenticationData(new AuthenticationDataPrivate(AuthenticationMethodOAuth2))
 {
+    qDBusRegisterMetaType<QList<QByteArray>>();
 }
 
 void OAuth2Data::setClientId(const QByteArray &id)

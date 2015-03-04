@@ -23,6 +23,7 @@
 
 #include "authentication_data.h"
 
+#include <QSharedData>
 #include <QVariantMap>
 
 namespace OnlineAccounts {

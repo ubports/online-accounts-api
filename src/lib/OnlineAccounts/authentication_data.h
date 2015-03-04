@@ -117,7 +117,7 @@ class ONLINE_ACCOUNTS_EXPORT OAuth1Data: public AuthenticationData
 public:
     OAuth1Data();
 
-    void setConsumerKey(const QByteArray &consumerkey);
+    void setConsumerKey(const QByteArray &consumerKey);
     QByteArray consumerKey() const;
 
     void setConsumerSecret(const QByteArray &consumerSecret);

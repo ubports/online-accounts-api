@@ -61,26 +61,27 @@ def load(mock, parameters):
     mock.last_account_id = 0
     mock.new_account_details = {}
 
+    def request_access(self, service_id, params):
+        if len(self.new_account_details) == 0:
+            raise dbus.exceptions.DBusException('Permission denied',
+                                                name=ERROR_PERMISSION_DENIED)
+        self.AddAccount(self.new_account_details)
+        authentication_reply = self.authenticate(self.last_account_id, service_id,
+                                                 True, False, params)
+        return ((self.last_account_id, self.new_account_details), authentication_reply)
 
-def request_access(self, service_id, params):
-    if len(self.new_account_details) == 0:
-        raise dbus.exceptions.DBusException('Permission denied',
-                                            name=ERROR_PERMISSION_DENIED)
-    self.AddAccount(self.new_account_details)
-    authentication_reply = self.authenticate(self.last_account_id, service_id,
-                                             True, False, params)
-    return ((self.last_account_id, self.new_account_details), authentication_reply)
+    setattr(mock.__class__, "request_access", request_access)
 
+    def authenticate(self, account_id, service_id, interactive, invalidate, params):
+        if account_id not in self.accounts:
+            raise dbus.exceptions.DBusException('No account with id %s' % (account_id,),
+                                                name=ERROR_NO_ACCOUNT)
+        if self.authentication_error:
+            raise dbus.exceptions.DBusException('Authentication error',
+                                                name=self.authentication_error)
+        return self.authentication_reply
 
-def authenticate(self, account_id, service_id, interactive, invalidate, params):
-    if account_id not in self.accounts:
-        raise dbus.exceptions.DBusException('No account with id %s' % (account_id,),
-                                            name=ERROR_NO_ACCOUNT)
-    if self.authentication_error:
-        raise dbus.exceptions.DBusException('Authentication error',
-                                            name=self.authentication_error)
-    return self.authentication_reply
-
+    setattr(mock.__class__, "authenticate", authenticate)
 
 @dbus.service.method(MOCK_IFACE, in_signature='a{sv}', out_signature='u')
 def AddAccount(self, account_details):

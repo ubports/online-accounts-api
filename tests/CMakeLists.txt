@@ -6,5 +6,6 @@ include_directories(
   ${TEST_INCLUDE_DIRS}
 )
 
+add_subdirectory(daemon/mock_template)
 add_subdirectory(lib/OnlineAccounts)
 add_subdirectory(unit)

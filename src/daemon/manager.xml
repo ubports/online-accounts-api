@@ -5,87 +5,148 @@
   <interface name="com.ubuntu.OnlineAccounts.Manager">
 
     <!--
-        GetAccounts: returns a list containing account information for
-        accounts that provide one of a list of service IDs.
+      Global concepts:
+
+      Clients are identified by their "applicationId", which is the
+      "<package>_<app>" of the client.
+
+      The "serviceId" is an application-specific name for an account provider.
+      That is, the "serviceId" contains the information about the application
+      which will use it, and the account provider (e.g. "google", "facebook").
+      "serviceId"s are backed by files shipped with the application, which can
+      contain application/account-provider specific information, such as the
+      ClientId and ClientSecret to be used when authentication with OAuth 2.0. 
+      An application can ship more than one "serviceId", if they refer to
+      different account providers; that is, one application can have a
+      serviceId for Google and one for Facebook, but the same application
+      cannot have one for GMail and another for Picasa.
+    -->
+
+    <!--
+      GetAccounts: returns a list of account IDs that satisfy the given
+      filters.
+
+      Allowed keys for the "filters" parameter (any combination is allowed,
+      though not all combinations might make sense):
+
+      - "applicationId" ("s"): the "<package>_<app>" of the client. An
+        unconfined application can specify this in order to restrict the set
+        of results to only those accounts that the application has been
+        authorized to use. For confined apps, OA will deduce the
+        applicationId from the apparmor label of the caller.
+
+      - "serviceId" ("s"): if the application wants to list only those
+        accounts coming from a specific provider (e.g., "Facebook").
+
+      - "accountId" ("u"): the ID of an account.
+
+      In any case, an application will receive only those accounts which the
+      user has authorized the application to use. See
+        http://wiki.ubuntu.com/OnlineAccounts
+      for an overview of the UI experience.
+
+      Disabled accounts will not be returned.
     -->
     <method name="GetAccounts">
-      <arg name="service_ids" type="as" direction="in" />
+      <arg name="filters" type="a{sv}" direction="in" />
+      <!--
+        The return value is a list of account IDs paired with a dictionary of account data.
+        This will always include:
+        - "serviceId" (s)
+        - "displayName" (s)
+        Other settings stored on the account will also be included, such as the
+        server address and port of an owncloud or IMAP account, but we haven't
+        defined exactly how. Possibly, all account-specific keys will be
+        prefixed by "settings/", in order not to clash with the keys defined at
+        the framework level.
+      -->
       <arg name="accounts" type="a(ua{sv})" direction="out" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0"
                   value="QList&lt;AccountInfo&gt;"/>
     </method>
 
     <!--
-        GetAccountInfo: return information about a given account ID
-    -->
-    <method name="GetAccountInfo">
-      <arg name="service_id" type="s" direction="in" />
-      <arg name="account_id" type="u" direction="in" />
-      <arg name="details" type="(ua{sv})" direction="out" />
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="AccountInfo"/>
-    </method>
+      Authenticate: request authentication credentials for the given
+      account ID in the context of a particular service.
 
-    <!--
-        Authenticate: request authentication credentials for the given
-        account ID in the context of a particualr service.
+      If "interactive" is false, an error will be returned if
+      user interaction would be required to retrieve the
+      credentials.
 
-        If "interactive" is false, an error will be returned if
-        user interaction would be required to retrieve the
-        credentials.
-
-        If "invalidate" is true, any stored credentials will be
-        ignored and new credentials will be requested from the account
-        provider.
+      If "invalidate" is true, any stored credentials will be
+      ignored and new credentials will be requested from the account
+      provider.
     -->
     <method name="Authenticate">
-      <arg name="service_id" type="s" direction="in" />
-      <arg name="account_id" type="u" direction="in" />
+      <arg name="accountId" type="u" direction="in" />
+      <arg name="serviceId" type="s" direction="in" />
       <arg name="interactive" type="b" direction="in" />
       <arg name="invalidate" type="b" direction="in" />
-      <!-- <arg name="reply_socket" type="h" direction="in" /> -->
+      <!--
+        This dictionary can be used to specify OAuth client keys or permission
+        scopes. While it's possible to statically define them a the "serviceId"
+        level, some apps might want to change this information at runtime.
+        Possible use cases:
+        1) OAuth keys are retrieved from a server (so that they can be updated
+           when the old ones are revoked).
+        2) An app might want to use different keys when talking to GMail and
+           Picasa.
+        3) The scope list can also be dynamic, and depending on how the user is
+           using the app.
+        4) SASL: the parameters would contain the latest challenge got from the
+           server.
+      --> 
+      <arg name="parameters" type="a{sv}" direction="in" />
       <arg name="credentials" type="a{sv}" direction="out" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In4" value="QVariantMap"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="QVariantMap"/>
     </method>
 
     <!--
-        Register: register a new account for use with the given
-        service.
+      RequestAccess: register a new account for use with the given
+      service.
+      This method also performs the authentication, since that's what apps
+      would do as soon as they get the account.
     -->
-    <method name="Register">
-      <arg name="service_id" type="s" direction="in" />
-      <!-- <arg name="reply_socket" type="h" direction="in" /> -->
+    <method name="RequestAccess">
+      <arg name="serviceId" type="s" direction="in" />
+      <arg name="parameters" type="a{sv}" direction="in" />
       <arg name="account" type="(ua{sv})" direction="out" />
-      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="AccountInfo"/>
       <arg name="credentials" type="a{sv}" direction="out" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="QVariantMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="AccountInfo"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="QVariantMap"/>
     </method>
 
     <!--
-        AccountChanged: emitted when account details are changed.
+      AccountChanged: emitted when account details are changed.
 
-        This signal will be emitted when new accounts are enabled, and
-        when existing accounts are disabled.  Clients can detect these
-        cases by checking the "enabled" flag and comparing the account
-        ID with the list of accounts they currently know about.
+      The apparmor policy will NOT ALLOW confined applications to receive
+      this signal on the account manager object path (which might be
+      /com/ubuntu/OnlineAccounts/Manager). Only unconfined applications will
+      be able to listen to this signal from that object path.
 
-        The actual changed account details can be retrieved with
-        GetAccountInfo().
+      Confined apps will have to catch this signal from a different object path:
+      /com/ubuntu/OnlineAccounts/Manager/@{APP_PKGNAME_DBUS}, which will
+      deliver the signal only for those accounts which the app has been
+      authorized to use.
     -->
     <signal name="AccountChanged">
-      <arg name="service_id" type="s" />
-      <arg name="account_id" type="u" />
-      <arg name="enabled" type="b" />
-    </signal>
-
-    <!--
-        CredentialsChanged: emitted when the credentials for the given
-        service ID on the given account change.
-
-        The new credentials can be retrieved with Authenticate().
-    -->
-    <signal name="CredentialsChanged">
-      <arg name="service_id" type="s" />
-      <arg name="account_id" type="u" />
+      <!--
+        The serviceId will also be included in the "account" dictionary. The
+        reason for having it also here is to allow clients to filter D-Bus
+        messages by arg0. This can be important for unconfined clients, which
+        would otherwise be woken up by any account change, even those not
+          relevant to them.
+      -->
+      <arg name="serviceId" type="s" />
+      <!--
+        The dictionary contains a changeType key, type "u", whose value is
+        enum { enabled, disabled, changed }
+      -->
+      <arg name="account" type="(ua{sv})" />
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="AccountInfo"/>
     </signal>
 
   </interface>

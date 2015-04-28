@@ -82,34 +82,21 @@ bool Manager::checkAccess(const QString &serviceId)
     return hasAccess;
 }
 
-QList<AccountInfo> Manager::GetAccounts(const QStringList &serviceIds)
+QList<AccountInfo> Manager::GetAccounts(const QVariantMap &filters)
 {
-    Q_FOREACH(const QString &serviceId, serviceIds) {
-        if (!checkAccess(serviceId)) {
-            return QList<AccountInfo>();
-        }
-    }
+    Q_UNUSED(filters);
 
-    return QList<AccountInfo>({AccountInfo(0, QVariantMap())});
+    return QList<AccountInfo>();
 }
 
-AccountInfo Manager::GetAccountInfo(const QString &serviceId, uint accountId)
-{
-    Q_UNUSED(accountId);
-
-    if (!checkAccess(serviceId)) {
-        return AccountInfo();
-    }
-
-    return AccountInfo(accountId, QVariantMap());
-}
-
-QVariantMap Manager::Authenticate(const QString &serviceId, uint accountId,
-                                  bool interactive, bool invalidate)
+QVariantMap Manager::Authenticate(uint accountId, const QString &serviceId,
+                                  bool interactive, bool invalidate,
+                                  const QVariantMap &parameters)
 {
     Q_UNUSED(accountId);
     Q_UNUSED(interactive);
     Q_UNUSED(invalidate);
+    Q_UNUSED(parameters);
 
     if (!checkAccess(serviceId)) {
         return QVariantMap();
@@ -118,13 +105,16 @@ QVariantMap Manager::Authenticate(const QString &serviceId, uint accountId,
     return QVariantMap();
 }
 
-AccountInfo Manager::Register(const QString &serviceId, QVariantMap &credentials)
+AccountInfo Manager::RequestAccess(const QString &serviceId,
+                                   const QVariantMap &parameters,
+                                   QVariantMap &credentials)
 {
-    Q_UNUSED(credentials);
+    Q_UNUSED(parameters);
 
     if (!checkAccess(serviceId)) {
         return AccountInfo();
     }
 
+    credentials = QVariantMap();
     return AccountInfo();
 }

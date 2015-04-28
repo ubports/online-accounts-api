@@ -31,15 +31,16 @@ public:
     ~Manager();
 
 public Q_SLOTS:
-    QList<AccountInfo> GetAccounts(const QStringList &serviceIds);
-    AccountInfo GetAccountInfo(const QString &serviceId, uint accountId);
-    QVariantMap Authenticate(const QString &serviceId, uint accountId,
-                             bool interactive, bool invalidate);
-    AccountInfo Register(const QString &serviceId, QVariantMap &credentials);
+    QList<AccountInfo> GetAccounts(const QVariantMap &filters);
+    QVariantMap Authenticate(uint accountId, const QString &serviceId,
+                             bool interactive, bool invalidate,
+                             const QVariantMap &parameters);
+    AccountInfo RequestAccess(const QString &serviceId,
+                              const QVariantMap &parameters,
+                              QVariantMap &credentials);
 
 Q_SIGNALS:
-    void AccountChanged(const QString &serviceId, uint accountId, bool enabled);
-    void CredentialsChanged(const QString &serviceId, uint accountId);
+    void AccountChanged(const QString &serviceId, AccountInfo accountInfo);
 
 private:
     bool canAccess(const QString &serviceId);

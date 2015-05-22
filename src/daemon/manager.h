@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MANAGER_H
-#define MANAGER_H
+#ifndef ONLINE_ACCOUNTS_DAEMON_MANAGER_H
+#define ONLINE_ACCOUNTS_DAEMON_MANAGER_H
 
 #include <QDBusArgument>
 #include <QDBusContext>
@@ -35,6 +35,7 @@ struct AccountInfo {
     AccountInfo(uint accountId, const QVariantMap &details):
         accountId(accountId), details(details) {}
 };
+
 Q_DECLARE_METATYPE(AccountInfo)
 
 QDBusArgument &operator<<(QDBusArgument &argument, const AccountInfo &info);
@@ -45,10 +46,13 @@ class ManagerPrivate;
 class Manager: public QObject, protected QDBusContext
 {
     Q_OBJECT
+    Q_PROPERTY(bool isIdle READ isIdle NOTIFY isIdleChanged)
 
 public:
     explicit Manager(QObject *parent = 0);
     ~Manager();
+
+    bool isIdle() const;
 
 public Q_SLOTS:
     QList<AccountInfo> GetAccounts(const QVariantMap &filters);
@@ -60,6 +64,7 @@ public Q_SLOTS:
                               QVariantMap &credentials);
 
 Q_SIGNALS:
+    void isIdleChanged();
     void AccountChanged(const QString &serviceId, AccountInfo accountInfo);
 
 private:
@@ -71,4 +76,4 @@ private:
     ManagerPrivate *d_ptr;
 };
 
-#endif
+#endif // ONLINE_ACCOUNTS_DAEMON_MANAGER_H

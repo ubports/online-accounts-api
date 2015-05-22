@@ -18,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "inactivity_timer.h"
 #include "manager.h"
 #include "manageradaptor.h"
 
@@ -28,16 +29,24 @@ int main(int argc, char **argv)
     qDBusRegisterMetaType<AccountInfo>();
     qDBusRegisterMetaType<QList<AccountInfo>>();
 
-    auto server = new Manager();
-    new ManagerAdaptor(server);
+    auto manager = new Manager();
+    new ManagerAdaptor(manager);
+
+    auto inactivityTimer = new OnlineAccountsDaemon::InactivityTimer(5000);
+    inactivityTimer->watchObject(manager);
+    QObject::connect(inactivityTimer, SIGNAL(timeout()), &app, SLOT(quit()));
 
     QDBusConnection bus = QDBusConnection::sessionBus();
-    bus.registerObject("/com/ubuntu/OnlineAccounts/Manager", server);
+    bus.registerObject("/com/ubuntu/OnlineAccounts/Manager", manager);
     bus.registerService("com.ubuntu.OnlineAccounts.Manager");
 
     int ret = app.exec();
 
     bus.unregisterService("com.ubuntu.OnlineAccounts.Manager");
     bus.unregisterObject("/com/ubuntu/OnlineAccounts/Manager");
+
+    delete inactivityTimer;
+    delete manager;
+
     return ret;
 }

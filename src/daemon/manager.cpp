@@ -44,19 +44,38 @@ const QDBusArgument &operator>>(const QDBusArgument &argument,
 }
 
 class ManagerPrivate {
+    Q_DECLARE_PUBLIC(Manager)
+
 public:
+    ManagerPrivate(Manager *q);
+
+private:
+    bool m_isIdle;
     AppArmorContext m_apparmor;
+    mutable Manager *q_ptr;
 };
+
+ManagerPrivate::ManagerPrivate(Manager *q):
+    m_isIdle(true),
+    q_ptr(q)
+{
+}
 
 Manager::Manager(QObject *parent):
     QObject(parent),
-    d_ptr(new ManagerPrivate)
+    d_ptr(new ManagerPrivate(this))
 {
 }
 
 Manager::~Manager()
 {
     delete d_ptr;
+}
+
+bool Manager::isIdle() const
+{
+    Q_D(const Manager);
+    return d->m_isIdle;
 }
 
 bool Manager::canAccess(const QString &serviceId)

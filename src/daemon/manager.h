@@ -68,10 +68,6 @@ Q_SIGNALS:
     void AccountChanged(const QString &serviceId, AccountInfo accountInfo);
 
 private:
-    bool canAccess(const QString &serviceId);
-    bool checkAccess(const QString &serviceId);
-    QString getPeerSecurityContext();
-
     Q_DECLARE_PRIVATE(Manager)
     ManagerPrivate *d_ptr;
 };

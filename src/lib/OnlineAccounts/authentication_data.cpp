@@ -21,7 +21,7 @@
 #include "authentication_data_p.h"
 
 #include <QDBusMetaType>
-#include "dbus_constants.h"
+#include "daemon/dbus_constants.h"
 
 using namespace OnlineAccounts;
 

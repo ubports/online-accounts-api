@@ -1,6 +1,9 @@
 project(OnlineAccountsQt)
 
-include_directories(. ${CMAKE_CURRENT_BINARY_DIR})
+include_directories(.
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${OnlineAccountsDaemon_SOURCE_DIR}/..
+)
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 
 add_library(OnlineAccountsQt SHARED

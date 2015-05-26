@@ -21,7 +21,7 @@
 #include "error_p.h"
 
 #include <QDBusError>
-#include "dbus_constants.h"
+#include "daemon/dbus_constants.h"
 
 namespace OnlineAccounts {
 

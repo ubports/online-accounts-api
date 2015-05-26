@@ -10,6 +10,7 @@ add_executable(${TEST} ${SOURCES})
 include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     ${OnlineAccountsQt_SOURCE_DIR}/..
+    ${OnlineAccountsDaemon_SOURCE_DIR}/..
     ${QTDBUSMOCK_INCLUDE_DIRS}
     ${QTDBUSTEST_INCLUDE_DIRS}
 )

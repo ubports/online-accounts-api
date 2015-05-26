@@ -1,5 +1,5 @@
 /*
- * This file is part of libOnlineAccounts
+ * This file is part of OnlineAccountsDaemon
  *
  * Copyright (C) 2015 Canonical Ltd.
  *
@@ -31,6 +31,10 @@
 #define ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME "displayName"
 #define ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID "serviceId"
 #define ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD "authMethod"
+#  define ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN 0
+#  define ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH1 1
+#  define ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH2 2
+#  define ONLINE_ACCOUNTS_AUTH_METHOD_PASSWORD 3
 #define ONLINE_ACCOUNTS_INFO_KEY_SETTINGS "settings/"
 #define ONLINE_ACCOUNTS_INFO_KEY_CHANGE_TYPE "changeType"
 #  define ONLINE_ACCOUNTS_INFO_CHANGE_ENABLED 0

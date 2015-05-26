@@ -21,12 +21,15 @@
 #include "manager.h"
 
 #include <Accounts/Account>
+#include <Accounts/AccountService>
 #include <Accounts/Application>
+#include <Accounts/AuthData>
 #include <Accounts/Manager>
 #include <Accounts/Service>
 #include <QDBusMessage>
 #include <QDebug>
 #include "aacontext.h"
+#include "dbus_constants.h"
 
 static const char FORBIDDEN_ERROR[] = "com.ubuntu.OnlineAccounts.Error.Forbidden";
 
@@ -53,6 +56,7 @@ class ManagerPrivate {
 public:
     ManagerPrivate(Manager *q);
 
+    int authMethod(const Accounts::AuthData &authData);
     AccountInfo readAccountInfo(Accounts::Account *account,
                                 const Accounts::Service &service);
     QList<AccountInfo> getAccounts(const QVariantMap &filters,
@@ -72,13 +76,38 @@ ManagerPrivate::ManagerPrivate(Manager *q):
 {
 }
 
+int ManagerPrivate::authMethod(const Accounts::AuthData &authData)
+{
+    QString method = authData.method();
+    QString mechanism = authData.mechanism();
+    if (method == "oauth2") {
+        if (mechanism == "web_server" || mechanism == "user_agent") {
+            return ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH2;
+        } else if (mechanism == "HMAC-SHA1" || mechanism == "PLAINTEXT") {
+            return ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH1;
+        }
+    } else if (method == "password") {
+        return ONLINE_ACCOUNTS_AUTH_METHOD_PASSWORD;
+    }
+
+    return ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN;
+}
+
 AccountInfo ManagerPrivate::readAccountInfo(Accounts::Account *account,
                                             const Accounts::Service &service)
 {
-    Q_UNUSED(account);
-    Q_UNUSED(service);
-    //TODO
-    return AccountInfo();
+    QVariantMap info;
+    info[ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME] = account->displayName();
+    info[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = service.name();
+
+    Accounts::AccountService as(account, service);
+    info[ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD] = authMethod(as.authData());
+    QString settingsPrefix(QStringLiteral(ONLINE_ACCOUNTS_INFO_KEY_SETTINGS));
+    Q_FOREACH(const QString &key, as.allKeys()) {
+        info[settingsPrefix + key] = as.value(key);
+    }
+
+    return AccountInfo(account->id(), info);
 }
 
 QList<AccountInfo> ManagerPrivate::getAccounts(const QVariantMap &filters,

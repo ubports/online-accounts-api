@@ -26,10 +26,13 @@
 #include <Accounts/AuthData>
 #include <Accounts/Manager>
 #include <Accounts/Service>
-#include <QDBusMessage>
 #include <QDebug>
+#include <QHash>
+#include <QPair>
+#include <QSet>
 #include "dbus_constants.h"
 #include "manager_adaptor.h"
+#include "state_saver.h"
 
 static const char FORBIDDEN_ERROR[] = "com.ubuntu.OnlineAccounts.Error.Forbidden";
 
@@ -37,11 +40,25 @@ using namespace OnlineAccountsDaemon;
 
 namespace OnlineAccountsDaemon {
 
+struct ActiveAccount {
+    ActiveAccount(): accountService(0) {}
+
+    Accounts::AccountService *accountService;
+    QSet<QString> clients;
+};
+
+typedef QPair<Accounts::AccountId,QString> AccountCoordinates;
+
 class ManagerPrivate {
     Q_DECLARE_PUBLIC(Manager)
 
 public:
     ManagerPrivate(Manager *q);
+
+    void loadActiveAccounts();
+    void addActiveAccount(Accounts::AccountId accountId,
+                          const QString &serviceName,
+                          const QString &client);
 
     int authMethod(const Accounts::AuthData &authData);
     AccountInfo readAccountInfo(Accounts::Account *account,
@@ -52,6 +69,9 @@ public:
 
 private:
     Accounts::Manager m_manager;
+    StateSaver m_stateSaver;
+    bool m_mustEmitNotifications;
+    QHash<AccountCoordinates,ActiveAccount> m_activeAccounts;
     bool m_isIdle;
     mutable Manager *q_ptr;
 };
@@ -59,9 +79,29 @@ private:
 } // namespace
 
 ManagerPrivate::ManagerPrivate(Manager *q):
+    m_mustEmitNotifications(false),
     m_isIdle(true),
     q_ptr(q)
 {
+    loadActiveAccounts();
+}
+
+void ManagerPrivate::loadActiveAccounts()
+{
+    ClientAccountRefs refs = m_stateSaver.load();
+    for (auto i = refs.constBegin(); i != refs.constEnd(); i++) {
+        addActiveAccount(i.value().accountId, i.value().serviceName, i.key());
+    }
+    m_mustEmitNotifications = true;
+}
+
+void ManagerPrivate::addActiveAccount(Accounts::AccountId accountId,
+                                      const QString &serviceName,
+                                      const QString &client)
+{
+    ActiveAccount activeAccount =
+        m_activeAccounts[AccountCoordinates(accountId, serviceName)];
+    activeAccount.clients.insert(client);
 }
 
 int ManagerPrivate::authMethod(const Accounts::AuthData &authData)

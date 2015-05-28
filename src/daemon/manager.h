@@ -27,6 +27,8 @@
 #include <QObject>
 #include <QVariantMap>
 
+namespace OnlineAccountsDaemon {
+
 struct AccountInfo {
     uint accountId;
     QVariantMap details;
@@ -36,11 +38,8 @@ struct AccountInfo {
         accountId(accountId), details(details) {}
 };
 
-Q_DECLARE_METATYPE(AccountInfo)
-
-QDBusArgument &operator<<(QDBusArgument &argument, const AccountInfo &info);
-const QDBusArgument &operator>>(const QDBusArgument &argument,
-                                AccountInfo &info);
+class CallContext;
+class ManagerAdaptor;
 
 class ManagerPrivate;
 class Manager: public QObject, protected QDBusContext
@@ -54,22 +53,27 @@ public:
 
     bool isIdle() const;
 
-public Q_SLOTS:
-    QList<AccountInfo> GetAccounts(const QVariantMap &filters);
-    QVariantMap Authenticate(uint accountId, const QString &serviceId,
-                             bool interactive, bool invalidate,
-                             const QVariantMap &parameters);
-    AccountInfo RequestAccess(const QString &serviceId,
-                              const QVariantMap &parameters,
-                              QVariantMap &credentials);
+    QList<AccountInfo> getAccounts(const QVariantMap &filters,
+                                   const CallContext &context);
+    void authenticate(uint accountId, const QString &serviceId,
+                      bool interactive, bool invalidate,
+                      const QVariantMap &parameters,
+                      const CallContext &context);
+    void requestAccess(const QString &serviceId,
+                       const QVariantMap &parameters,
+                       const CallContext &context);
 
 Q_SIGNALS:
     void isIdleChanged();
-    void AccountChanged(const QString &serviceId, AccountInfo accountInfo);
 
 private:
+    friend class ManagerAdaptor;
     Q_DECLARE_PRIVATE(Manager)
     ManagerPrivate *d_ptr;
 };
+
+} // namespace
+
+Q_DECLARE_METATYPE(OnlineAccountsDaemon::AccountInfo)
 
 #endif // ONLINE_ACCOUNTS_DAEMON_MANAGER_H

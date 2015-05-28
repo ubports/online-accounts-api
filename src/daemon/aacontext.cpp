@@ -6,6 +6,7 @@
 #include <sys/apparmor.h>
 
 const int maxCacheSize = 50;
+static AppArmorContext *static_instance = 0;
 
 AppArmorContext::AppArmorContext()
 {
@@ -13,6 +14,14 @@ AppArmorContext::AppArmorContext()
 
 AppArmorContext::~AppArmorContext()
 {
+}
+
+AppArmorContext *AppArmorContext::instance()
+{
+    if (!static_instance) {
+        static_instance = new AppArmorContext();
+    }
+    return static_instance;
 }
 
 QString AppArmorContext::getPeerSecurityContext(const QDBusConnection &bus,

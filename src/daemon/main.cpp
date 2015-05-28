@@ -18,19 +18,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QCoreApplication>
+#include <QDBusConnection>
 #include "inactivity_timer.h"
 #include "manager.h"
-#include "manageradaptor.h"
 
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
 
-    qDBusRegisterMetaType<AccountInfo>();
-    qDBusRegisterMetaType<QList<AccountInfo>>();
-
-    auto manager = new Manager();
-    new ManagerAdaptor(manager);
+    auto manager = new OnlineAccountsDaemon::Manager();
 
     auto inactivityTimer = new OnlineAccountsDaemon::InactivityTimer(5000);
     inactivityTimer->watchObject(manager);

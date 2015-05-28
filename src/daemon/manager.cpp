@@ -28,27 +28,14 @@
 #include <Accounts/Service>
 #include <QDBusMessage>
 #include <QDebug>
-#include "aacontext.h"
 #include "dbus_constants.h"
+#include "manager_adaptor.h"
 
 static const char FORBIDDEN_ERROR[] = "com.ubuntu.OnlineAccounts.Error.Forbidden";
 
-QDBusArgument &operator<<(QDBusArgument &argument, const AccountInfo &info)
-{
-    argument.beginStructure();
-    argument << info.accountId << info.details;
-    argument.endStructure();
-    return argument;
-}
+using namespace OnlineAccountsDaemon;
 
-const QDBusArgument &operator>>(const QDBusArgument &argument,
-                                AccountInfo &info)
-{
-    argument.beginStructure();
-    argument >> info.accountId >> info.details;
-    argument.endStructure();
-    return argument;
-}
+namespace OnlineAccountsDaemon {
 
 class ManagerPrivate {
     Q_DECLARE_PUBLIC(Manager)
@@ -66,9 +53,10 @@ public:
 private:
     Accounts::Manager m_manager;
     bool m_isIdle;
-    AppArmorContext m_apparmor;
     mutable Manager *q_ptr;
 };
+
+} // namespace
 
 ManagerPrivate::ManagerPrivate(Manager *q):
     m_isIdle(true),
@@ -187,6 +175,7 @@ Manager::Manager(QObject *parent):
     QObject(parent),
     d_ptr(new ManagerPrivate(this))
 {
+    new ManagerAdaptor(this);
 }
 
 Manager::~Manager()
@@ -200,17 +189,17 @@ bool Manager::isIdle() const
     return d->m_isIdle;
 }
 
-QList<AccountInfo> Manager::GetAccounts(const QVariantMap &filters)
+QList<AccountInfo> Manager::getAccounts(const QVariantMap &filters,
+                                        const CallContext &context)
 {
     Q_D(Manager);
-    QString context = d->m_apparmor.getPeerSecurityContext(connection(),
-                                                           message());
-    return d->getAccounts(filters, context);
+    return d->getAccounts(filters, context.securityContext());
 }
 
-QVariantMap Manager::Authenticate(uint accountId, const QString &serviceId,
-                                  bool interactive, bool invalidate,
-                                  const QVariantMap &parameters)
+void Manager::authenticate(uint accountId, const QString &serviceId,
+                           bool interactive, bool invalidate,
+                           const QVariantMap &parameters,
+                           const CallContext &context)
 {
     Q_D(Manager);
     Q_UNUSED(accountId);
@@ -218,32 +207,23 @@ QVariantMap Manager::Authenticate(uint accountId, const QString &serviceId,
     Q_UNUSED(invalidate);
     Q_UNUSED(parameters);
 
-    QString context = d->m_apparmor.getPeerSecurityContext(connection(),
-                                                           message());
-    if (!d->canAccess(context, serviceId)) {
-        sendErrorReply(FORBIDDEN_ERROR,
-                       QString("Access to service ID %1 forbidden").arg(serviceId));
-        return QVariantMap();
+    if (!d->canAccess(context.securityContext(), serviceId)) {
+        context.sendError(FORBIDDEN_ERROR,
+                          QString("Access to service ID %1 forbidden").arg(serviceId));
+        return;
     }
-
-    return QVariantMap();
 }
 
-AccountInfo Manager::RequestAccess(const QString &serviceId,
-                                   const QVariantMap &parameters,
-                                   QVariantMap &credentials)
+void Manager::requestAccess(const QString &serviceId,
+                            const QVariantMap &parameters,
+                            const CallContext &context)
 {
     Q_D(Manager);
     Q_UNUSED(parameters);
 
-    QString context = d->m_apparmor.getPeerSecurityContext(connection(),
-                                                           message());
-    if (!d->canAccess(context, serviceId)) {
-        sendErrorReply(FORBIDDEN_ERROR,
-                       QString("Access to service ID %1 forbidden").arg(serviceId));
-        return AccountInfo();
+    if (!d->canAccess(context.securityContext(), serviceId)) {
+        context.sendError(FORBIDDEN_ERROR,
+                          QString("Access to service ID %1 forbidden").arg(serviceId));
+        return;
     }
-
-    credentials = QVariantMap();
-    return AccountInfo();
 }

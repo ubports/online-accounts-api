@@ -8,12 +8,14 @@
 
 class AppArmorContext {
 public:
-    AppArmorContext();
     ~AppArmorContext();
+
+    static AppArmorContext *instance();
 
     QString getPeerSecurityContext(const QDBusConnection &bus, const QDBusMessage &message);
 
 private:
+    AppArmorContext();
     QHash<QString,QString> m_contexts;
 };
 

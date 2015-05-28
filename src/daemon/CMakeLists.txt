@@ -10,14 +10,14 @@ add_definitions(
     ${SIGNONQT_CFLAGS}
 )
 
-qt5_add_dbus_adaptor(adaptor_files manager.xml manager.h Manager)
-
 add_executable(accountd
+    aacontext.cpp
     inactivity_timer.cpp
     main.cpp
     manager.cpp
-    aacontext.cpp
-    ${adaptor_files})
+    manager_adaptor.cpp
+    state_saver.cpp
+)
 qt5_use_modules(accountd DBus)
 target_link_libraries(accountd
     ${ACCOUNTSQT_LDFLAGS}

@@ -89,7 +89,7 @@ public:
     inline QDBusContext *dbusContext() const
     { return static_cast<QDBusContext *>(parent()); }
 
-    public Q_SLOTS:
+public Q_SLOTS:
     QVariantMap Authenticate(uint accountId, const QString &serviceId,
                              bool interactive, bool invalidate,
                              const QVariantMap &parameters);

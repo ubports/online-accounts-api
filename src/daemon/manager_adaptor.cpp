@@ -22,7 +22,7 @@
 
 #include <QDBusMetaType>
 #include <QDebug>
-#include "aacontext.h"
+#include "client_registry.h"
 
 using namespace OnlineAccountsDaemon;
 
@@ -66,8 +66,9 @@ void CallContext::sendError(const QString &name, const QString &message) const
 
 QString CallContext::securityContext() const
 {
-    return AppArmorContext::instance()->getPeerSecurityContext(m_connection,
-                                                               m_message);
+    ClientRegistry *clientRegistry = ClientRegistry::instance();
+    QString client = clientRegistry->registerClient(m_connection, m_message);
+    return clientRegistry->clientSecurityContext(client);
 }
 
 QString CallContext::clientConnection() const

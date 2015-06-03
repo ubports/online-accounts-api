@@ -18,35 +18,44 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ONLINE_ACCOUNTS_DAEMON_STATE_SAVER_H
-#define ONLINE_ACCOUNTS_DAEMON_STATE_SAVER_H
+#ifndef ONLINE_ACCOUNTS_DAEMON_CLIENT_REGISTRY_H
+#define ONLINE_ACCOUNTS_DAEMON_CLIENT_REGISTRY_H
 
 #include <QObject>
 #include <QStringList>
-#include "account_info.h"
+
+class QDBusConnection;
+class QDBusMessage;
 
 namespace OnlineAccountsDaemon {
 
-class StateSaverPrivate;
-class StateSaver: public QObject
+class ClientRegistryPrivate;
+class ClientRegistry: public QObject
 {
     Q_OBJECT
 
 public:
-    explicit StateSaver(QObject *parent = 0);
-    ~StateSaver();
+    ~ClientRegistry();
 
-    void setAccounts(const QList<AccountInfo> &accounts);
-    QList<AccountInfo> accounts() const;
+    static ClientRegistry *instance();
 
-    void setClients(const QStringList &clients);
+    QString registerClient(const QDBusConnection &connection,
+                           const QDBusMessage &message);
+    void registerClient(const QString &client);
     QStringList clients() const;
+    bool hasClients() const { return !clients().isEmpty(); }
+
+    QString clientSecurityContext(const QString &client) const;
+
+Q_SIGNALS:
+    void hasClientsChanged();
 
 private:
-    Q_DECLARE_PRIVATE(StateSaver)
-    StateSaverPrivate *d_ptr;
+    ClientRegistry();
+    Q_DECLARE_PRIVATE(ClientRegistry)
+    ClientRegistryPrivate *d_ptr;
 };
 
 } // namespace
 
-#endif // ONLINE_ACCOUNTS_DAEMON_STATE_SAVER_H
+#endif // ONLINE_ACCOUNTS_DAEMON_CLIENT_REGISTRY_H

@@ -11,7 +11,7 @@ add_definitions(
 )
 
 add_executable(accountd
-    aacontext.cpp
+    client_registry.cpp
     inactivity_timer.cpp
     main.cpp
     manager.cpp

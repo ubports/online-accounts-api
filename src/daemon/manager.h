@@ -26,17 +26,9 @@
 #include <QList>
 #include <QObject>
 #include <QVariantMap>
+#include "account_info.h"
 
 namespace OnlineAccountsDaemon {
-
-struct AccountInfo {
-    uint accountId;
-    QVariantMap details;
-
-    AccountInfo(): accountId(0) {}
-    AccountInfo(uint accountId, const QVariantMap &details):
-        accountId(accountId), details(details) {}
-};
 
 class CallContext;
 class ManagerAdaptor;
@@ -73,7 +65,5 @@ private:
 };
 
 } // namespace
-
-Q_DECLARE_METATYPE(OnlineAccountsDaemon::AccountInfo)
 
 #endif // ONLINE_ACCOUNTS_DAEMON_MANAGER_H

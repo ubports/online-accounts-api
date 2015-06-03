@@ -18,35 +18,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ONLINE_ACCOUNTS_DAEMON_STATE_SAVER_H
-#define ONLINE_ACCOUNTS_DAEMON_STATE_SAVER_H
+#ifndef ONLINE_ACCOUNTS_DAEMON_ACCOUNT_INFO_H
+#define ONLINE_ACCOUNTS_DAEMON_ACCOUNT_INFO_H
 
-#include <QObject>
-#include <QStringList>
-#include "account_info.h"
+#include <QVariantMap>
 
 namespace OnlineAccountsDaemon {
 
-class StateSaverPrivate;
-class StateSaver: public QObject
-{
-    Q_OBJECT
+struct AccountInfo {
+    uint accountId;
+    QVariantMap details;
 
-public:
-    explicit StateSaver(QObject *parent = 0);
-    ~StateSaver();
-
-    void setAccounts(const QList<AccountInfo> &accounts);
-    QList<AccountInfo> accounts() const;
-
-    void setClients(const QStringList &clients);
-    QStringList clients() const;
-
-private:
-    Q_DECLARE_PRIVATE(StateSaver)
-    StateSaverPrivate *d_ptr;
+    AccountInfo(): accountId(0) {}
+    AccountInfo(uint accountId, const QVariantMap &details):
+        accountId(accountId), details(details) {}
 };
 
 } // namespace
 
-#endif // ONLINE_ACCOUNTS_DAEMON_STATE_SAVER_H
+Q_DECLARE_METATYPE(OnlineAccountsDaemon::AccountInfo)
+
+#endif // ONLINE_ACCOUNTS_DAEMON_ACCOUNT_INFO_H

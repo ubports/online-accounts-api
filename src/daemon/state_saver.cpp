@@ -22,6 +22,7 @@
 
 #include <QDebug>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
@@ -34,13 +35,22 @@ namespace OnlineAccountsDaemon {
 class StateSaverPrivate {
 public:
     StateSaverPrivate();
+    ~StateSaverPrivate();
 
-    QJsonValue accountRefToJson(const AccountRef &ref);
-    AccountRef accountRefFromJson(const QJsonValue &value);
+    static QList<AccountInfo> accountsFromJson(const QJsonValue &value);
+    static QJsonValue accountsToJson(const QList<AccountInfo> &accounts);
+
+    static QStringList clientsFromJson(const QJsonValue &value);
+    static QJsonValue clientsToJson(const QStringList &clients);
+
+    void load();
+    void save();
 
 private:
     friend class StateSaver;
     QString m_cacheFile;
+    QStringList m_clients;
+    QList<AccountInfo> m_accounts;
 };
 
 } // namespace
@@ -50,23 +60,83 @@ StateSaverPrivate::StateSaverPrivate()
     QString cachePath =
         QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
     m_cacheFile = cachePath + "/client_account_refs.json";
+
+    load();
 }
 
-QJsonValue StateSaverPrivate::accountRefToJson(const AccountRef &ref)
+StateSaverPrivate::~StateSaverPrivate()
 {
+    save();
+}
+
+QList<AccountInfo>
+StateSaverPrivate::accountsFromJson(const QJsonValue &value)
+{
+    QList<AccountInfo> accounts;
+    QJsonArray jsonAccounts = value.toArray();
+
+    Q_FOREACH(const QJsonValue &jsonAccount, jsonAccounts) {
+        QJsonObject jsonObject = jsonAccount.toObject();
+        int accountId = jsonObject.value("accountId").toInt();
+        QVariantMap details =
+            jsonObject.value("details").toObject().toVariantMap();
+        accounts.append(AccountInfo(uint(accountId), details));
+    }
+    return accounts;
+}
+
+QJsonValue
+StateSaverPrivate::accountsToJson(const QList<AccountInfo> &accounts)
+{
+    Q_UNUSED(accounts);
+    return QJsonValue(); // TODO
+}
+
+QStringList StateSaverPrivate::clientsFromJson(const QJsonValue &value)
+{
+    QStringList clients;
+    Q_FOREACH(const QJsonValue &jsonClient, value.toArray()) {
+        clients.append(jsonClient.toString());
+    }
+    return clients;
+}
+
+QJsonValue StateSaverPrivate::clientsToJson(const QStringList &clients)
+{
+    return QJsonValue(QJsonArray::fromStringList(clients));
+}
+
+void StateSaverPrivate::save()
+{
+    QFile file(m_cacheFile);
+    if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly | QIODevice::Text))) {
+        qWarning() << "Couldn't save state to" << m_cacheFile;
+        return;
+    }
+
     QJsonObject jsonObject;
-    jsonObject.insert(QStringLiteral("accountId"), ref.accountId);
-    jsonObject.insert(QStringLiteral("serviceName"), ref.serviceName);
-    return QJsonValue(jsonObject);
+    jsonObject.insert("accounts", accountsToJson(m_accounts));
+    jsonObject.insert("clients", clientsToJson(m_clients));
+
+    QJsonDocument doc(jsonObject);
+    file.write(doc.toJson());
 }
 
-AccountRef StateSaverPrivate::accountRefFromJson(const QJsonValue &value)
+void StateSaverPrivate::load()
 {
-    QJsonObject jsonObject = value.toObject();
-    AccountRef ref;
-    ref.accountId = jsonObject[QStringLiteral("accountId")].toInt();
-    ref.serviceName = jsonObject[QStringLiteral("serviceName")].toString();
-    return ref;
+    QFile file(m_cacheFile);
+    if (Q_UNLIKELY(!file.open(QIODevice::ReadOnly | QIODevice::Text))) {
+        qWarning() << "Cannot open file" << m_cacheFile;
+        return;
+    }
+
+    QByteArray contents = file.readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(contents);
+    if (doc.isEmpty() || !doc.isObject()) return;
+
+    QJsonObject jsonObject = doc.object();
+    m_accounts = accountsFromJson(jsonObject.value("accounts"));
+    m_clients = clientsFromJson(jsonObject.value("clients"));
 }
 
 StateSaver::StateSaver(QObject *parent):
@@ -80,47 +150,26 @@ StateSaver::~StateSaver()
     delete d_ptr;
 }
 
-void StateSaver::save(const ClientAccountRefs &refs)
+void StateSaver::setAccounts(const QList<AccountInfo> &accounts)
 {
     Q_D(StateSaver);
-
-    QJsonObject clients;
-    for (ClientAccountRefs::const_iterator i = refs.constBegin();
-         i != refs.constEnd(); i++) {
-        clients.insert(i.key(), d->accountRefToJson(i.value()));
-    }
-
-    QFile file(d->m_cacheFile);
-    if (Q_UNLIKELY(!file.open(QIODevice::WriteOnly | QIODevice::Text))) {
-        qWarning() << "Couldn't save state to" << d->m_cacheFile;
-        return;
-    }
-
-    QJsonDocument doc(clients);
-    file.write(doc.toJson());
+    d->m_accounts = accounts;
 }
 
-ClientAccountRefs StateSaver::load()
+QList<AccountInfo> StateSaver::accounts() const
+{
+    Q_D(const StateSaver);
+    return d->m_accounts;
+}
+
+void StateSaver::setClients(const QStringList &clients)
 {
     Q_D(StateSaver);
+    d->m_clients = clients;
+}
 
-    ClientAccountRefs refs;
-
-    QFile file(d->m_cacheFile);
-    if (Q_UNLIKELY(!file.open(QIODevice::ReadOnly | QIODevice::Text))) {
-        qWarning() << "Cannot open file" << d->m_cacheFile;
-        return refs;
-    }
-
-    QByteArray contents = file.readAll();
-    QJsonDocument doc = QJsonDocument::fromJson(contents);
-    if (doc.isEmpty() || !doc.isObject()) return refs;
-
-    QJsonObject jsonObject = doc.object();
-    for (QJsonObject::const_iterator i = jsonObject.constBegin();
-         i != jsonObject.constEnd(); i++) {
-        refs.insert(i.key(), d->accountRefFromJson(i.value()));
-    }
-
-    return refs;
+QStringList StateSaver::clients() const
+{
+    Q_D(const StateSaver);
+    return d->m_clients;
 }

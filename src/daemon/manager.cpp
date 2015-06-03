@@ -88,11 +88,9 @@ ManagerPrivate::ManagerPrivate(Manager *q):
 
 void ManagerPrivate::loadActiveAccounts()
 {
-    ClientAccountRefs refs = m_stateSaver.load();
-    for (auto i = refs.constBegin(); i != refs.constEnd(); i++) {
-        addActiveAccount(i.value().accountId, i.value().serviceName, i.key());
+    QStringList oldClients = m_stateSaver.clients();
+    Q_FOREACH(const QString &client, oldClients) {
     }
-    m_mustEmitNotifications = true;
 }
 
 void ManagerPrivate::addActiveAccount(Accounts::AccountId accountId,
@@ -102,6 +100,14 @@ void ManagerPrivate::addActiveAccount(Accounts::AccountId accountId,
     ActiveAccount activeAccount =
         m_activeAccounts[AccountCoordinates(accountId, serviceName)];
     activeAccount.clients.insert(client);
+    if (!activeAccount.accountService) {
+        Accounts::Account *account = m_manager.account(accountId);
+        if (Q_UNLIKELY(!account)) return;
+
+        Accounts::Service service = m_manager.service(serviceName);
+        activeAccount.accountService =
+            new Accounts::AccountService(account, service);
+    }
 }
 
 int ManagerPrivate::authMethod(const Accounts::AuthData &authData)

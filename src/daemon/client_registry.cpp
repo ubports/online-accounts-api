@@ -22,6 +22,7 @@
 
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusServiceWatcher>
 #include <QDebug>
 #include <QHash>
 #include <sys/apparmor.h>
@@ -32,27 +33,51 @@ static ClientRegistry *static_instance = 0;
 
 namespace OnlineAccountsDaemon {
 
-class ClientRegistryPrivate
+class ClientRegistryPrivate: public QObject
 {
-public:
-    ClientRegistryPrivate();
+    Q_OBJECT
+    Q_DECLARE_PUBLIC(ClientRegistry)
 
-    void registerClient(const QString &client) {
-        m_clientContexts.insert(client, getSecurityContext(client));
-    }
+public:
+    ClientRegistryPrivate(ClientRegistry *q);
+
+    void registerClient(const QString &client);
     QString getSecurityContext(const QString &client) const;
 
+private Q_SLOTS:
+    void onServiceUnregistered(const QString &client);
+
 private:
-    friend class ClientRegistry;
     QDBusConnection m_connection;
+    QDBusServiceWatcher m_watcher;
     QHash<QString,QString> m_clientContexts;
+    mutable ClientRegistry *q_ptr;
 };
 
 } // namespace
 
-ClientRegistryPrivate::ClientRegistryPrivate():
-    m_connection(QDBusConnection::sessionBus())
+ClientRegistryPrivate::ClientRegistryPrivate(ClientRegistry *q):
+    QObject(q),
+    m_connection(QDBusConnection::sessionBus()),
+    q_ptr(q)
 {
+    m_watcher.setConnection(m_connection);
+    QObject::connect(&m_watcher, SIGNAL(serviceUnregistered(const QString&)),
+                     this, SLOT(onServiceUnregistered(const QString&)));
+}
+
+void ClientRegistryPrivate::registerClient(const QString &client)
+{
+    Q_Q(ClientRegistry);
+
+    if (m_clientContexts.contains(client)) return;
+
+    bool wasEmpty = m_clientContexts.isEmpty();
+    m_clientContexts.insert(client, getSecurityContext(client));
+    m_watcher.addWatchedService(client);
+    if (wasEmpty) {
+        Q_EMIT q->hasClientsChanged();
+    }
 }
 
 QString ClientRegistryPrivate::getSecurityContext(const QString &client) const
@@ -80,9 +105,20 @@ QString ClientRegistryPrivate::getSecurityContext(const QString &client) const
     return context;
 }
 
+void ClientRegistryPrivate::onServiceUnregistered(const QString &client)
+{
+    Q_Q(ClientRegistry);
+
+    qDebug() << "Client disappeared:" << client;
+    m_clientContexts.remove(client);
+    if (m_clientContexts.isEmpty()) {
+        Q_EMIT q->hasClientsChanged();
+    }
+}
+
 ClientRegistry::ClientRegistry():
     QObject(),
-    d_ptr(new ClientRegistryPrivate)
+    d_ptr(new ClientRegistryPrivate(this))
 {
 }
 
@@ -132,3 +168,5 @@ QString ClientRegistry::clientSecurityContext(const QString &client) const
 
     return d->getSecurityContext(client);
 }
+
+#include "client_registry.moc"

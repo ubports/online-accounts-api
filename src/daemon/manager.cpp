@@ -52,12 +52,17 @@ struct ActiveAccount {
 typedef QPair<Accounts::AccountId,QString> AccountCoordinates;
 typedef QHash<QString,Accounts::Application> ClientMap;
 
-class ManagerPrivate {
+class ManagerPrivate: public QObject
+{
+    Q_OBJECT
     Q_DECLARE_PUBLIC(Manager)
 
 public:
     ManagerPrivate(Manager *q);
 
+    void watchAccount(Accounts::Account *account);
+    void handleNewAccountService(Accounts::Account *account,
+                                 const Accounts::Service &service);
     void loadActiveAccounts();
     ActiveAccount &addActiveAccount(Accounts::AccountId accountId,
                                     const QString &serviceName,
@@ -74,6 +79,11 @@ public:
 
     void notifyAccountChange(const ActiveAccount &account, uint change);
 
+private Q_SLOTS:
+    void onAccountServiceEnabled(bool enabled);
+    void onAccountServiceChanged();
+    void onAccountEnabled(const QString &serviceId, bool enabled);
+
 private:
     ManagerAdaptor *m_adaptor;
     Accounts::Manager m_manager;
@@ -81,6 +91,7 @@ private:
     bool m_mustEmitNotifications;
     QHash<AccountCoordinates,ActiveAccount> m_activeAccounts;
     ClientMap m_clients;
+    QList<Accounts::Account*> m_watchedAccounts;
     bool m_isIdle;
     mutable Manager *q_ptr;
 };
@@ -88,12 +99,47 @@ private:
 } // namespace
 
 ManagerPrivate::ManagerPrivate(Manager *q):
+    QObject(q),
     m_adaptor(new ManagerAdaptor(q)),
     m_mustEmitNotifications(false),
     m_isIdle(true),
     q_ptr(q)
 {
     loadActiveAccounts();
+}
+
+void ManagerPrivate::watchAccount(Accounts::Account *account)
+{
+    if (m_watchedAccounts.contains(account)) return;
+
+    QObject::connect(account, SIGNAL(enabledChanged(const QString &, bool)),
+                     this, SLOT(onAccountEnabled(const QString &, bool)));
+    m_watchedAccounts.append(account);
+}
+
+void ManagerPrivate::handleNewAccountService(Accounts::Account *account,
+                                             const Accounts::Service &service)
+{
+    AccountCoordinates coords(account->id(), service.name());
+    if (m_activeAccounts.contains(coords)) {
+        /* This event is also received via the AccountService instance; we'll
+         * handle it from there. */
+        return;
+    }
+
+    QStringList interestedClients;
+    for (auto i = m_clients.constBegin();
+         i != m_clients.constEnd(); i++) {
+        const Accounts::Application &application = i.value();
+
+        if (!application.serviceUsage(service).isEmpty()) {
+            interestedClients.append(i.key());
+        }
+    }
+    ActiveAccount &activeAccount =
+        addActiveAccount(account->id(), service.name(), interestedClients);
+    notifyAccountChange(activeAccount,
+                        ONLINE_ACCOUNTS_INFO_CHANGE_ENABLED);
 }
 
 void ManagerPrivate::loadActiveAccounts()
@@ -158,23 +204,9 @@ void ManagerPrivate::loadActiveAccounts()
         Accounts::Account *account = m_manager.account(accountId);
         if (Q_UNLIKELY(!account)) continue;
 
+        watchAccount(account);
         Q_FOREACH(Accounts::Service service, account->enabledServices()) {
-            QStringList interestedClients;
-            for (auto i = m_clients.constBegin();
-                 i != m_clients.constEnd(); i++) {
-                const Accounts::Application &application = i.value();
-
-                if (!application.serviceUsage(service).isEmpty()) {
-                    interestedClients.append(i.key());
-                }
-            }
-            AccountCoordinates coords(accountId, service.name());
-            if (m_activeAccounts.contains(coords)) continue;
-
-            ActiveAccount &activeAccount =
-                addActiveAccount(accountId, service.name(), interestedClients);
-            notifyAccountChange(activeAccount,
-                                ONLINE_ACCOUNTS_INFO_CHANGE_ENABLED);
+            handleNewAccountService(account, service);
         }
     }
 }
@@ -205,8 +237,12 @@ ActiveAccount &ManagerPrivate::addActiveAccount(Accounts::AccountId accountId,
         if (Q_UNLIKELY(!account)) return activeAccount;
 
         Accounts::Service service = m_manager.service(serviceName);
-        activeAccount.accountService =
-            new Accounts::AccountService(account, service);
+        auto as = new Accounts::AccountService(account, service);
+        activeAccount.accountService = as;
+        QObject::connect(as, SIGNAL(enabled(bool)),
+                         this, SLOT(onAccountServiceEnabled(bool)));
+        QObject::connect(as, SIGNAL(changed()),
+                         this, SLOT(onAccountServiceChanged()));
     }
 
     return activeAccount;
@@ -321,6 +357,47 @@ bool ManagerPrivate::canAccess(const QString &context,
     return serviceId.left(pos) == pkgname;
 }
 
+void ManagerPrivate::onAccountServiceEnabled(bool enabled)
+{
+    auto as = qobject_cast<Accounts::AccountService*>(sender());
+
+    ActiveAccount &activeAccount =
+        m_activeAccounts[AccountCoordinates(as->account()->id(),
+                                            as->service().name())];
+    if (Q_UNLIKELY(!activeAccount.isValid())) return;
+
+    notifyAccountChange(activeAccount,
+                        enabled ? ONLINE_ACCOUNTS_INFO_CHANGE_ENABLED :
+                        ONLINE_ACCOUNTS_INFO_CHANGE_DISABLED);
+}
+
+void ManagerPrivate::onAccountServiceChanged()
+{
+    auto as = qobject_cast<Accounts::AccountService*>(sender());
+    if (!as->isEnabled()) {
+        // Nobody cares about disabled accounts
+        return;
+    }
+
+    ActiveAccount &activeAccount =
+        m_activeAccounts[AccountCoordinates(as->account()->id(),
+                                            as->service().name())];
+    if (Q_UNLIKELY(!activeAccount.isValid())) return;
+
+    notifyAccountChange(activeAccount, ONLINE_ACCOUNTS_INFO_CHANGE_UPDATED);
+}
+
+void ManagerPrivate::onAccountEnabled(const QString &serviceId, bool enabled)
+{
+    if (!enabled) {
+        /* We don't care about these. If we have an AccountService active, we
+         * will be receiving the same event though it. */
+        return;
+    }
+    auto account = qobject_cast<Accounts::Account*>(sender());
+    handleNewAccountService(account, m_manager.service(serviceId));
+}
+
 Manager::Manager(QObject *parent):
     QObject(parent),
     d_ptr(new ManagerPrivate(this))
@@ -376,3 +453,5 @@ void Manager::requestAccess(const QString &serviceId,
         return;
     }
 }
+
+#include "manager.moc"

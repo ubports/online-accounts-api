@@ -27,6 +27,8 @@
 
 namespace OnlineAccountsDaemon {
 
+typedef QPair<QString,QString> Client;
+
 class StateSaverPrivate;
 class StateSaver: public QObject
 {
@@ -39,8 +41,8 @@ public:
     void setAccounts(const QList<AccountInfo> &accounts);
     QList<AccountInfo> accounts() const;
 
-    void setClients(const QStringList &clients);
-    QStringList clients() const;
+    void setClients(const QList<Client> &clients);
+    QList<Client> clients() const;
 
 private:
     Q_DECLARE_PRIVATE(StateSaver)

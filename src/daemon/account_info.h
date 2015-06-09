@@ -22,6 +22,7 @@
 #define ONLINE_ACCOUNTS_DAEMON_ACCOUNT_INFO_H
 
 #include <QVariantMap>
+#include "dbus_constants.h"
 
 namespace OnlineAccountsDaemon {
 
@@ -32,6 +33,9 @@ struct AccountInfo {
     AccountInfo(): accountId(0) {}
     AccountInfo(uint accountId, const QVariantMap &details):
         accountId(accountId), details(details) {}
+    QString serviceId() const {
+        return details[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID].toString();
+    }
 };
 
 } // namespace

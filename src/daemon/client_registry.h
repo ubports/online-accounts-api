@@ -42,6 +42,7 @@ public:
     QString registerClient(const QDBusConnection &connection,
                            const QDBusMessage &message);
     void registerClient(const QString &client);
+    void registerActiveClients(const QStringList &clients);
     QStringList clients() const;
     bool hasClients() const { return !clients().isEmpty(); }
 

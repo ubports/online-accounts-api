@@ -40,8 +40,8 @@ public:
     static QList<AccountInfo> accountsFromJson(const QJsonValue &value);
     static QJsonValue accountsToJson(const QList<AccountInfo> &accounts);
 
-    static QStringList clientsFromJson(const QJsonValue &value);
-    static QJsonValue clientsToJson(const QStringList &clients);
+    static QList<Client> clientsFromJson(const QJsonValue &value);
+    static QJsonValue clientsToJson(const QList<Client> &clients);
 
     void load();
     void save();
@@ -49,7 +49,7 @@ public:
 private:
     friend class StateSaver;
     QString m_cacheFile;
-    QStringList m_clients;
+    QList<Client> m_clients;
     QList<AccountInfo> m_accounts;
 };
 
@@ -92,18 +92,28 @@ StateSaverPrivate::accountsToJson(const QList<AccountInfo> &accounts)
     return QJsonValue(); // TODO
 }
 
-QStringList StateSaverPrivate::clientsFromJson(const QJsonValue &value)
+QList<Client> StateSaverPrivate::clientsFromJson(const QJsonValue &value)
 {
-    QStringList clients;
+    QList<Client> clients;
     Q_FOREACH(const QJsonValue &jsonClient, value.toArray()) {
-        clients.append(jsonClient.toString());
+        QJsonObject jsonObject = jsonClient.toObject();
+        QString busName = jsonObject.value("busName").toString();
+        QString applicationId = jsonObject.value("applicationId").toString();
+        clients.append(Client(busName, applicationId));
     }
     return clients;
 }
 
-QJsonValue StateSaverPrivate::clientsToJson(const QStringList &clients)
+QJsonValue StateSaverPrivate::clientsToJson(const QList<Client> &clients)
 {
-    return QJsonValue(QJsonArray::fromStringList(clients));
+    QJsonArray clientArray;
+    Q_FOREACH(const Client &client, clients) {
+        QJsonObject clientObject;
+        clientObject.insert("busName", client.first);
+        clientObject.insert("applicationId", client.second);
+        clientArray.append(clientObject);
+    }
+    return QJsonValue(clientArray);
 }
 
 void StateSaverPrivate::save()
@@ -162,13 +172,13 @@ QList<AccountInfo> StateSaver::accounts() const
     return d->m_accounts;
 }
 
-void StateSaver::setClients(const QStringList &clients)
+void StateSaver::setClients(const QList<Client> &clients)
 {
     Q_D(StateSaver);
     d->m_clients = clients;
 }
 
-QStringList StateSaver::clients() const
+QList<Client> StateSaver::clients() const
 {
     Q_D(const StateSaver);
     return d->m_clients;

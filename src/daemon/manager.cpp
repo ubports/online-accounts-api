@@ -30,6 +30,7 @@
 #include <QHash>
 #include <QPair>
 #include <QSet>
+#include "client_registry.h"
 #include "dbus_constants.h"
 #include "manager_adaptor.h"
 #include "state_saver.h"
@@ -43,11 +44,13 @@ namespace OnlineAccountsDaemon {
 struct ActiveAccount {
     ActiveAccount(): accountService(0) {}
 
+    bool isValid() const { return accountService != 0; }
     Accounts::AccountService *accountService;
     QSet<QString> clients;
 };
 
 typedef QPair<Accounts::AccountId,QString> AccountCoordinates;
+typedef QHash<QString,Accounts::Application> ClientMap;
 
 class ManagerPrivate {
     Q_DECLARE_PUBLIC(Manager)
@@ -56,22 +59,28 @@ public:
     ManagerPrivate(Manager *q);
 
     void loadActiveAccounts();
-    void addActiveAccount(Accounts::AccountId accountId,
-                          const QString &serviceName,
-                          const QString &client);
+    ActiveAccount &addActiveAccount(Accounts::AccountId accountId,
+                                    const QString &serviceName,
+                                    const QString &client);
+    ActiveAccount &addActiveAccount(Accounts::AccountId accountId,
+                                    const QString &serviceName,
+                                    const QStringList &clients);
 
     int authMethod(const Accounts::AuthData &authData);
-    AccountInfo readAccountInfo(Accounts::Account *account,
-                                const Accounts::Service &service);
+    AccountInfo readAccountInfo(const Accounts::AccountService *as);
     QList<AccountInfo> getAccounts(const QVariantMap &filters,
-                                   const QString &context);
+                                   const CallContext &context);
     bool canAccess(const QString &context, const QString &serviceId);
 
+    void notifyAccountChange(const ActiveAccount &account, uint change);
+
 private:
+    ManagerAdaptor *m_adaptor;
     Accounts::Manager m_manager;
     StateSaver m_stateSaver;
     bool m_mustEmitNotifications;
     QHash<AccountCoordinates,ActiveAccount> m_activeAccounts;
+    ClientMap m_clients;
     bool m_isIdle;
     mutable Manager *q_ptr;
 };
@@ -79,6 +88,7 @@ private:
 } // namespace
 
 ManagerPrivate::ManagerPrivate(Manager *q):
+    m_adaptor(new ManagerAdaptor(q)),
     m_mustEmitNotifications(false),
     m_isIdle(true),
     q_ptr(q)
@@ -88,26 +98,118 @@ ManagerPrivate::ManagerPrivate(Manager *q):
 
 void ManagerPrivate::loadActiveAccounts()
 {
-    QStringList oldClients = m_stateSaver.clients();
-    Q_FOREACH(const QString &client, oldClients) {
+    QSet<Client> oldClients = m_stateSaver.clients().toSet();
+    ClientRegistry *clientRegistry = ClientRegistry::instance();
+    QStringList oldClientNames;
+    Q_FOREACH(const Client &client, oldClients) {
+        oldClientNames.append(client.first);
+    }
+    clientRegistry->registerActiveClients(oldClientNames);
+
+    /* Build the table of the active clients */
+    QStringList activeClientNames = clientRegistry->clients();
+    Q_FOREACH(const Client &client, oldClients) {
+        if (activeClientNames.contains(client.first)) {
+            m_clients[client.first] = m_manager.application(client.second);
+        }
+    }
+
+    QList<AccountInfo> oldAccounts = m_stateSaver.accounts();
+    Q_FOREACH(const AccountInfo &accountInfo, oldAccounts) {
+        // If no clients are interested in this account, ignore it
+        Accounts::Service service =
+            m_manager.service(accountInfo.serviceId());
+        if (Q_UNLIKELY(!service.isValid())) continue;
+
+        QStringList clients;
+        for (auto i = m_clients.constBegin();
+             i != m_clients.constEnd(); i++) {
+            const Accounts::Application &application = i.value();
+            if (!application.serviceUsage(service).isEmpty()) {
+                clients.append(i.key());
+            }
+        }
+        if (clients.isEmpty()) {
+            // no one is interested in this account
+            continue;
+        }
+
+        ActiveAccount &activeAccount =
+            addActiveAccount(accountInfo.accountId, service.name(), clients);
+        if (Q_UNLIKELY(!activeAccount.isValid())) continue;
+
+        if (!activeAccount.accountService->isEnabled()) {
+            // the account got disabled while this daemon was not running
+            notifyAccountChange(activeAccount,
+                                ONLINE_ACCOUNTS_INFO_CHANGE_DISABLED);
+        } else {
+            AccountInfo newAccountInfo =
+                readAccountInfo(activeAccount.accountService);
+            if (newAccountInfo.details != accountInfo.details) {
+                notifyAccountChange(activeAccount,
+                                    ONLINE_ACCOUNTS_INFO_CHANGE_UPDATED);
+            }
+        }
+    }
+
+    /* Last, go through all active clients and see if there are new accounts
+     * for any of them. */
+    Q_FOREACH(Accounts::AccountId accountId, m_manager.accountListEnabled()) {
+        Accounts::Account *account = m_manager.account(accountId);
+        if (Q_UNLIKELY(!account)) continue;
+
+        Q_FOREACH(Accounts::Service service, account->enabledServices()) {
+            QStringList interestedClients;
+            for (auto i = m_clients.constBegin();
+                 i != m_clients.constEnd(); i++) {
+                const Accounts::Application &application = i.value();
+
+                if (!application.serviceUsage(service).isEmpty()) {
+                    interestedClients.append(i.key());
+                }
+            }
+            AccountCoordinates coords(accountId, service.name());
+            if (m_activeAccounts.contains(coords)) continue;
+
+            ActiveAccount &activeAccount =
+                addActiveAccount(accountId, service.name(), interestedClients);
+            notifyAccountChange(activeAccount,
+                                ONLINE_ACCOUNTS_INFO_CHANGE_ENABLED);
+        }
     }
 }
 
-void ManagerPrivate::addActiveAccount(Accounts::AccountId accountId,
-                                      const QString &serviceName,
-                                      const QString &client)
+void ManagerPrivate::notifyAccountChange(const ActiveAccount &account,
+                                         uint change)
 {
-    ActiveAccount activeAccount =
+    AccountInfo info = readAccountInfo(account.accountService);
+    m_adaptor->notifyAccountChange(info, change);
+}
+
+ActiveAccount &ManagerPrivate::addActiveAccount(Accounts::AccountId accountId,
+                                                const QString &serviceName,
+                                                const QString &client)
+{
+    return addActiveAccount(accountId, serviceName, QStringList() << client);
+}
+
+ActiveAccount &ManagerPrivate::addActiveAccount(Accounts::AccountId accountId,
+                                                const QString &serviceName,
+                                                const QStringList &clients)
+{
+    ActiveAccount &activeAccount =
         m_activeAccounts[AccountCoordinates(accountId, serviceName)];
-    activeAccount.clients.insert(client);
+    activeAccount.clients += clients.toSet();
     if (!activeAccount.accountService) {
         Accounts::Account *account = m_manager.account(accountId);
-        if (Q_UNLIKELY(!account)) return;
+        if (Q_UNLIKELY(!account)) return activeAccount;
 
         Accounts::Service service = m_manager.service(serviceName);
         activeAccount.accountService =
             new Accounts::AccountService(account, service);
     }
+
+    return activeAccount;
 }
 
 int ManagerPrivate::authMethod(const Accounts::AuthData &authData)
@@ -127,25 +229,24 @@ int ManagerPrivate::authMethod(const Accounts::AuthData &authData)
     return ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN;
 }
 
-AccountInfo ManagerPrivate::readAccountInfo(Accounts::Account *account,
-                                            const Accounts::Service &service)
+AccountInfo ManagerPrivate::readAccountInfo(const Accounts::AccountService *as)
 {
     QVariantMap info;
-    info[ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME] = account->displayName();
-    info[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = service.name();
 
-    Accounts::AccountService as(account, service);
-    info[ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD] = authMethod(as.authData());
+    info[ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME] = as->account()->displayName();
+    info[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = as->service().name();
+
+    info[ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD] = authMethod(as->authData());
     QString settingsPrefix(QStringLiteral(ONLINE_ACCOUNTS_INFO_KEY_SETTINGS));
-    Q_FOREACH(const QString &key, as.allKeys()) {
-        info[settingsPrefix + key] = as.value(key);
+    Q_FOREACH(const QString &key, as->allKeys()) {
+        info[settingsPrefix + key] = as->value(key);
     }
 
-    return AccountInfo(account->id(), info);
+    return AccountInfo(as->account()->id(), info);
 }
 
 QList<AccountInfo> ManagerPrivate::getAccounts(const QVariantMap &filters,
-                                               const QString &context)
+                                               const CallContext &context)
 {
     QString desiredApplicationId = filters.value("applicationId").toString();
     QString desiredServiceId = filters.value("serviceId").toString();
@@ -170,7 +271,7 @@ QList<AccountInfo> ManagerPrivate::getAccounts(const QVariantMap &filters,
                 continue;
             }
 
-            if (!canAccess(context, service.name())) {
+            if (!canAccess(context.securityContext(), service.name())) {
                 continue;
             }
 
@@ -180,7 +281,10 @@ QList<AccountInfo> ManagerPrivate::getAccounts(const QVariantMap &filters,
                 continue;
             }
 
-            accounts.append(readAccountInfo(account, service));
+            ActiveAccount &activeAccount =
+                addActiveAccount(accountId, service.name(),
+                                 context.clientName());
+            accounts.append(readAccountInfo(activeAccount.accountService));
         }
     }
 
@@ -221,7 +325,6 @@ Manager::Manager(QObject *parent):
     QObject(parent),
     d_ptr(new ManagerPrivate(this))
 {
-    new ManagerAdaptor(this);
 }
 
 Manager::~Manager()
@@ -239,7 +342,7 @@ QList<AccountInfo> Manager::getAccounts(const QVariantMap &filters,
                                         const CallContext &context)
 {
     Q_D(Manager);
-    return d->getAccounts(filters, context.securityContext());
+    return d->getAccounts(filters, context);
 }
 
 void Manager::authenticate(uint accountId, const QString &serviceId,

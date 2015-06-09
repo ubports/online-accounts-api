@@ -71,7 +71,7 @@ QString CallContext::securityContext() const
     return clientRegistry->clientSecurityContext(client);
 }
 
-QString CallContext::clientConnection() const
+QString CallContext::clientName() const
 {
     return m_message.service();
 }
@@ -105,6 +105,14 @@ ManagerAdaptor::ManagerAdaptor(Manager *parent):
 ManagerAdaptor::~ManagerAdaptor()
 {
     delete d_ptr;
+}
+
+void ManagerAdaptor::notifyAccountChange(const AccountInfo &info,
+                                         uint changeType)
+{
+    AccountInfo copy(info);
+    copy.details[ONLINE_ACCOUNTS_INFO_KEY_CHANGE_TYPE] = changeType;
+    Q_EMIT AccountChanged(copy.serviceId(), copy);
 }
 
 QVariantMap ManagerAdaptor::Authenticate(uint accountId,

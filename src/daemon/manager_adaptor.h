@@ -40,7 +40,7 @@ public:
     void sendError(const QString &name, const QString &message) const;
 
     QString securityContext() const;
-    QString clientConnection() const;
+    QString clientName() const;
 
 private:
     QDBusConnection m_connection;
@@ -88,6 +88,8 @@ public:
 
     inline QDBusContext *dbusContext() const
     { return static_cast<QDBusContext *>(parent()); }
+
+    void notifyAccountChange(const AccountInfo &info, uint changeType);
 
 public Q_SLOTS:
     QVariantMap Authenticate(uint accountId, const QString &serviceId,

@@ -21,6 +21,7 @@
 #include "client_registry.h"
 
 #include <QDBusConnection>
+#include <QDBusConnectionInterface>
 #include <QDBusMessage>
 #include <QDBusServiceWatcher>
 #include <QDebug>
@@ -155,6 +156,18 @@ QStringList ClientRegistry::clients() const
 {
     Q_D(const ClientRegistry);
     return d->m_clientContexts.keys();
+}
+
+void ClientRegistry::registerActiveClients(const QStringList &clients)
+{
+    Q_D(const ClientRegistry);
+    QStringList activeServices =
+        d->m_connection.interface()->registeredServiceNames().value();
+    Q_FOREACH(const QString &client, clients) {
+        if (activeServices.contains(client)) {
+            registerClient(client);
+        }
+    }
 }
 
 QString ClientRegistry::clientSecurityContext(const QString &client) const

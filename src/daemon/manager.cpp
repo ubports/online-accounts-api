@@ -36,8 +36,6 @@
 #include "manager_adaptor.h"
 #include "state_saver.h"
 
-static const char FORBIDDEN_ERROR[] = "com.ubuntu.OnlineAccounts.Error.Forbidden";
-
 using namespace OnlineAccountsDaemon;
 
 namespace OnlineAccountsDaemon {
@@ -340,7 +338,7 @@ void ManagerPrivate::authenticate(uint accountId, const QString &serviceId,
                                   const CallContext &context)
 {
     if (!canAccess(context.securityContext(), serviceId)) {
-        context.sendError(FORBIDDEN_ERROR,
+        context.sendError(ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED,
                           QString("Access to service ID %1 forbidden").arg(serviceId));
         return;
     }
@@ -349,7 +347,7 @@ void ManagerPrivate::authenticate(uint accountId, const QString &serviceId,
         addActiveAccount(accountId, serviceId, context.clientName());
     auto as = activeAccount.accountService;
     if (!as || !as->isEnabled()) {
-        context.sendError(FORBIDDEN_ERROR,
+        context.sendError(ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED,
                           QString("Account %1 is disabled").arg(accountId));
         return;
     }
@@ -495,7 +493,7 @@ void Manager::requestAccess(const QString &serviceId,
     Q_UNUSED(parameters);
 
     if (!d->canAccess(context.securityContext(), serviceId)) {
-        context.sendError(FORBIDDEN_ERROR,
+        context.sendError(ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED,
                           QString("Access to service ID %1 forbidden").arg(serviceId));
         return;
     }

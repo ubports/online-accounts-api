@@ -11,6 +11,7 @@ add_definitions(
 )
 
 add_executable(accountd
+    authenticator.cpp
     client_registry.cpp
     inactivity_timer.cpp
     main.cpp
@@ -22,6 +23,6 @@ qt5_use_modules(accountd DBus)
 target_link_libraries(accountd
     ${ACCOUNTSQT_LDFLAGS}
     ${APPARMOR_LDFLAGS}
-    ${SIGNONQT_LDLAGS}
+    ${SIGNONQT_LDFLAGS}
 )
 set_target_properties(accountd PROPERTIES AUTOMOC TRUE)

@@ -184,6 +184,12 @@ void Authenticator::authenticate(const Accounts::AuthData &authData,
     d->authenticate(authData, parameters);
 }
 
+QVariantMap Authenticator::reply() const
+{
+    Q_D(const Authenticator);
+    return d->m_reply;
+}
+
 QString Authenticator::errorName() const
 {
     Q_D(const Authenticator);

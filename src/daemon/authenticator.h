@@ -22,6 +22,7 @@
 #define ONLINE_ACCOUNTS_DAEMON_AUTHENTICATOR_H
 
 #include <QObject>
+#include <QString>
 #include <QVariantMap>
 
 namespace Accounts {

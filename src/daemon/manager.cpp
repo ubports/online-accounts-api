@@ -30,6 +30,7 @@
 #include <QHash>
 #include <QPair>
 #include <QSet>
+#include "authenticator.h"
 #include "client_registry.h"
 #include "dbus_constants.h"
 #include "manager_adaptor.h"
@@ -75,11 +76,16 @@ public:
     AccountInfo readAccountInfo(const Accounts::AccountService *as);
     QList<AccountInfo> getAccounts(const QVariantMap &filters,
                                    const CallContext &context);
+    void authenticate(uint accountId, const QString &serviceId,
+                      bool interactive, bool invalidate,
+                      const QVariantMap &parameters,
+                      const CallContext &context);
     bool canAccess(const QString &context, const QString &serviceId);
 
     void notifyAccountChange(const ActiveAccount &account, uint change);
 
 private Q_SLOTS:
+    void onAuthenticationFinished();
     void onAccountServiceEnabled(bool enabled);
     void onAccountServiceChanged();
     void onAccountEnabled(const QString &serviceId, bool enabled);
@@ -89,6 +95,7 @@ private:
     Accounts::Manager m_manager;
     StateSaver m_stateSaver;
     bool m_mustEmitNotifications;
+    QHash<QObject *, CallContext> m_pendingRequests;
     QHash<AccountCoordinates,ActiveAccount> m_activeAccounts;
     ClientMap m_clients;
     QList<Accounts::Account*> m_watchedAccounts;
@@ -327,6 +334,37 @@ QList<AccountInfo> ManagerPrivate::getAccounts(const QVariantMap &filters,
     return accounts;
 }
 
+void ManagerPrivate::authenticate(uint accountId, const QString &serviceId,
+                                  bool interactive, bool invalidate,
+                                  const QVariantMap &parameters,
+                                  const CallContext &context)
+{
+    if (!canAccess(context.securityContext(), serviceId)) {
+        context.sendError(FORBIDDEN_ERROR,
+                          QString("Access to service ID %1 forbidden").arg(serviceId));
+        return;
+    }
+
+    ActiveAccount &activeAccount =
+        addActiveAccount(accountId, serviceId, context.clientName());
+    auto as = activeAccount.accountService;
+    if (!as || !as->isEnabled()) {
+        context.sendError(FORBIDDEN_ERROR,
+                          QString("Account %1 is disabled").arg(accountId));
+        return;
+    }
+
+    Authenticator *authenticator = new Authenticator(this);
+    authenticator->setInteractive(interactive);
+    if (invalidate) {
+        authenticator->invalidateCache();
+    }
+    QObject::connect(authenticator, SIGNAL(finished()),
+                     this, SLOT(onAuthenticationFinished()));
+    m_pendingRequests.insert(authenticator, context);
+    authenticator->authenticate(as->authData(), parameters);
+}
+
 bool ManagerPrivate::canAccess(const QString &context,
                                const QString &serviceId)
 {
@@ -355,6 +393,23 @@ bool ManagerPrivate::canAccess(const QString &context,
         return false;
     }
     return serviceId.left(pos) == pkgname;
+}
+
+void ManagerPrivate::onAuthenticationFinished()
+{
+    auto auth = qobject_cast<Authenticator*>(sender());
+
+    auto i = m_pendingRequests.find(auth);
+    CallContext &context = i.value();
+    if (auth->isError()) {
+        context.sendError(auth->errorName(), auth->errorMessage());
+    } else {
+        QVariantMap reply = auth->reply();
+        context.sendReply(QVariantList() << reply);
+    }
+
+    m_pendingRequests.erase(i);
+    delete auth;
 }
 
 void ManagerPrivate::onAccountServiceEnabled(bool enabled)
@@ -428,16 +483,8 @@ void Manager::authenticate(uint accountId, const QString &serviceId,
                            const CallContext &context)
 {
     Q_D(Manager);
-    Q_UNUSED(accountId);
-    Q_UNUSED(interactive);
-    Q_UNUSED(invalidate);
-    Q_UNUSED(parameters);
-
-    if (!d->canAccess(context.securityContext(), serviceId)) {
-        context.sendError(FORBIDDEN_ERROR,
-                          QString("Access to service ID %1 forbidden").arg(serviceId));
-        return;
-    }
+    d->authenticate(accountId, serviceId, interactive, invalidate,
+                    parameters, context);
 }
 
 void Manager::requestAccess(const QString &serviceId,

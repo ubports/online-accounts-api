@@ -78,6 +78,9 @@ public:
                       bool interactive, bool invalidate,
                       const QVariantMap &parameters,
                       const CallContext &context);
+    void requestAccess(const QString &serviceId,
+                       const QVariantMap &parameters,
+                       const CallContext &context);
     bool canAccess(const QString &context, const QString &serviceId);
 
     void notifyAccountChange(const ActiveAccount &account, uint change);
@@ -363,6 +366,18 @@ void ManagerPrivate::authenticate(uint accountId, const QString &serviceId,
     authenticator->authenticate(as->authData(), parameters);
 }
 
+void ManagerPrivate::requestAccess(const QString &serviceId,
+                                   const QVariantMap &parameters,
+                                   const CallContext &context)
+{
+    Q_UNUSED(parameters);
+    if (!canAccess(context.securityContext(), serviceId)) {
+        context.sendError(ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED,
+                          QString("Access to service ID %1 forbidden").arg(serviceId));
+        return;
+    }
+}
+
 bool ManagerPrivate::canAccess(const QString &context,
                                const QString &serviceId)
 {
@@ -490,13 +505,7 @@ void Manager::requestAccess(const QString &serviceId,
                             const CallContext &context)
 {
     Q_D(Manager);
-    Q_UNUSED(parameters);
-
-    if (!d->canAccess(context.securityContext(), serviceId)) {
-        context.sendError(ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED,
-                          QString("Access to service ID %1 forbidden").arg(serviceId));
-        return;
-    }
+    d->requestAccess(serviceId, parameters, context);
 }
 
 #include "manager.moc"

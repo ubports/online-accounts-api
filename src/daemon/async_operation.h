@@ -18,41 +18,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ONLINE_ACCOUNTS_DAEMON_AUTHENTICATOR_H
-#define ONLINE_ACCOUNTS_DAEMON_AUTHENTICATOR_H
+#ifndef ONLINE_ACCOUNTS_DAEMON_ASYNC_OPERATION_H
+#define ONLINE_ACCOUNTS_DAEMON_ASYNC_OPERATION_H
 
 #include <QObject>
+#include <QList>
 #include <QString>
-#include <QVariantMap>
-#include "async_operation.h"
-
-namespace Accounts {
-class AuthData;
-}
+#include <QVariant>
 
 namespace OnlineAccountsDaemon {
 
-class AuthenticatorPrivate;
-class Authenticator: public AsyncOperation
+class CallContext;
+
+class AsyncOperationPrivate;
+class AsyncOperation: public QObject
 {
     Q_OBJECT
 
 public:
-    explicit Authenticator(const CallContext &context,
-                           QObject *parent = 0);
-    ~Authenticator();
+    explicit AsyncOperation(const CallContext &context,
+                            QObject *parent = 0);
+    ~AsyncOperation();
 
-    void setInteractive(bool interactive);
-    void invalidateCache();
-
-    void authenticate(const Accounts::AuthData &authData,
-                      const QVariantMap &parameters);
+protected:
+    void setReply(const QList<QVariant> &reply);
+    void setError(const QString &name, const QString &message);
 
 private:
-    Q_DECLARE_PRIVATE(Authenticator)
-    AuthenticatorPrivate *d_ptr;
+    Q_DECLARE_PRIVATE(AsyncOperation)
+    AsyncOperationPrivate *d_ptr;
 };
 
 } // namespace
 
-#endif // ONLINE_ACCOUNTS_DAEMON_AUTHENTICATOR_H
+#endif // ONLINE_ACCOUNTS_DAEMON_ASYNC_OPERATION_H

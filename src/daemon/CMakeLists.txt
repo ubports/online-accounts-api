@@ -11,6 +11,7 @@ add_definitions(
 )
 
 add_executable(accountd
+    async_operation.cpp
     authenticator.cpp
     client_registry.cpp
     inactivity_timer.cpp

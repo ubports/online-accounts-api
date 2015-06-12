@@ -86,7 +86,6 @@ public:
     void notifyAccountChange(const ActiveAccount &account, uint change);
 
 private Q_SLOTS:
-    void onAuthenticationFinished();
     void onAccountServiceEnabled(bool enabled);
     void onAccountServiceChanged();
     void onAccountEnabled(const QString &serviceId, bool enabled);
@@ -96,7 +95,6 @@ private:
     Accounts::Manager m_manager;
     StateSaver m_stateSaver;
     bool m_mustEmitNotifications;
-    QHash<QObject *, CallContext> m_pendingRequests;
     QHash<AccountCoordinates,ActiveAccount> m_activeAccounts;
     ClientMap m_clients;
     QList<Accounts::Account*> m_watchedAccounts;
@@ -355,14 +353,11 @@ void ManagerPrivate::authenticate(uint accountId, const QString &serviceId,
         return;
     }
 
-    Authenticator *authenticator = new Authenticator(this);
+    Authenticator *authenticator = new Authenticator(context, this);
     authenticator->setInteractive(interactive);
     if (invalidate) {
         authenticator->invalidateCache();
     }
-    QObject::connect(authenticator, SIGNAL(finished()),
-                     this, SLOT(onAuthenticationFinished()));
-    m_pendingRequests.insert(authenticator, context);
     authenticator->authenticate(as->authData(), parameters);
 }
 
@@ -406,23 +401,6 @@ bool ManagerPrivate::canAccess(const QString &context,
         return false;
     }
     return serviceId.left(pos) == pkgname;
-}
-
-void ManagerPrivate::onAuthenticationFinished()
-{
-    auto auth = qobject_cast<Authenticator*>(sender());
-
-    auto i = m_pendingRequests.find(auth);
-    CallContext &context = i.value();
-    if (auth->isError()) {
-        context.sendError(auth->errorName(), auth->errorMessage());
-    } else {
-        QVariantMap reply = auth->reply();
-        context.sendReply(QVariantList() << reply);
-    }
-
-    m_pendingRequests.erase(i);
-    delete auth;
 }
 
 void ManagerPrivate::onAccountServiceEnabled(bool enabled)

@@ -67,6 +67,9 @@ private:
     SignOn::AuthSession *m_authSession;
     SignOn::Identity *m_identity;
     QVariantMap m_parameters;
+    QVariantMap m_reply;
+    QString m_errorName;
+    QString m_errorMessage;
     mutable Authenticator *q_ptr;
 };
 
@@ -105,7 +108,8 @@ void AuthenticatorPrivate::authenticate(const Accounts::AuthData &authData,
 void AuthenticatorPrivate::onAuthSessionResponse(const SignOn::SessionData &sessionData)
 {
     Q_Q(Authenticator);
-    q->setReply(QVariantList() << sessionData.toMap());
+    m_reply = sessionData.toMap();
+    Q_EMIT q->finished();
 }
 
 QString AuthenticatorPrivate::signonErrorName(int type)
@@ -142,11 +146,13 @@ QString AuthenticatorPrivate::signonErrorName(int type)
 void AuthenticatorPrivate::onAuthSessionError(const SignOn::Error &error)
 {
     Q_Q(Authenticator);
-    q->setError(signonErrorName(error.type()), error.message());
+    m_errorName = signonErrorName(error.type());
+    m_errorMessage = error.message();
+    Q_EMIT q->finished();
 }
 
-Authenticator::Authenticator(const CallContext &context, QObject *parent):
-    AsyncOperation(context, parent),
+Authenticator::Authenticator(QObject *parent):
+    QObject(parent),
     d_ptr(new AuthenticatorPrivate(this))
 {
 }
@@ -176,6 +182,24 @@ void Authenticator::authenticate(const Accounts::AuthData &authData,
 {
     Q_D(Authenticator);
     d->authenticate(authData, parameters);
+}
+
+QVariantMap Authenticator::reply() const
+{
+    Q_D(const Authenticator);
+    return d->m_reply;
+}
+
+QString Authenticator::errorName() const
+{
+    Q_D(const Authenticator);
+    return d->m_errorName;
+}
+
+QString Authenticator::errorMessage() const
+{
+    Q_D(const Authenticator);
+    return d->m_errorMessage;
 }
 
 #include "authenticator.moc"

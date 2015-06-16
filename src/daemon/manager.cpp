@@ -30,7 +30,7 @@
 #include <QHash>
 #include <QPair>
 #include <QSet>
-#include "authenticator.h"
+#include "authentication_request.h"
 #include "client_registry.h"
 #include "dbus_constants.h"
 #include "manager_adaptor.h"
@@ -353,12 +353,13 @@ void ManagerPrivate::authenticate(uint accountId, const QString &serviceId,
         return;
     }
 
-    Authenticator *authenticator = new Authenticator(context, this);
-    authenticator->setInteractive(interactive);
+    AuthenticationRequest *authentication =
+        new AuthenticationRequest(context, this);
+    authentication->setInteractive(interactive);
     if (invalidate) {
-        authenticator->invalidateCache();
+        authentication->invalidateCache();
     }
-    authenticator->authenticate(as->authData(), parameters);
+    authentication->authenticate(as->authData(), parameters);
 }
 
 void ManagerPrivate::requestAccess(const QString &serviceId,

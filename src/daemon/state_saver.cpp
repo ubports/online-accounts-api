@@ -21,6 +21,7 @@
 #include "state_saver.h"
 
 #include <QDebug>
+#include <QDir>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -57,9 +58,11 @@ private:
 
 StateSaverPrivate::StateSaverPrivate()
 {
-    QString cachePath =
-        QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-    m_cacheFile = cachePath + "/client_account_refs.json";
+    QDir cacheDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation));
+    if (!cacheDir.exists()) {
+        cacheDir.mkpath(".");
+    }
+    m_cacheFile = cacheDir.filePath("client_account_refs.json");
 
     load();
 }

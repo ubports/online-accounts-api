@@ -20,6 +20,7 @@
 
 #include <QCoreApplication>
 #include <QDBusConnection>
+#include <QProcessEnvironment>
 #include "inactivity_timer.h"
 #include "manager.h"
 
@@ -27,9 +28,24 @@ int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
 
+    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+
+    /* default daemonTimeout to 5 seconds */
+    int daemonTimeout = 5;
+
+    /* override daemonTimeout if OAU_DAEMON_TIMEOUT is set */
+    if (environment.contains(QLatin1String("OAD_TIMEOUT"))) {
+        bool isOk;
+        int value = environment.value(
+            QLatin1String("OAD_TIMEOUT")).toInt(&isOk);
+        if (isOk)
+            daemonTimeout = value;
+    }
+
     auto manager = new OnlineAccountsDaemon::Manager();
 
-    auto inactivityTimer = new OnlineAccountsDaemon::InactivityTimer(5000);
+    auto inactivityTimer =
+        new OnlineAccountsDaemon::InactivityTimer(daemonTimeout * 1000);
     inactivityTimer->watchObject(manager);
     QObject::connect(inactivityTimer, SIGNAL(timeout()), &app, SLOT(quit()));
 

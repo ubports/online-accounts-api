@@ -96,6 +96,8 @@ ManagerAdaptor::ManagerAdaptor(Manager *parent):
     QDBusAbstractAdaptor(parent),
     d_ptr(new ManagerAdaptorPrivate)
 {
+    qRegisterMetaType<AccountInfo>("AccountInfo");
+    qRegisterMetaType<QList<AccountInfo> >("QList<AccountInfo>");
     qDBusRegisterMetaType<AccountInfo>();
     qDBusRegisterMetaType<QList<AccountInfo>>();
 

@@ -30,6 +30,7 @@
 #include <QHash>
 #include <QPair>
 #include <QSet>
+#include "access_request.h"
 #include "authentication_request.h"
 #include "client_registry.h"
 #include "dbus_constants.h"
@@ -58,6 +59,8 @@ class ManagerPrivate: public QObject
 
 public:
     ManagerPrivate(Manager *q);
+
+    QString applicationIdFromServiceId(const QString &serviceId);
 
     void watchAccount(Accounts::Account *account);
     void handleNewAccountService(Accounts::Account *account,
@@ -89,6 +92,7 @@ private Q_SLOTS:
     void onAccountServiceEnabled(bool enabled);
     void onAccountServiceChanged();
     void onAccountEnabled(const QString &serviceId, bool enabled);
+    void onLoadRequest(uint accountId, const QString &serviceId);
 
 private:
     ManagerAdaptor *m_adaptor;
@@ -112,6 +116,17 @@ ManagerPrivate::ManagerPrivate(Manager *q):
     q_ptr(q)
 {
     loadActiveAccounts();
+}
+
+QString ManagerPrivate::applicationIdFromServiceId(const QString &serviceId)
+{
+    Accounts::Service service = m_manager.service(serviceId);
+    Accounts::ApplicationList apps = m_manager.applicationList(service);
+    if (apps.isEmpty()) return QString();
+
+    /* TODO: to figure out the correct app, take the security context into
+     * account */
+    return apps.first().name();
 }
 
 void ManagerPrivate::watchAccount(Accounts::Account *account)
@@ -372,6 +387,12 @@ void ManagerPrivate::requestAccess(const QString &serviceId,
                           QString("Access to service ID %1 forbidden").arg(serviceId));
         return;
     }
+
+    AccessRequest *accessRequest = new AccessRequest(context, this);
+    QObject::connect(accessRequest, SIGNAL(loadRequest(uint, const QString&)),
+                     this, SLOT(onLoadRequest(uint, const QString&)));
+    QString applicationId = applicationIdFromServiceId(serviceId);
+    accessRequest->requestAccess(applicationId, serviceId, parameters);
 }
 
 bool ManagerPrivate::canAccess(const QString &context,
@@ -443,6 +464,17 @@ void ManagerPrivate::onAccountEnabled(const QString &serviceId, bool enabled)
     }
     auto account = qobject_cast<Accounts::Account*>(sender());
     handleNewAccountService(account, m_manager.service(serviceId));
+}
+
+void ManagerPrivate::onLoadRequest(uint accountId, const QString &serviceId)
+{
+    AccessRequest *request = qobject_cast<AccessRequest*>(sender());
+
+    ActiveAccount &activeAccount =
+        addActiveAccount(accountId, serviceId,
+                         request->context().clientName());
+    auto as = activeAccount.accountService;
+    request->setAccountInfo(readAccountInfo(as), as->authData());
 }
 
 Manager::Manager(QObject *parent):

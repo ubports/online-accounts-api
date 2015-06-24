@@ -59,6 +59,12 @@ AsyncOperation::~AsyncOperation()
     delete d_ptr;
 }
 
+const CallContext &AsyncOperation::context() const
+{
+    Q_D(const AsyncOperation);
+    return d->m_context;
+}
+
 void AsyncOperation::setReply(const QList<QVariant> &reply)
 {
     Q_D(AsyncOperation);

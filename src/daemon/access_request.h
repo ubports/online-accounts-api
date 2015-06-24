@@ -18,39 +18,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ONLINE_ACCOUNTS_DAEMON_ASYNC_OPERATION_H
-#define ONLINE_ACCOUNTS_DAEMON_ASYNC_OPERATION_H
+#ifndef ONLINE_ACCOUNTS_DAEMON_ACCESS_REQUEST_H
+#define ONLINE_ACCOUNTS_DAEMON_ACCESS_REQUEST_H
 
 #include <QObject>
-#include <QList>
 #include <QString>
-#include <QVariant>
+#include <QVariantMap>
+#include "async_operation.h"
+
+namespace Accounts {
+class AuthData;
+}
 
 namespace OnlineAccountsDaemon {
 
-class CallContext;
+class AccountInfo;
 
-class AsyncOperationPrivate;
-class AsyncOperation: public QObject
+class AccessRequestPrivate;
+class AccessRequest: public AsyncOperation
 {
     Q_OBJECT
 
 public:
-    explicit AsyncOperation(const CallContext &context,
-                            QObject *parent = 0);
-    ~AsyncOperation();
+    explicit AccessRequest(const CallContext &context,
+                           QObject *parent = 0);
+    ~AccessRequest();
 
-    const CallContext &context() const;
+    void requestAccess(const QString &applicationId,
+                       const QString &serviceId,
+                       const QVariantMap &parameters);
 
-protected:
-    void setReply(const QList<QVariant> &reply);
-    void setError(const QString &name, const QString &message);
+    void setAccountInfo(const AccountInfo &accountInfo,
+                        const Accounts::AuthData &authData);
+
+Q_SIGNALS:
+    void loadRequest(uint accountId, const QString &serviceId);
 
 private:
-    Q_DECLARE_PRIVATE(AsyncOperation)
-    AsyncOperationPrivate *d_ptr;
+    Q_DECLARE_PRIVATE(AccessRequest)
+    AccessRequestPrivate *d_ptr;
 };
 
 } // namespace
 
-#endif // ONLINE_ACCOUNTS_DAEMON_ASYNC_OPERATION_H
+#endif // ONLINE_ACCOUNTS_DAEMON_ACCESS_REQUEST_H

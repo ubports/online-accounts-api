@@ -46,6 +46,7 @@ AsyncOperationPrivate::AsyncOperationPrivate(AsyncOperation *q,
     m_context(context),
     q_ptr(q)
 {
+    m_context.setDelayedReply(true);
 }
 
 AsyncOperation::AsyncOperation(const CallContext &context, QObject *parent):

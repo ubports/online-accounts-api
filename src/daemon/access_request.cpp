@@ -22,6 +22,7 @@
 
 #include <Accounts/AuthData>
 #include <online-accounts-client/Setup>
+#include <QDBusArgument>
 #include <QDebug>
 #include "account_info.h"
 #include "authenticator.h"
@@ -99,7 +100,9 @@ void AccessRequestPrivate::onAuthenticationFinished()
      * the client.
      */
     QList<QVariant> args;
-    args << QVariant::fromValue(m_accountInfo);
+    QDBusArgument infoArg;
+    infoArg << m_accountInfo;
+    args << QVariant::fromValue(infoArg);
     args << m_authenticator.reply();
     q->setReply(args);
 }

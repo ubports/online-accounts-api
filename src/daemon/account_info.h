@@ -24,6 +24,8 @@
 #include <QVariantMap>
 #include "dbus_constants.h"
 
+class QDBusArgument;
+
 namespace OnlineAccountsDaemon {
 
 struct AccountInfo {
@@ -39,6 +41,11 @@ struct AccountInfo {
 };
 
 } // namespace
+
+QDBusArgument &operator<<(QDBusArgument &argument,
+                          const OnlineAccountsDaemon::AccountInfo &info);
+const QDBusArgument &operator>>(const QDBusArgument &argument,
+                                OnlineAccountsDaemon::AccountInfo &info);
 
 Q_DECLARE_METATYPE(OnlineAccountsDaemon::AccountInfo)
 

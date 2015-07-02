@@ -35,6 +35,6 @@ add_subdirectory(tests)
 
 include(EnableCoverageReport)
 if(cmake_build_type_lower MATCHES coverage)
-    ENABLE_COVERAGE_REPORT(TARGETS OnlineAccounts FILTER /usr/include ${CMAKE_SOURCE_DIR}/tests/* ${CMAKE_BINARY_DIR}/*)
+    ENABLE_COVERAGE_REPORT(TARGETS OnlineAccountsQt accountd FILTER /usr/include ${CMAKE_SOURCE_DIR}/tests/* ${CMAKE_BINARY_DIR}/*)
 endif()
 

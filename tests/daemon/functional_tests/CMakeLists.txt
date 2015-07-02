@@ -6,17 +6,20 @@ set(SOURCES
 
 pkg_check_modules(QTDBUSMOCK REQUIRED libqtdbusmock-1)
 pkg_check_modules(QTDBUSTEST REQUIRED libqtdbustest-1)
+pkg_check_modules(ACCOUNTSQT accounts-qt5 REQUIRED)
 
 add_executable(${TEST} ${SOURCES})
 include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     ${OnlineAccountsQt_SOURCE_DIR}/..
     ${OnlineAccountsDaemon_SOURCE_DIR}/..
+    ${ACCOUNTSQT_INCLUDE_DIRS}
     ${QTDBUSMOCK_INCLUDE_DIRS}
     ${QTDBUSTEST_INCLUDE_DIRS}
 )
 add_definitions(
     -DTEST_DBUS_CONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/data/testsession.conf"
+    -DTEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
     -DSIGNOND_MOCK_TEMPLATE="${CMAKE_CURRENT_SOURCE_DIR}/signond.py"
     -DONLINE_ACCOUNTS_SERVICE_MOCK_TEMPLATE="${CMAKE_CURRENT_SOURCE_DIR}/online_accounts-service.py"
 )   
@@ -28,6 +31,7 @@ configure_file(data/com.ubuntu.OnlineAccounts.Manager.service.in
 
 target_link_libraries(${TEST}
     OnlineAccountsQt
+    ${ACCOUNTSQT_LIBRARIES}
     ${QTDBUSMOCK_LIBRARIES}
     ${QTDBUSTEST_LIBRARIES}
 )

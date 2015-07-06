@@ -26,11 +26,37 @@
 #include <Accounts/Manager>
 #include <Accounts/Service>
 #include <QDBusConnection>
+#include <QDBusServiceWatcher>
 #include <QDir>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QObject>
 #include <QSignalSpy>
 #include <QTest>
 #include <libqtdbusmock/DBusMock.h>
+
+namespace QTest {
+template<>
+char *toString(const QSet<int> &set)
+{
+    QByteArray ba = "QSet<int>(";
+    QStringList list;
+    Q_FOREACH(int i, set) {
+        list.append(QString::number(i));
+    }
+    ba += list.join(", ");
+    ba += ")";
+    return qstrdup(ba.data());
+}
+
+template<>
+char *toString(const QVariantMap &map)
+{
+    QJsonDocument doc(QJsonObject::fromVariantMap(map));
+    return qstrdup(doc.toJson(QJsonDocument::Compact).data());
+}
+
+} // QTest namespace
 
 class FunctionalTests: public QObject
 {
@@ -46,8 +72,11 @@ public:
 private Q_SLOTS:
     void testGetAccountsFiltering_data();
     void testGetAccountsFiltering();
+    void testAuthenticate_data();
+    void testAuthenticate();
     void testRequestAccess_data();
     void testRequestAccess();
+    void cleanupTestCase();
 
 private:
     void clearDb();
@@ -58,6 +87,8 @@ private:
     QtDBusMock::DBusMock m_mock;
     FakeOnlineAccountsService m_onlineAccounts;
     FakeSignond m_signond;
+    int m_firstAccountId;
+    int m_account3CredentialsId;
 };
 
 FunctionalTests::EnvSetup::EnvSetup() {
@@ -67,6 +98,10 @@ FunctionalTests::EnvSetup::EnvSetup() {
     qputenv("AG_SERVICE_TYPES", TEST_DATA_DIR);
     qputenv("AG_PROVIDERS", TEST_DATA_DIR);
     qputenv("XDG_DATA_HOME", TEST_DATA_DIR);
+
+    qputenv("SSO_USE_PEER_BUS", "0");
+
+    qputenv("OAD_TIMEOUT", "2");
 }
 
 FunctionalTests::FunctionalTests():
@@ -74,9 +109,46 @@ FunctionalTests::FunctionalTests():
     m_dbus(TEST_DBUS_CONFIG_FILE),
     m_mock(m_dbus),
     m_onlineAccounts(&m_mock),
-    m_signond(&m_mock)
+    m_signond(&m_mock),
+    m_account3CredentialsId(35)
 {
     clearDb();
+
+    /* Populate the accounts DB */
+    Accounts::Manager *manager = new Accounts::Manager(this);
+    Accounts::Service coolMail = manager->service("coolmail");
+    Accounts::Service coolShare = manager->service("coolshare");
+    Accounts::Account *account1 = manager->createAccount("cool");
+    QVERIFY(account1 != 0);
+    account1->setEnabled(true);
+    account1->setDisplayName("CoolAccount 1");
+    // Do not create this identity, we want it to be non-existing
+    account1->setCredentialsId(249);
+    account1->selectService(coolMail);
+    account1->setEnabled(true);
+    account1->syncAndBlock();
+    m_firstAccountId = account1->id() - 1;
+
+    Accounts::Account *account2 = manager->createAccount("cool");
+    QVERIFY(account2 != 0);
+    account2->setEnabled(true);
+    account2->setDisplayName("CoolAccount 2");
+    account2->selectService(coolMail);
+    account2->setEnabled(false);
+    account2->selectService(coolShare);
+    account2->setEnabled(true);
+    account2->syncAndBlock();
+
+    Accounts::Account *account3 = manager->createAccount("cool");
+    QVERIFY(account3 != 0);
+    account3->setEnabled(true);
+    account3->setDisplayName("CoolAccount 3");
+    account3->setCredentialsId(m_account3CredentialsId);
+    account3->selectService(coolMail);
+    account3->setEnabled(true);
+    account3->syncAndBlock();
+
+    delete manager;
 
     m_dbus.startServices();
 }
@@ -96,43 +168,17 @@ void FunctionalTests::testGetAccountsFiltering_data()
     QTest::newRow("empty filters") <<
         filters <<
         (QList<int>() << 1 << 2 << 3);
+
+    filters[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = "coolmail";
+    QTest::newRow("by service ID") <<
+        filters <<
+        (QList<int>() << 1 << 3);
 }
 
 void FunctionalTests::testGetAccountsFiltering()
 {
     QFETCH(QVariantMap, filters);
     QFETCH(QList<int>, expectedAccountIds);
-
-    /* Populate the accounts DB */
-    Accounts::Manager *manager = new Accounts::Manager(this);
-    Accounts::Service coolMail = manager->service("coolmail");
-    Accounts::Service coolShare = manager->service("coolshare");
-    Accounts::Account *account1 = manager->createAccount("cool");
-    QVERIFY(account1 != 0);
-    account1->setEnabled(true);
-    account1->setDisplayName("CoolAccount");
-    account1->selectService(coolMail);
-    account1->setEnabled(true);
-    account1->syncAndBlock();
-    int firstAccountId = account1->id() - 1;
-
-    Accounts::Account *account2 = manager->createAccount("cool");
-    QVERIFY(account2 != 0);
-    account2->setEnabled(true);
-    account2->setDisplayName("CoolAccount");
-    account2->selectService(coolMail);
-    account2->setEnabled(true);
-    account2->syncAndBlock();
-
-    Accounts::Account *account3 = manager->createAccount("cool");
-    QVERIFY(account3 != 0);
-    account3->setEnabled(true);
-    account3->setDisplayName("CoolAccount");
-    account3->selectService(coolMail);
-    account3->setEnabled(true);
-    account3->syncAndBlock();
-
-    delete manager;
 
     DaemonInterface *daemon = new DaemonInterface;
 
@@ -144,12 +190,105 @@ void FunctionalTests::testGetAccountsFiltering()
     QList<AccountInfo> accountInfos = reply.argumentAt<0>();
     QList<int> accountIds;
     Q_FOREACH(const AccountInfo &info, accountInfos) {
-        accountIds.append(info.id() + firstAccountId);
+        accountIds.append(info.id() + m_firstAccountId);
     }
     QCOMPARE(accountIds.toSet(), expectedAccountIds.toSet());
 
     delete daemon;
 
+}
+
+void FunctionalTests::testAuthenticate_data()
+{
+    QTest::addColumn<int>("accountId");
+    QTest::addColumn<QString>("serviceId");
+    QTest::addColumn<bool>("interactive");
+    QTest::addColumn<bool>("invalidate");
+    QTest::addColumn<QVariantMap>("authParams");
+    QTest::addColumn<QVariantMap>("expectedCredentials");
+    QTest::addColumn<QString>("errorName");
+
+    QVariantMap authParams;
+    QVariantMap credentials;
+    QTest::newRow("invalid account ID") <<
+        12412341 <<
+        "coolmail" <<
+        false << false <<
+        authParams <<
+        credentials <<
+        ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED;
+
+    authParams["errorName"] =
+        "com.google.code.AccountsSSO.SingleSignOn.Error.Network";
+    QTest::newRow("Authentication error") <<
+        3 <<
+        "coolmail" <<
+        false << false <<
+        authParams <<
+        credentials <<
+        "com.ubuntu.OnlineAccounts.Error.Network";
+    authParams.clear();
+
+    authParams["one"] = 1;
+    credentials["one"] = 1;
+    credentials["host"] = "coolmail.ex";
+    credentials["UiPolicy"] = 2;
+    QTest::newRow("no interactive, no invalidate") <<
+        3 <<
+        "coolmail" <<
+        false << false <<
+        authParams <<
+        credentials <<
+        QString();
+
+    credentials["UiPolicy"] = 0;
+    QTest::newRow("interactive, no invalidate") <<
+        3 <<
+        "coolmail" <<
+        true << false <<
+        authParams <<
+        credentials <<
+        QString();
+
+    credentials["ForceTokenRefresh"] = true;
+    QTest::newRow("interactive, invalidate") <<
+        3 <<
+        "coolmail" <<
+        true << true <<
+        authParams <<
+        credentials <<
+        QString();
+}
+
+void FunctionalTests::testAuthenticate()
+{
+    QFETCH(int, accountId);
+    QFETCH(QString, serviceId);
+    QFETCH(bool, interactive);
+    QFETCH(bool, invalidate);
+    QFETCH(QVariantMap, authParams);
+    QFETCH(QVariantMap, expectedCredentials);
+    QFETCH(QString, errorName);
+
+    m_signond.addIdentity(m_account3CredentialsId, QVariantMap());
+
+    DaemonInterface *daemon = new DaemonInterface;
+
+    QDBusPendingReply<QVariantMap> reply =
+        daemon->authenticate(m_firstAccountId + accountId, serviceId,
+                             interactive, invalidate, authParams);
+    reply.waitForFinished();
+
+    if (errorName.isEmpty()) {
+        QVERIFY(!reply.isError());
+        QVariantMap credentials = reply.argumentAt<0>();
+        QCOMPARE(credentials, expectedCredentials);
+    } else {
+        QVERIFY(reply.isError());
+        QCOMPARE(reply.error().name(), errorName);
+    }
+
+    delete daemon;
 }
 
 void FunctionalTests::testRequestAccess_data()
@@ -174,6 +313,37 @@ void FunctionalTests::testRequestAccess_data()
         accountInfo <<
         credentials <<
         ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED;
+
+    accessReply["accountId"] = m_firstAccountId + 3;
+    accountInfo[ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD] =
+        ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH2;
+    accountInfo[ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME] = "CoolAccount 3";
+    accountInfo[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = "coolmail";
+    accountInfo["settings/auth/mechanism"] = "user_agent";
+    accountInfo["settings/auth/method"] = "oauth2";
+    accountInfo["settings/auth/oauth2/user_agent/host"] = "coolmail.ex";
+    accountInfo["settings/auto-explode-after"] = 10;
+    accountInfo["settings/color"] = "green";
+    credentials["host"] = "coolmail.ex";
+    QTest::newRow("no auth params") <<
+        "coolmail" <<
+        authParams <<
+        accessReply <<
+        m_firstAccountId + 3 <<
+        accountInfo <<
+        credentials <<
+        "";
+
+    authParams["one"] = 1;
+    credentials["one"] = 1;
+    QTest::newRow("with auth params") <<
+        "coolmail" <<
+        authParams <<
+        accessReply <<
+        m_firstAccountId + 3 <<
+        accountInfo <<
+        credentials <<
+        "";
 }
 
 void FunctionalTests::testRequestAccess()
@@ -187,6 +357,7 @@ void FunctionalTests::testRequestAccess()
     QFETCH(QString, errorName);
 
     m_onlineAccounts.setRequestAccessReply(accessReply);
+    m_signond.addIdentity(m_account3CredentialsId, QVariantMap());
 
     DaemonInterface *daemon = new DaemonInterface;
 
@@ -207,6 +378,22 @@ void FunctionalTests::testRequestAccess()
     }
 
     delete daemon;
+}
+
+void FunctionalTests::cleanupTestCase()
+{
+    QDBusConnection conn = QDBusConnection::sessionBus();
+    QString serviceName(QStringLiteral(ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME));
+    QDBusReply<bool> reply =
+        conn.interface()->isServiceRegistered(serviceName);
+    if (reply.value()) {
+        /* Let'äs wait for the daemon to quit */
+        QDBusServiceWatcher watcher(serviceName, conn,
+                                    QDBusServiceWatcher::WatchForUnregistration);
+        QSignalSpy unregistered(&watcher,
+                                SIGNAL(serviceUnregistered(const QString &)));
+        QTRY_COMPARE(unregistered.count(), 1);
+    }
 }
 
 QTEST_MAIN(FunctionalTests)

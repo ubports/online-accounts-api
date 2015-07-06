@@ -18,10 +18,12 @@ __license__ = 'LGPL 3+'
 import dbus
 
 from dbusmock import MOCK_IFACE
+import dbusmock
 
 BUS_NAME = 'com.google.code.AccountsSSO.SingleSignOn'
 MAIN_OBJ = '/com/google/code/AccountsSSO/SingleSignOn'
 AUTH_SERVICE_IFACE = 'com.google.code.AccountsSSO.SingleSignOn.AuthService'
+MAIN_IFACE = AUTH_SERVICE_IFACE
 IDENTITY_IFACE = 'com.google.code.AccountsSSO.SingleSignOn.Identity'
 AUTH_SESSION_IFACE = 'com.google.code.AccountsSSO.SingleSignOn.AuthSession'
 SYSTEM_BUS = False
@@ -35,30 +37,33 @@ def get_identity(self, identity):
     if identity not in self.identities:
         raise dbus.exceptions.DBusException('Identity not found',
                                             name=ERROR_IDENTITY_NOT_FOUND)
-    path = '/Identity' + identity
-    self.addObject(path, IDENTITY_IFACE, {}, [
-        ('getInfo', '', 'a{sv}', 'ret = self.identities[%s]' % identity)
+    path = '/Identity%s' % identity
+    self.AddObject(path, IDENTITY_IFACE, {}, [
+        ('getInfo', '', 'a{sv}', '') #'ret = self.parent.identities[%s]' % identity)
     ])
+    identity_obj = dbusmock.get_object(path)
+    identity_obj.parent = self
     return (path, self.identities[identity])
 
 
-def auth_session_process(self, identity, params, method):
+def auth_session_process(identity, params, method):
     if 'errorName' in params:
-        raise dbus.exceptions.DBusException(params.errorMessage
-                                            name=params.errorName)
+        raise dbus.exceptions.DBusException('Authentication error',
+                                            name=params['errorName'])
     return params
 
 def get_auth_session_object_path(self, identity, method):
-    if identity != 0 && identity not in self.identities:
+    if identity != 0 and (identity not in self.identities):
         raise dbus.exceptions.DBusException('Identity not found',
                                             name=ERROR_IDENTITY_NOT_FOUND)
-    path = '/AuthSession' + self.sessions_counter
+    path = '/AuthSession%s' % self.sessions_counter
     self.sessions_counter += 1
-    self.addObject(path, AUTH_SESSION_IFACE, {}, [
+    self.AddObject(path, AUTH_SESSION_IFACE, {}, [
         ('process', 'a{sv}s', 'a{sv}', 'ret = self.auth_session_process(self.identity, args[0], args[1])'),
     ])
 
     auth_session = dbusmock.get_object(path)
+    auth_session.auth_session_process = auth_session_process
     auth_session.identity = identity
     auth_session.method = method
 
@@ -66,6 +71,8 @@ def get_auth_session_object_path(self, identity, method):
 
 
 def load(mock, parameters):
+    mock.get_identity = get_identity
+    mock.get_auth_session_object_path = get_auth_session_object_path
     mock.AddMethods(AUTH_SERVICE_IFACE, [
         ('getIdentity', 'u', 'oa{sv}', 'ret = self.get_identity(self, args[0])'),
         ('getAuthSessionObjectPath', 'us', 's', 'ret = self.get_auth_session_object_path(self, args[0], args[1])'),

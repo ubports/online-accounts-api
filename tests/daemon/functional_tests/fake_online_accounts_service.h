@@ -29,12 +29,9 @@ class FakeOnlineAccountsService
 {
 public:
     FakeOnlineAccountsService(QtDBusMock::DBusMock *mock): m_mock(mock) {
-        m_mock->registerCustomMock("com.ubuntu.OnlineAccountsUi",
-                                   "/",
-                                   "com.ubuntu.OnlineAccountsUi",
-                                   QDBusConnection::SessionBus);
-        mocked().AddTemplate(ONLINE_ACCOUNTS_SERVICE_MOCK_TEMPLATE,
-                             QVariantMap());
+        m_mock->registerTemplate("com.ubuntu.OnlineAccountsUi",
+                                 ONLINE_ACCOUNTS_SERVICE_MOCK_TEMPLATE,
+                                 QDBusConnection::SessionBus);
     }
 
     void setRequestAccessReply(const QVariantMap &reply) {

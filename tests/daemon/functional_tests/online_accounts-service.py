@@ -41,8 +41,8 @@ def load(mock, parameters):
 
     def request_access(self, params):
         if 'errorName' in self.access_reply:
-            raise dbus.exceptions.DBusException(self.access_reply.errorMessage,
-                                                name=self.access_reply.errorName)
+            raise dbus.exceptions.DBusException('Access error',
+                                                name=self.access_reply['errorName'])
         return self.access_reply
 
     setattr(mock.__class__, "request_access", request_access)

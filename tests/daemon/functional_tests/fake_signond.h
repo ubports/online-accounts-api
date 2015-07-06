@@ -28,12 +28,9 @@ class FakeSignond
 {
 public:
     FakeSignond(QtDBusMock::DBusMock *mock): m_mock(mock) {
-        m_mock->registerCustomMock("com.google.code.AccountsSSO.SingleSignOn",
-                                   "/com/google/code/AccountsSSO/SingleSignOn",
-                                   "com.google.code.AccountsSSO.SingleSignOn.AuthService",
-                                   QDBusConnection::SessionBus);
-        mockedAuthService().AddTemplate(SIGNOND_MOCK_TEMPLATE,
-                                        QVariantMap());
+        m_mock->registerTemplate("com.google.code.AccountsSSO.SingleSignOn",
+                                 SIGNOND_MOCK_TEMPLATE,
+                                 QDBusConnection::SessionBus);
     }
 
     void addIdentity(uint id, const QVariantMap &info) {

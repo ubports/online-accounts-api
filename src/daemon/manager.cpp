@@ -296,6 +296,7 @@ AccountInfo ManagerPrivate::readAccountInfo(const Accounts::AccountService *as)
     info[ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD] = authMethod(as->authData());
     QString settingsPrefix(QStringLiteral(ONLINE_ACCOUNTS_INFO_KEY_SETTINGS));
     Q_FOREACH(const QString &key, as->allKeys()) {
+        if (key == "enabled") continue;
         info[settingsPrefix + key] = as->value(key);
     }
 

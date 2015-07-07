@@ -34,6 +34,8 @@ namespace OnlineAccountsDaemon {
 class CallContext {
 public:
     explicit CallContext(QDBusContext *dbusContext);
+    CallContext(const CallContext &other);
+    virtual ~CallContext();
 
     void setDelayedReply(bool delayed);
     void sendReply(const QList<QVariant> &args) const;
@@ -45,6 +47,29 @@ public:
 private:
     QDBusConnection m_connection;
     QDBusMessage m_message;
+};
+
+class CallContextCounter: public QObject
+{
+    Q_OBJECT
+
+public:
+    static CallContextCounter *instance();
+
+    int activeContexts() const { return m_contexts; }
+
+Q_SIGNALS:
+    void activeContextsChanged();
+
+protected:
+    void addContext(const CallContext &context);
+    void removeContext(const CallContext &context);
+
+private:
+    friend class CallContext;
+    CallContextCounter();
+
+    int m_contexts;
 };
 
 class ManagerAdaptorPrivate;

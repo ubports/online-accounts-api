@@ -16,6 +16,7 @@ __copyright__ = '(c) 2015 Canonical Ltd.'
 __license__ = 'LGPL 3+'
 
 import dbus
+import time
 
 from dbusmock import MOCK_IFACE
 import dbusmock
@@ -50,6 +51,8 @@ def auth_session_process(identity, params, method):
     if 'errorName' in params:
         raise dbus.exceptions.DBusException('Authentication error',
                                             name=params['errorName'])
+    if 'delay' in params:
+        time.sleep(params['delay'])
     return params
 
 def get_auth_session_object_path(self, identity, method):

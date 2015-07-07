@@ -76,6 +76,7 @@ private Q_SLOTS:
     void testAuthenticate();
     void testRequestAccess_data();
     void testRequestAccess();
+    void testLifetime();
     void cleanupTestCase();
 
 private:
@@ -101,7 +102,7 @@ FunctionalTests::EnvSetup::EnvSetup() {
 
     qputenv("SSO_USE_PEER_BUS", "0");
 
-    qputenv("OAD_TIMEOUT", "2");
+    qputenv("OAD_TIMEOUT", "1");
 }
 
 FunctionalTests::FunctionalTests():
@@ -376,6 +377,39 @@ void FunctionalTests::testRequestAccess()
         QVERIFY(reply.isError());
         QCOMPARE(reply.error().name(), errorName);
     }
+
+    delete daemon;
+}
+
+void FunctionalTests::testLifetime()
+{
+    /* Make a dbus call, and have signond reply after 3 seconds; make sure that
+     * the online accounts daemon doesn't time out. */
+    m_signond.addIdentity(m_account3CredentialsId, QVariantMap());
+
+    DaemonInterface *daemon = new DaemonInterface;
+
+    QDBusServiceWatcher watcher(ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME,
+                                QDBusConnection::sessionBus(),
+                                QDBusServiceWatcher::WatchForUnregistration);
+    QSignalSpy unregistered(&watcher,
+                            SIGNAL(serviceUnregistered(const QString &)));
+
+    QVariantMap authParams;
+    authParams["delay"] = 3;
+    QDBusPendingReply<QVariantMap> reply =
+        daemon->authenticate(m_firstAccountId + 3, "coolmail",
+                             false, false, authParams);
+    reply.waitForFinished();
+
+    QVERIFY(!reply.isError());
+    QVariantMap expectedCredentials(authParams);
+    expectedCredentials["UiPolicy"] = 2;
+    expectedCredentials["host"] = "coolmail.ex";
+    QVariantMap credentials = reply.argumentAt<0>();
+    QCOMPARE(credentials, expectedCredentials);
+
+    QCOMPARE(unregistered.count(), 0);
 
     delete daemon;
 }

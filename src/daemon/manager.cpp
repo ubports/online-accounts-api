@@ -89,6 +89,7 @@ public:
     void notifyAccountChange(const ActiveAccount &account, uint change);
 
 private Q_SLOTS:
+    void onActiveContextsChanged();
     void onAccountServiceEnabled(bool enabled);
     void onAccountServiceChanged();
     void onAccountEnabled(const QString &serviceId, bool enabled);
@@ -115,7 +116,24 @@ ManagerPrivate::ManagerPrivate(Manager *q):
     m_isIdle(true),
     q_ptr(q)
 {
+    CallContextCounter *counter = CallContextCounter::instance();
+    QObject::connect(counter, SIGNAL(activeContextsChanged()),
+                     this, SLOT(onActiveContextsChanged()));
+
     loadActiveAccounts();
+}
+
+void ManagerPrivate::onActiveContextsChanged()
+{
+    Q_Q(Manager);
+    CallContextCounter *counter = CallContextCounter::instance();
+    if (counter->activeContexts() == 0) {
+        m_isIdle = true;
+        Q_EMIT q->isIdleChanged();
+    } else if (m_isIdle) {
+        m_isIdle = false;
+        Q_EMIT q->isIdleChanged();
+    }
 }
 
 QString ManagerPrivate::applicationIdFromServiceId(const QString &serviceId)

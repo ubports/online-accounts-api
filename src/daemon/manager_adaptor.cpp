@@ -47,6 +47,19 @@ CallContext::CallContext(QDBusContext *dbusContext):
     m_connection(dbusContext->connection()),
     m_message(dbusContext->message())
 {
+    CallContextCounter::instance()->addContext(*this);
+}
+
+CallContext::CallContext(const CallContext &other):
+    m_connection(other.m_connection),
+    m_message(other.m_message)
+{
+    CallContextCounter::instance()->addContext(*this);
+}
+
+CallContext::~CallContext()
+{
+    CallContextCounter::instance()->removeContext(*this);
 }
 
 void CallContext::setDelayedReply(bool delayed)
@@ -74,6 +87,34 @@ QString CallContext::securityContext() const
 QString CallContext::clientName() const
 {
     return m_message.service();
+}
+
+static CallContextCounter *m_callContextCounterInstance = 0;
+
+CallContextCounter::CallContextCounter():
+    QObject(),
+    m_contexts(0)
+{
+}
+
+CallContextCounter *CallContextCounter::instance()
+{
+    if (!m_callContextCounterInstance) {
+        m_callContextCounterInstance = new CallContextCounter;
+    }
+    return m_callContextCounterInstance;
+}
+
+void CallContextCounter::addContext(const CallContext &)
+{
+    m_contexts++;
+    Q_EMIT activeContextsChanged();
+}
+
+void CallContextCounter::removeContext(const CallContext &)
+{
+    m_contexts--;
+    Q_EMIT activeContextsChanged();
 }
 
 namespace OnlineAccountsDaemon {

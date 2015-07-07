@@ -87,8 +87,10 @@ QString ClientRegistryPrivate::getSecurityContext(const QString &client) const
         return QStringLiteral("unconfined");
     }
 
+    QString dbusService = qEnvironmentVariableIsEmpty("OAD_TESTING") ?
+        "org.freedesktop.DBus" : "mocked.org.freedesktop.dbus";
     QDBusMessage msg =
-        QDBusMessage::createMethodCall("org.freedesktop.DBus",
+        QDBusMessage::createMethodCall(dbusService,
                                        "/org/freedesktop/DBus",
                                        "org.freedesktop.DBus",
                                        "GetConnectionAppArmorSecurityContext");

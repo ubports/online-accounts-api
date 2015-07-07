@@ -20,6 +20,7 @@
 
 #include "daemon/dbus_constants.h"
 #include "daemon_interface.h"
+#include "fake_dbus_apparmor.h"
 #include "fake_online_accounts_service.h"
 #include "fake_signond.h"
 #include <Accounts/Account>
@@ -86,6 +87,7 @@ private:
     EnvSetup m_env;
     QtDBusTest::DBusTestRunner m_dbus;
     QtDBusMock::DBusMock m_mock;
+    FakeDBusApparmor m_dbusApparmor;
     FakeOnlineAccountsService m_onlineAccounts;
     FakeSignond m_signond;
     int m_firstAccountId;
@@ -103,12 +105,14 @@ FunctionalTests::EnvSetup::EnvSetup() {
     qputenv("SSO_USE_PEER_BUS", "0");
 
     qputenv("OAD_TIMEOUT", "1");
+    qputenv("OAD_TESTING", "1");
 }
 
 FunctionalTests::FunctionalTests():
     QObject(),
     m_dbus(TEST_DBUS_CONFIG_FILE),
     m_mock(m_dbus),
+    m_dbusApparmor(&m_mock),
     m_onlineAccounts(&m_mock),
     m_signond(&m_mock),
     m_account3CredentialsId(35)

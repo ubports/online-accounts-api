@@ -39,9 +39,10 @@ def get_identity(self, identity):
         raise dbus.exceptions.DBusException('Identity not found',
                                             name=ERROR_IDENTITY_NOT_FOUND)
     path = '/Identity%s' % identity
-    self.AddObject(path, IDENTITY_IFACE, {}, [
-        ('getInfo', '', 'a{sv}', '') #'ret = self.parent.identities[%s]' % identity)
-    ])
+    if not path in dbusmock.get_objects():
+        self.AddObject(path, IDENTITY_IFACE, {}, [
+            ('getInfo', '', 'a{sv}', 'ret = self.parent.identities[%s]' % identity)
+        ])
     identity_obj = dbusmock.get_object(path)
     identity_obj.parent = self
     return (path, self.identities[identity])

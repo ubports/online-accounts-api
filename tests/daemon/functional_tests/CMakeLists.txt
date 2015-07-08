@@ -20,6 +20,7 @@ include_directories(
 add_definitions(
     -DTEST_DBUS_CONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/data/testsession.conf"
     -DTEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/data"
+    -DTEST_PROCESS="${CMAKE_CURRENT_SOURCE_DIR}/test_process.py"
     -DSIGNOND_MOCK_TEMPLATE="${CMAKE_CURRENT_SOURCE_DIR}/signond.py"
     -DDBUS_APPARMOR_MOCK_TEMPLATE="${CMAKE_CURRENT_SOURCE_DIR}/dbus_apparmor.py"
     -DONLINE_ACCOUNTS_SERVICE_MOCK_TEMPLATE="${CMAKE_CURRENT_SOURCE_DIR}/online_accounts-service.py"

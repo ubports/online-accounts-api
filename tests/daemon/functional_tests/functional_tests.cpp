@@ -32,6 +32,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QObject>
+#include <QProcess>
 #include <QSignalSpy>
 #include <QTest>
 #include <libqtdbusmock/DBusMock.h>
@@ -58,6 +59,49 @@ char *toString(const QVariantMap &map)
 }
 
 } // QTest namespace
+
+class TestProcess: public QProcess
+{
+    Q_OBJECT
+
+public:
+    TestProcess(QObject *parent = 0):
+        QProcess(parent)
+    {
+        setProgram(QStringLiteral(TEST_PROCESS));
+        setReadChannel(QProcess::StandardOutput);
+        setProcessChannelMode(QProcess::ForwardedErrorChannel);
+        start();
+        QVERIFY(waitForStarted());
+        QVERIFY(waitForReadyRead());
+        m_uniqueName = QString::fromUtf8(readLine()).trimmed();
+    }
+
+    ~TestProcess() { quit(); }
+
+    QString uniqueName() const { return m_uniqueName; }
+
+    void quit() { write("\n"); waitForFinished(); }
+
+    QList<AccountInfo> getAccounts(const QVariantMap &filters) {
+        QJsonDocument doc(QJsonObject::fromVariantMap(filters));
+        write("GetAccounts -f ");
+        write(doc.toJson(QJsonDocument::Compact) + '\n');
+
+        waitForReadyRead();
+        doc = QJsonDocument::fromJson(readLine());
+        QList<AccountInfo> accountInfos;
+        Q_FOREACH(const QJsonValue &v, doc.array()) {
+            QJsonArray a = v.toArray();
+            accountInfos.append(AccountInfo(a.at(0).toInt(),
+                                            a.at(1).toObject().toVariantMap()));
+        }
+        return accountInfos;
+    }
+
+private:
+    QString m_uniqueName;
+};
 
 class FunctionalTests: public QObject
 {
@@ -122,7 +166,7 @@ FunctionalTests::FunctionalTests():
     /* Populate the accounts DB */
     Accounts::Manager *manager = new Accounts::Manager(this);
     Accounts::Service coolMail = manager->service("coolmail");
-    Accounts::Service coolShare = manager->service("coolshare");
+    Accounts::Service coolShare = manager->service("com.ubuntu.tests_coolshare");
     Accounts::Account *account1 = manager->createAccount("cool");
     QVERIFY(account1 != 0);
     account1->setEnabled(true);
@@ -167,32 +211,39 @@ void FunctionalTests::clearDb()
 void FunctionalTests::testGetAccountsFiltering_data()
 {
     QTest::addColumn<QVariantMap>("filters");
+    QTest::addColumn<QString>("securityContext");
     QTest::addColumn<QList<int> >("expectedAccountIds");
 
     QVariantMap filters;
     QTest::newRow("empty filters") <<
         filters <<
+        "unconfined" <<
         (QList<int>() << 1 << 2 << 3);
+
+    QTest::newRow("empty filters, confined") <<
+        filters <<
+        "com.ubuntu.tests_application_0.2" <<
+        (QList<int>() << 2);
 
     filters[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = "coolmail";
     QTest::newRow("by service ID") <<
         filters <<
+        "unconfined" <<
         (QList<int>() << 1 << 3);
 }
 
 void FunctionalTests::testGetAccountsFiltering()
 {
     QFETCH(QVariantMap, filters);
+    QFETCH(QString, securityContext);
     QFETCH(QList<int>, expectedAccountIds);
 
     DaemonInterface *daemon = new DaemonInterface;
 
-    QDBusPendingReply<QList<AccountInfo> > reply =
-        daemon->getAccounts(filters);
-    reply.waitForFinished();
+    TestProcess testProcess;
+    m_dbusApparmor.addClient(testProcess.uniqueName(), securityContext);
 
-    QVERIFY(!reply.isError());
-    QList<AccountInfo> accountInfos = reply.argumentAt<0>();
+    QList<AccountInfo> accountInfos = testProcess.getAccounts(filters);
     QList<int> accountIds;
     Q_FOREACH(const AccountInfo &info, accountInfos) {
         accountIds.append(info.id() + m_firstAccountId);
@@ -200,7 +251,6 @@ void FunctionalTests::testGetAccountsFiltering()
     QCOMPARE(accountIds.toSet(), expectedAccountIds.toSet());
 
     delete daemon;
-
 }
 
 void FunctionalTests::testAuthenticate_data()

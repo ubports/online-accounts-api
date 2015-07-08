@@ -8,6 +8,7 @@ Build-Depends: cmake (>= 2.8.9),
                python3:any,
                libaccounts-qt5-dev,
                libapparmor-dev,
+               libonline-accounts-client-dev,
                libqtdbusmock1-dev,
                libqtdbustest1-dev,
                libsignon-qt5-dev,
@@ -30,7 +31,7 @@ Depends: ${misc:Depends},
 Description: Online Accounts simplified API (D-Bus service)
  D-Bus service implementing the simplified Online Accounts API.
 
-Package: libonline-accounts-daemon-dev
+Package: online-accounts-daemon-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same

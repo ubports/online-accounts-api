@@ -1,1 +1,10 @@
 *.user
+/debian/files
+/debian/*.debhelper*
+/debian/*.substvars
+/debian/libonline-accounts-daemon-dev/
+/debian/libonline-accounts-qt-dev/
+/debian/libonline-accounts-qt1/
+/debian/online-accounts-daemon/
+/debian/online-accounts-daemon-dev/
+/debian/tmp/

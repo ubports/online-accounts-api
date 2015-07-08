@@ -119,7 +119,6 @@ FunctionalTests::FunctionalTests():
 {
     clearDb();
 
-    qDebug() << "DBus address:" << qgetenv("DBUS_SESSION_BUS_ADDRESS");
     /* Populate the accounts DB */
     Accounts::Manager *manager = new Accounts::Manager(this);
     Accounts::Service coolMail = manager->service("coolmail");

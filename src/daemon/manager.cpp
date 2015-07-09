@@ -59,6 +59,7 @@ class ManagerPrivate: public QObject
 
 public:
     ManagerPrivate(Manager *q);
+    ~ManagerPrivate();
 
     QString applicationIdFromServiceId(const QString &serviceId);
 
@@ -66,6 +67,7 @@ public:
     void handleNewAccountService(Accounts::Account *account,
                                  const Accounts::Service &service);
     void loadActiveAccounts();
+    void saveState();
     ActiveAccount &addActiveAccount(Accounts::AccountId accountId,
                                     const QString &serviceName,
                                     const QString &client);
@@ -121,6 +123,11 @@ ManagerPrivate::ManagerPrivate(Manager *q):
                      this, SLOT(onActiveContextsChanged()));
 
     loadActiveAccounts();
+}
+
+ManagerPrivate::~ManagerPrivate()
+{
+    saveState();
 }
 
 void ManagerPrivate::onActiveContextsChanged()
@@ -250,6 +257,24 @@ void ManagerPrivate::loadActiveAccounts()
     }
 }
 
+void ManagerPrivate::saveState()
+{
+    QList<Client> clients;
+    for (auto i = m_clients.constBegin(); i != m_clients.constEnd(); i++) {
+        const Accounts::Application &application = i.value();
+        clients.append(Client(i.key(), application.name()));
+    }
+    m_stateSaver.setClients(clients);
+
+    QList<AccountInfo> accounts;
+    Q_FOREACH(const ActiveAccount &activeAccount, m_activeAccounts) {
+        if (!activeAccount.isValid()) continue;
+
+        accounts.append(readAccountInfo(activeAccount.accountService));
+    }
+    m_stateSaver.setAccounts(accounts);
+}
+
 void ManagerPrivate::notifyAccountChange(const ActiveAccount &account,
                                          uint change)
 {
@@ -330,6 +355,10 @@ QList<AccountInfo> ManagerPrivate::getAccounts(const QVariantMap &filters,
 
     Accounts::Application application = desiredApplicationId.isEmpty() ?
         Accounts::Application() : m_manager.application(desiredApplicationId);
+
+    if (canAccess(context.securityContext(), desiredApplicationId)) {
+        m_clients.insert(context.clientName(), application);
+    }
 
     QList<AccountInfo> accounts;
 

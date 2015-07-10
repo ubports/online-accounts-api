@@ -46,6 +46,8 @@ void InactivityTimer::onIdleChanged()
 {
     if (allObjectsAreIdle()) {
         m_timer.start(m_interval);
+    } else {
+        m_timer.stop();
     }
 }
 

@@ -504,9 +504,27 @@ void FunctionalTests::testAccountChanges()
     expectedAccountInfo["serviceId"] = "com.ubuntu.tests_coolshare";
     QCOMPARE(accountInfo.data(), expectedAccountInfo);
 
-    /* Disable the service */
+    /* Change a setting */
     accountChanged.clear();
-    account->setEnabled(false);
+    account->setValue("color", "blue");
+    account->syncAndBlock();
+
+    QTRY_COMPARE(accountChanged.count(), 1);
+    serviceId = accountChanged.at(0).at(0).toString();
+    accountInfo = accountChanged.at(0).at(1).value<AccountInfo>();
+
+    QCOMPARE(serviceId, coolShare.name());
+    QCOMPARE(accountInfo.id(), account->id());
+    expectedAccountInfo["authMethod"] = ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN;
+    expectedAccountInfo["changeType"] = ONLINE_ACCOUNTS_INFO_CHANGE_UPDATED;
+    expectedAccountInfo["settings/color"] = "blue";
+    expectedAccountInfo["displayName"] = "New account";
+    expectedAccountInfo["serviceId"] = "com.ubuntu.tests_coolshare";
+    QCOMPARE(accountInfo.data(), expectedAccountInfo);
+
+    /* Delete the account */
+    accountChanged.clear();
+    account->remove();
     account->syncAndBlock();
 
     QTRY_COMPARE(accountChanged.count(), 1);

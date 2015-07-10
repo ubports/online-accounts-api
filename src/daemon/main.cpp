@@ -52,6 +52,11 @@ int main(int argc, char **argv)
     QDBusConnection bus = QDBusConnection::sessionBus();
     bus.registerObject("/com/ubuntu/OnlineAccounts/Manager", manager);
     bus.registerService("com.ubuntu.OnlineAccounts.Manager");
+    bus.connect(QString(),
+                QStringLiteral("/org/freedesktop/DBus/Local"),
+                QStringLiteral("org.freedesktop.DBus.Local"),
+                QStringLiteral("Disconnected"),
+                manager, SLOT(onDisconnected()));
 
     int ret = app.exec();
 

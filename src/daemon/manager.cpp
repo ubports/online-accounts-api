@@ -26,6 +26,7 @@
 #include <Accounts/AuthData>
 #include <Accounts/Manager>
 #include <Accounts/Service>
+#include <QCoreApplication>
 #include <QDebug>
 #include <QHash>
 #include <QPair>
@@ -580,6 +581,12 @@ void Manager::requestAccess(const QString &serviceId,
 {
     Q_D(Manager);
     d->requestAccess(serviceId, parameters, context);
+}
+
+void Manager::onDisconnected()
+{
+    qDebug() << "Disconnected from D-Bus: quitting";
+    QCoreApplication::instance()->quit();
 }
 
 #include "manager.moc"

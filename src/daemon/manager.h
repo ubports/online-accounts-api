@@ -55,6 +55,9 @@ public:
                        const QVariantMap &parameters,
                        const CallContext &context);
 
+public Q_SLOTS:
+    void onDisconnected();
+
 Q_SIGNALS:
     void isIdleChanged();
 

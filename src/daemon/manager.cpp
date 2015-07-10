@@ -95,6 +95,7 @@ private Q_SLOTS:
     void onAccountServiceEnabled(bool enabled);
     void onAccountServiceChanged();
     void onAccountEnabled(const QString &serviceId, bool enabled);
+    void onAccountCreated(Accounts::AccountId accountId);
     void onLoadRequest(uint accountId, const QString &serviceId);
 
 private:
@@ -123,6 +124,9 @@ ManagerPrivate::ManagerPrivate(Manager *q):
                      this, SLOT(onActiveContextsChanged()));
 
     loadActiveAccounts();
+
+    QObject::connect(&m_manager, SIGNAL(accountCreated(Accounts::AccountId)),
+                     this, SLOT(onAccountCreated(Accounts::AccountId)));
 }
 
 ManagerPrivate::~ManagerPrivate()
@@ -356,7 +360,8 @@ QList<AccountInfo> ManagerPrivate::getAccounts(const QVariantMap &filters,
     Accounts::Application application = desiredApplicationId.isEmpty() ?
         Accounts::Application() : m_manager.application(desiredApplicationId);
 
-    if (canAccess(context.securityContext(), desiredApplicationId)) {
+    if (application.isValid() &&
+        canAccess(context.securityContext(), desiredApplicationId)) {
         m_clients.insert(context.clientName(), application);
     }
 
@@ -512,6 +517,16 @@ void ManagerPrivate::onAccountEnabled(const QString &serviceId, bool enabled)
     }
     auto account = qobject_cast<Accounts::Account*>(sender());
     handleNewAccountService(account, m_manager.service(serviceId));
+}
+
+void ManagerPrivate::onAccountCreated(Accounts::AccountId accountId)
+{
+    Accounts::Account *account = m_manager.account(accountId);
+    if (Q_UNLIKELY(!account)) return;
+    watchAccount(account);
+    Q_FOREACH(Accounts::Service service, account->enabledServices()) {
+        handleNewAccountService(account, service);
+    }
 }
 
 void ManagerPrivate::onLoadRequest(uint accountId, const QString &serviceId)

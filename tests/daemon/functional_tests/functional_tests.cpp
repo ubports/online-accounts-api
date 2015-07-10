@@ -66,7 +66,8 @@ class TestProcess: public QProcess
 
 public:
     TestProcess(QObject *parent = 0):
-        QProcess(parent)
+        QProcess(parent),
+        m_replyExpected(false)
     {
         setProgram(QStringLiteral(TEST_PROCESS));
         setReadChannel(QProcess::StandardOutput);
@@ -75,6 +76,9 @@ public:
         QVERIFY(waitForStarted());
         QVERIFY(waitForReadyRead());
         m_uniqueName = QString::fromUtf8(readLine()).trimmed();
+
+        QObject::connect(this, SIGNAL(readyReadStandardOutput()),
+                         this, SLOT(onReadyRead()));
     }
 
     ~TestProcess() { quit(); }
@@ -85,11 +89,13 @@ public:
 
     QList<AccountInfo> getAccounts(const QVariantMap &filters) {
         QJsonDocument doc(QJsonObject::fromVariantMap(filters));
+        m_replyExpected = true;
         write("GetAccounts -f ");
         write(doc.toJson(QJsonDocument::Compact) + '\n');
 
         waitForReadyRead();
         doc = QJsonDocument::fromJson(readLine());
+        m_replyExpected = false;
         QList<AccountInfo> accountInfos;
         Q_FOREACH(const QJsonValue &v, doc.array()) {
             QJsonArray a = v.toArray();
@@ -99,8 +105,28 @@ public:
         return accountInfos;
     }
 
+private Q_SLOTS:
+    void onReadyRead() {
+        if (m_replyExpected) return;
+        QByteArray line = readLine().trimmed();
+        QList<QByteArray> parts = line.split(' ');
+        if (parts[0] != "AccountChanged") return;
+
+        QByteArray changes = parts.mid(2).join(' ');
+        QJsonDocument doc = QJsonDocument::fromJson(changes);
+        QJsonArray a = doc.array();
+
+        Q_EMIT accountChanged(QString::fromUtf8(parts[1]),
+                              AccountInfo(a.at(0).toInt(),
+                                          a.at(1).toObject().toVariantMap()));
+    }
+
+Q_SIGNALS:
+    void accountChanged(QString serviceId, AccountInfo account);
+
 private:
     QString m_uniqueName;
+    bool m_replyExpected;
 };
 
 class FunctionalTests: public QObject
@@ -121,6 +147,7 @@ private Q_SLOTS:
     void testAuthenticate();
     void testRequestAccess_data();
     void testRequestAccess();
+    void testAccountChanges();
     void testLifetime();
     void cleanupTestCase();
 
@@ -148,7 +175,7 @@ FunctionalTests::EnvSetup::EnvSetup() {
 
     qputenv("SSO_USE_PEER_BUS", "0");
 
-    qputenv("OAD_TIMEOUT", "1");
+    qputenv("OAD_TIMEOUT", "2");
     qputenv("OAD_TESTING", "1");
 }
 
@@ -431,6 +458,68 @@ void FunctionalTests::testRequestAccess()
         QVERIFY(reply.isError());
         QCOMPARE(reply.error().name(), errorName);
     }
+
+    delete daemon;
+}
+
+void FunctionalTests::testAccountChanges()
+{
+    DaemonInterface *daemon = new DaemonInterface;
+
+    /* First, we make a call to the service so that it knows about our client
+     * and will later notify it about changes.
+     */
+    QVariantMap filters;
+    filters["applicationId"] = "com.ubuntu.tests_application";
+    TestProcess testProcess;
+    QSignalSpy accountChanged(&testProcess,
+                              SIGNAL(accountChanged(QString,AccountInfo)));
+    QList<AccountInfo> accountInfos = testProcess.getAccounts(filters);
+    QList<int> initialAccountIds;
+    Q_FOREACH(const AccountInfo &info, accountInfos) {
+        initialAccountIds.append(info.id());
+    }
+
+    /* Create a new account */
+    Accounts::Manager *manager = new Accounts::Manager(this);
+    Accounts::Service coolShare = manager->service("com.ubuntu.tests_coolshare");
+    Accounts::Account *account = manager->createAccount("cool");
+    QVERIFY(account != 0);
+    account->setEnabled(true);
+    account->setDisplayName("New account");
+    account->selectService(coolShare);
+    account->setEnabled(true);
+    account->syncAndBlock();
+
+    QTRY_COMPARE(accountChanged.count(), 1);
+    QString serviceId = accountChanged.at(0).at(0).toString();
+    AccountInfo accountInfo = accountChanged.at(0).at(1).value<AccountInfo>();
+
+    QCOMPARE(serviceId, coolShare.name());
+    QCOMPARE(accountInfo.id(), account->id());
+    QVariantMap expectedAccountInfo;
+    expectedAccountInfo["authMethod"] = ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN;
+    expectedAccountInfo["changeType"] = ONLINE_ACCOUNTS_INFO_CHANGE_ENABLED;
+    expectedAccountInfo["displayName"] = "New account";
+    expectedAccountInfo["serviceId"] = "com.ubuntu.tests_coolshare";
+    QCOMPARE(accountInfo.data(), expectedAccountInfo);
+
+    /* Disable the service */
+    accountChanged.clear();
+    account->setEnabled(false);
+    account->syncAndBlock();
+
+    QTRY_COMPARE(accountChanged.count(), 1);
+    serviceId = accountChanged.at(0).at(0).toString();
+    accountInfo = accountChanged.at(0).at(1).value<AccountInfo>();
+
+    QCOMPARE(serviceId, coolShare.name());
+    QCOMPARE(accountInfo.id(), account->id());
+    expectedAccountInfo["authMethod"] = ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN;
+    expectedAccountInfo["changeType"] = ONLINE_ACCOUNTS_INFO_CHANGE_DISABLED;
+    expectedAccountInfo["displayName"] = "New account";
+    expectedAccountInfo["serviceId"] = "com.ubuntu.tests_coolshare";
+    QCOMPARE(accountInfo.data(), expectedAccountInfo);
 
     delete daemon;
 }

@@ -47,5 +47,5 @@ install(FILES
     PasswordData
     PendingCall pending_call.h
     PendingCallWatcher
-    DESTINATION include/${CLIENT_LIB}
+    DESTINATION include/${CLIENT_LIB}/OnlineAccounts
 )

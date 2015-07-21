@@ -8,4 +8,4 @@ Description: Library for the simplified Online Accounts API
 Version: @PROJECT_VERSION@
 Requires: Qt5Core
 Libs: -L${libdir} -l@CLIENT_LIB@
-Cflags: -I${includedir}
+Cflags: -I${includedir}/@CLIENT_LIB@

@@ -41,5 +41,5 @@ target_link_libraries(${TEST}
 qt5_use_modules(${TEST} Core DBus Test)
 
 set_target_properties(${TEST} PROPERTIES AUTOMOC TRUE)
-add_test(${TEST} ${XVFB_COMMAND} ${CMAKE_CURRENT_BINARY_DIR}/${TEST} -xunitxml -o ${TEST}.xml)
+add_test(${TEST} ${XVFB_COMMAND} ${CMAKE_CURRENT_BINARY_DIR}/${TEST})
 add_dependencies(check ${TEST})

@@ -32,5 +32,6 @@ def load(mock, parameters):
 @dbus.service.method(MOCK_IFACE, in_signature='ss', out_signature='')
 def AddClient(self, client, context):
     '''Adds a client with its security context'''
+    print("Adding client %s with context %s" % (client, context))
     self.contexts[client] = context
 

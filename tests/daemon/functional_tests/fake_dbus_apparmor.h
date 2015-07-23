@@ -34,7 +34,9 @@ public:
     }
 
     void addClient(const QString &client, const QString context) {
+        QDBusMessage reply =
         mocked().call("AddClient", client, context);
+        qDebug() << "Last error adding client:" << reply.errorName() << reply.errorMessage();
     }
 
 private:

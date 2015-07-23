@@ -158,9 +158,9 @@ private:
     EnvSetup m_env;
     QtDBusTest::DBusTestRunner m_dbus;
     QtDBusMock::DBusMock m_mock;
+    FakeDBusApparmor m_dbusApparmor;
     FakeOnlineAccountsService m_onlineAccounts;
     FakeSignond m_signond;
-    FakeDBusApparmor m_dbusApparmor;
     int m_firstAccountId;
     int m_account3CredentialsId;
 };
@@ -181,12 +181,11 @@ FunctionalTests::EnvSetup::EnvSetup() {
 
 FunctionalTests::FunctionalTests():
     QObject(),
-    m_env(EnvSetup()),
     m_dbus(TEST_DBUS_CONFIG_FILE),
     m_mock(m_dbus),
+    m_dbusApparmor(&m_mock),
     m_onlineAccounts(&m_mock),
     m_signond(&m_mock),
-    m_dbusApparmor(&m_mock),
     m_account3CredentialsId(35)
 {
     clearDb();

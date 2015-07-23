@@ -35,6 +35,7 @@ ERROR_PERMISSION_DENIED = ERROR_PREFIX + 'PermissionDenied'
 ERROR_USER_INTERACTION= ERROR_PREFIX + 'UserInteraction'
 
 def get_identity(self, identity):
+    print("Get identity called")
     if identity not in self.identities:
         raise dbus.exceptions.DBusException('Identity not found',
                                             name=ERROR_IDENTITY_NOT_FOUND)
@@ -89,5 +90,6 @@ def load(mock, parameters):
 
 @dbus.service.method(MOCK_IFACE, in_signature='ua{sv}', out_signature='')
 def AddIdentity(self, identity, data):
+    print("AddIdentity called")
     self.identities[identity] = data
 

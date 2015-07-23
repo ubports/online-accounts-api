@@ -83,10 +83,6 @@ void ClientRegistryPrivate::registerClient(const QString &client)
 
 QString ClientRegistryPrivate::getSecurityContext(const QString &client) const
 {
-    if (!aa_is_enabled()) {
-        return QStringLiteral("unconfined");
-    }
-
     QString dbusService = qEnvironmentVariableIsEmpty("OAD_TESTING") ?
         "org.freedesktop.DBus" : "mocked.org.freedesktop.dbus";
     QDBusMessage msg =
@@ -103,6 +99,7 @@ QString ClientRegistryPrivate::getSecurityContext(const QString &client) const
     } else {
         qWarning() << "Could not determine AppArmor context: " <<
             reply.errorName() << ": " << reply.errorMessage();
+        context = QStringLiteral("unconfined");
     }
 
     return context;

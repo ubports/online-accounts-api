@@ -19,6 +19,7 @@ set(CMAKE_AUTOMOC ON)
 
 add_subdirectory(src/daemon)
 add_subdirectory(src/lib/OnlineAccounts)
+add_subdirectory(src/lib/qml_module)
 
 if(cmake_build_type_lower MATCHES coverage)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage" )

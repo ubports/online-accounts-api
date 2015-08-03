@@ -41,7 +41,8 @@ public:
 
     void requestAccess(const QString &applicationId,
                        const QString &serviceId,
-                       const QVariantMap &parameters);
+                       const QVariantMap &parameters,
+                       pid_t clientPid);
 
 private Q_SLOTS:
     void onSetupFinished(QVariantMap reply);
@@ -69,12 +70,14 @@ AccessRequestPrivate::AccessRequestPrivate(AccessRequest *q):
 
 void AccessRequestPrivate::requestAccess(const QString &applicationId,
                                          const QString &serviceId,
-                                         const QVariantMap &parameters)
+                                         const QVariantMap &parameters,
+                                         pid_t clientPid)
 {
     m_parameters = parameters;
 
     m_setup.setApplicationId(applicationId);
     m_setup.setServiceId(serviceId);
+    m_setup.setClientPid(clientPid);
     m_setup.exec();
 }
 
@@ -120,10 +123,11 @@ AccessRequest::~AccessRequest()
 
 void AccessRequest::requestAccess(const QString &applicationId,
                                   const QString &serviceId,
-                                  const QVariantMap &parameters)
+                                  const QVariantMap &parameters,
+                                  pid_t clientPid)
 {
     Q_D(AccessRequest);
-    d->requestAccess(applicationId, serviceId, parameters);
+    d->requestAccess(applicationId, serviceId, parameters, clientPid);
 }
 
 void AccessRequest::setAccountInfo(const AccountInfo &accountInfo,

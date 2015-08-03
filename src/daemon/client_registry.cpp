@@ -44,6 +44,7 @@ public:
 
     void registerClient(const QString &client);
     QString getSecurityContext(const QString &client) const;
+    pid_t getPid(const QString &client) const;
 
 private Q_SLOTS:
     void onServiceUnregistered(const QString &client);
@@ -103,6 +104,12 @@ QString ClientRegistryPrivate::getSecurityContext(const QString &client) const
     }
 
     return context;
+}
+
+pid_t ClientRegistryPrivate::getPid(const QString &client) const
+{
+    QDBusReply<uint> reply = m_connection.interface()->servicePid(client);
+    return pid_t(reply.value());
 }
 
 void ClientRegistryPrivate::onServiceUnregistered(const QString &client)
@@ -179,6 +186,12 @@ QString ClientRegistry::clientSecurityContext(const QString &client) const
     }
 
     return d->getSecurityContext(client);
+}
+
+pid_t ClientRegistry::clientPid(const QString &client) const
+{
+    Q_D(const ClientRegistry);
+    return d->getPid(client);
 }
 
 #include "client_registry.moc"

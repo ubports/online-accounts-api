@@ -27,6 +27,7 @@
 #include <QDBusMessage>
 #include <QString>
 #include <QVariantMap>
+#include <sys/types.h>
 #include "manager.h"
 
 namespace OnlineAccountsDaemon {
@@ -42,6 +43,7 @@ public:
     void sendError(const QString &name, const QString &message) const;
 
     QString securityContext() const;
+    pid_t clientPid() const;
     QString clientName() const;
 
 private:

@@ -446,7 +446,8 @@ void ManagerPrivate::requestAccess(const QString &serviceId,
     QObject::connect(accessRequest, SIGNAL(loadRequest(uint, const QString&)),
                      this, SLOT(onLoadRequest(uint, const QString&)));
     QString applicationId = applicationIdFromServiceId(serviceId);
-    accessRequest->requestAccess(applicationId, serviceId, parameters);
+    accessRequest->requestAccess(applicationId, serviceId, parameters,
+                                 context.clientPid());
 }
 
 bool ManagerPrivate::canAccess(const QString &context,

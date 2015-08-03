@@ -156,7 +156,8 @@ void AccountModelPrivate::onAccountAvailable(OnlineAccounts::Account *account)
         return;
     }
 
-    q->beginInsertRows(QModelIndex(), m_accounts.count(), 1);
+    int index = m_accounts.count();
+    q->beginInsertRows(QModelIndex(), index, index);
     handleAccount(account);
     q->endInsertRows();
     Q_EMIT q->accountListChanged();

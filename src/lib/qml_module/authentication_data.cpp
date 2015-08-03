@@ -26,7 +26,7 @@
 static void commonParamsFromMap(OnlineAccounts::AuthenticationData &data,
                                 const QVariantMap &params)
 {
-    data.setInteractive(params["interactive"].toBool());
+    data.setInteractive(params.value("interactive", true).toBool());
     if (params["invalidateCachedReply"].toBool()) {
         data.invalidateCachedReply();
     }

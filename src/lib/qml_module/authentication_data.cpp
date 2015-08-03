@@ -75,16 +75,20 @@ authenticationDataFromMap(const QVariantMap &params,
     case OnlineAccounts::AuthenticationMethodOAuth1:
         {
             OnlineAccounts::OAuth1Data data;
-            data.setConsumerKey(params["consumerKey"].toByteArray());
-            data.setConsumerSecret(params["consumerSecret"].toByteArray());
+            if (params.contains("consumerKey")) {
+                data.setConsumerKey(params["consumerKey"].toByteArray());
+                data.setConsumerSecret(params["consumerSecret"].toByteArray());
+            }
             commonParamsFromMap(data, params);
             return data;
         }
     case OnlineAccounts::AuthenticationMethodOAuth2:
         {
             OnlineAccounts::OAuth2Data data;
-            data.setClientId(params["clientId"].toByteArray());
-            data.setClientSecret(params["clientSecret"].toByteArray());
+            if (params.contains("clientId")) {
+                data.setClientId(params["clientId"].toByteArray());
+                data.setClientSecret(params["clientSecret"].toByteArray());
+            }
             commonParamsFromMap(data, params);
             return data;
         }

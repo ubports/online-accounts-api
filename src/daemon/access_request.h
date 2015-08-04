@@ -24,6 +24,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariantMap>
+#include <sys/types.h>
 #include "async_operation.h"
 
 namespace Accounts {
@@ -46,7 +47,8 @@ public:
 
     void requestAccess(const QString &applicationId,
                        const QString &serviceId,
-                       const QVariantMap &parameters);
+                       const QVariantMap &parameters,
+                       pid_t clientPid);
 
     void setAccountInfo(const AccountInfo &accountInfo,
                         const Accounts::AuthData &authData);

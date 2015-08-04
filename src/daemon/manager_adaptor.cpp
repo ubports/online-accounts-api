@@ -84,6 +84,12 @@ QString CallContext::securityContext() const
     return clientRegistry->clientSecurityContext(client);
 }
 
+pid_t CallContext::clientPid() const
+{
+    ClientRegistry *clientRegistry = ClientRegistry::instance();
+    return clientRegistry->clientPid(m_message.service());
+}
+
 QString CallContext::clientName() const
 {
     return m_message.service();

@@ -23,6 +23,7 @@
 
 #include <QObject>
 #include <QStringList>
+#include <sys/types.h>
 
 class QDBusConnection;
 class QDBusMessage;
@@ -47,6 +48,7 @@ public:
     bool hasClients() const { return !clients().isEmpty(); }
 
     QString clientSecurityContext(const QString &client) const;
+    pid_t clientPid(const QString &client) const;
 
 Q_SIGNALS:
     void hasClientsChanged();

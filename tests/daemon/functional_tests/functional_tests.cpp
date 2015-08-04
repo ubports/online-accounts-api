@@ -36,6 +36,8 @@
 #include <QSignalSpy>
 #include <QTest>
 #include <libqtdbusmock/DBusMock.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace QTest {
 template<>
@@ -364,6 +366,8 @@ void FunctionalTests::testAuthenticate()
     if (errorName.isEmpty()) {
         QVERIFY(!reply.isError());
         QVariantMap credentials = reply.argumentAt<0>();
+        // Add the requestor PID
+        expectedCredentials["requestorPid"] = getpid();
         QCOMPARE(credentials, expectedCredentials);
     } else {
         QVERIFY(reply.isError());
@@ -567,6 +571,7 @@ void FunctionalTests::testLifetime()
     QVariantMap expectedCredentials(authParams);
     expectedCredentials["UiPolicy"] = 2;
     expectedCredentials["host"] = "coolmail.ex";
+    expectedCredentials["requestorPid"] = getpid();
     QVariantMap credentials = reply.argumentAt<0>();
     QCOMPARE(credentials, expectedCredentials);
 

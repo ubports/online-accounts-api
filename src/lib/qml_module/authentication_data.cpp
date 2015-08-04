@@ -40,17 +40,17 @@ QVariantMap replyToMap(const OnlineAccounts::PendingCall &call,
     case OnlineAccounts::AuthenticationMethodOAuth1:
         {
             OnlineAccounts::OAuth1Reply reply(call);
-            map["consumerKey"] = reply.consumerKey();
-            map["consumerSecret"] = reply.consumerSecret();
-            map["token"] = reply.token();
-            map["tokenSecret"] = reply.tokenSecret();
-            map["signatureMethod"] = reply.signatureMethod();
+            map["consumerKey"] = QString::fromUtf8(reply.consumerKey());
+            map["consumerSecret"] = QString::fromUtf8(reply.consumerSecret());
+            map["token"] = QString::fromUtf8(reply.token());
+            map["tokenSecret"] = QString::fromUtf8(reply.tokenSecret());
+            map["signatureMethod"] = QString::fromUtf8(reply.signatureMethod());
             return map;
         }
     case OnlineAccounts::AuthenticationMethodOAuth2:
         {
             OnlineAccounts::OAuth2Reply reply(call);
-            map["accessToken"] = reply.accessToken();
+            map["accessToken"] = QString::fromUtf8(reply.accessToken());
             map["expiresIn"] = reply.expiresIn();
             map["grantedScopes"] = QVariant::fromValue(reply.grantedScopes());
             return map;

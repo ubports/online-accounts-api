@@ -22,6 +22,7 @@
 
 #include <QDebug>
 #include "authenticator.h"
+#include "manager_adaptor.h"
 
 using namespace OnlineAccountsDaemon;
 
@@ -91,7 +92,9 @@ void AuthenticationRequest::authenticate(const Accounts::AuthData &authData,
                                          const QVariantMap &parameters)
 {
     Q_D(AuthenticationRequest);
-    d->m_authenticator.authenticate(authData, parameters);
+    QVariantMap p(parameters);
+    p.insert("requestorPid", context().clientPid());
+    d->m_authenticator.authenticate(authData, p);
 }
 
 #include "authentication_request.moc"

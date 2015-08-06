@@ -40,26 +40,30 @@ QVariantMap replyToMap(const OnlineAccounts::PendingCall &call,
     case OnlineAccounts::AuthenticationMethodOAuth1:
         {
             OnlineAccounts::OAuth1Reply reply(call);
-            map["consumerKey"] = QString::fromUtf8(reply.consumerKey());
-            map["consumerSecret"] = QString::fromUtf8(reply.consumerSecret());
-            map["token"] = QString::fromUtf8(reply.token());
-            map["tokenSecret"] = QString::fromUtf8(reply.tokenSecret());
-            map["signatureMethod"] = QString::fromUtf8(reply.signatureMethod());
+            map["ConsumerKey"] = QString::fromUtf8(reply.consumerKey());
+            map["ConsumerSecret"] = QString::fromUtf8(reply.consumerSecret());
+            map["Token"] = QString::fromUtf8(reply.token());
+            map["TokenSecret"] = QString::fromUtf8(reply.tokenSecret());
+            map["SignatureMethod"] = QString::fromUtf8(reply.signatureMethod());
             return map;
         }
     case OnlineAccounts::AuthenticationMethodOAuth2:
         {
             OnlineAccounts::OAuth2Reply reply(call);
-            map["accessToken"] = QString::fromUtf8(reply.accessToken());
-            map["expiresIn"] = reply.expiresIn();
-            map["grantedScopes"] = QVariant::fromValue(reply.grantedScopes());
+            map["AccessToken"] = QString::fromUtf8(reply.accessToken());
+            map["ExpiresIn"] = reply.expiresIn();
+            QStringList grantedScopes;
+            Q_FOREACH(const QByteArray &s, reply.grantedScopes()) {
+                grantedScopes.append(s);
+            }
+            map["GrantedScopes"] = grantedScopes;
             return map;
         }
     case OnlineAccounts::AuthenticationMethodPassword:
         {
             OnlineAccounts::PasswordReply reply(call);
-            map["username"] = reply.username();
-            map["password"] = reply.password();
+            map["Username"] = reply.username();
+            map["Password"] = reply.password();
             return map;
         }
     default:
@@ -75,9 +79,9 @@ authenticationDataFromMap(const QVariantMap &params,
     case OnlineAccounts::AuthenticationMethodOAuth1:
         {
             OnlineAccounts::OAuth1Data data;
-            if (params.contains("consumerKey")) {
-                data.setConsumerKey(params["consumerKey"].toByteArray());
-                data.setConsumerSecret(params["consumerSecret"].toByteArray());
+            if (params.contains("ConsumerKey")) {
+                data.setConsumerKey(params["ConsumerKey"].toByteArray());
+                data.setConsumerSecret(params["ConsumerSecret"].toByteArray());
             }
             commonParamsFromMap(data, params);
             return data;
@@ -85,9 +89,16 @@ authenticationDataFromMap(const QVariantMap &params,
     case OnlineAccounts::AuthenticationMethodOAuth2:
         {
             OnlineAccounts::OAuth2Data data;
-            if (params.contains("clientId")) {
-                data.setClientId(params["clientId"].toByteArray());
-                data.setClientSecret(params["clientSecret"].toByteArray());
+            if (params.contains("ClientId")) {
+                data.setClientId(params["ClientId"].toByteArray());
+                data.setClientSecret(params["ClientSecret"].toByteArray());
+            }
+            if (params.contains("Scopes")) {
+                QList<QByteArray> scopes;
+                Q_FOREACH(const QString &s, params["Scopes"].toStringList()) {
+                    scopes.append(s.toUtf8());
+                }
+                data.setScopes(scopes);
             }
             commonParamsFromMap(data, params);
             return data;

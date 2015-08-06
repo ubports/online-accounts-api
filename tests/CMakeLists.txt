@@ -8,3 +8,4 @@ endif()
 
 add_subdirectory(daemon)
 add_subdirectory(lib/OnlineAccounts)
+add_subdirectory(lib/qml_module)

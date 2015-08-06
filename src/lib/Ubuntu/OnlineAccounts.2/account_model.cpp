@@ -282,10 +282,14 @@ QString AccountModel::serviceId() const
     return d->m_serviceId;
 }
 
-QList<Account*> AccountModel::accountList() const
+QList<QObject*> AccountModel::accountList() const
 {
     Q_D(const AccountModel);
-    return d->m_accounts;
+    QList<QObject*> objects;
+    Q_FOREACH(Account *a, d->m_accounts) {
+        objects.append(a);
+    }
+    return objects;
 }
 
 void AccountModel::requestAccess(const QString &service,

@@ -40,7 +40,7 @@ class AccountModel: public QAbstractListModel, public QQmlParserStatus
                WRITE setApplicationId NOTIFY applicationIdChanged)
     Q_PROPERTY(QString serviceId READ serviceId \
                WRITE setServiceId NOTIFY serviceIdChanged)
-    Q_PROPERTY(QList<Account*> accountList READ accountList \
+    Q_PROPERTY(QList<QObject*> accountList READ accountList \
                NOTIFY accountListChanged)
 
 public:
@@ -63,7 +63,7 @@ public:
     void setServiceId(const QString &serviceId);
     QString serviceId() const;
 
-    QList<Account*> accountList() const;
+    QList<QObject*> accountList() const;
 
     Q_INVOKABLE void requestAccess(const QString &service,
                                    const QVariantMap &params);

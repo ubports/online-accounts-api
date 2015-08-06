@@ -19,7 +19,7 @@ set(CMAKE_AUTOMOC ON)
 
 add_subdirectory(src/daemon)
 add_subdirectory(src/lib/OnlineAccounts)
-add_subdirectory(src/lib/qml_module)
+add_subdirectory(src/lib/Ubuntu/OnlineAccounts.2)
 
 if(cmake_build_type_lower MATCHES coverage)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage" )
@@ -38,6 +38,6 @@ add_subdirectory(tests)
 
 include(EnableCoverageReport)
 if(cmake_build_type_lower MATCHES coverage)
-    ENABLE_COVERAGE_REPORT(TARGETS OnlineAccountsQt accountd FILTER /usr/include ${CMAKE_SOURCE_DIR}/tests/* ${CMAKE_BINARY_DIR}/*)
+    ENABLE_COVERAGE_REPORT(TARGETS OnlineAccountsQt OnlineAccountsQML accountd FILTER /usr/include ${CMAKE_SOURCE_DIR}/tests/* ${CMAKE_BINARY_DIR}/*)
 endif()
 

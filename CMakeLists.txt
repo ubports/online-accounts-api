@@ -21,6 +21,8 @@ add_subdirectory(src/daemon)
 add_subdirectory(src/lib/OnlineAccounts)
 add_subdirectory(src/lib/Ubuntu/OnlineAccounts.2)
 
+add_subdirectory(doc)
+
 if(cmake_build_type_lower MATCHES coverage)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage" )
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage" )

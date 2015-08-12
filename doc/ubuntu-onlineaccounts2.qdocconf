@@ -1,0 +1,21 @@
+project = UbuntuOnlineAccounts2
+description = Ubuntu.OnlineAccounts 2.0 module documentation
+sourcedirs = ./ ../src/lib/Ubuntu/OnlineAccounts.2/
+sources.fileextensions = "*.qdoc *.cpp"
+outputdir = html
+outputformats = HTML
+version = 0.2
+syntaxhightlighting = true
+sourceencoding = UTF-8
+outputencoding = UTF-8
+
+HTML.nonavigationbar = "true"
+HTML.stylesheets = \
+    css/base.css \
+    css/qtquick.css \
+    css/reset.css \
+    css/scratch.css
+HTML.headerstyles = \
+    "<link rel=\"stylesheet\" type=\"text/css\" href=\"style/reset.css\" />\n" \
+    "<link rel=\"stylesheet\" type=\"text/css\" href=\"style/qtquick.css\" />\n" \
+    "<link rel=\"stylesheet\" type=\"text/css\" href=\"style/base.css\" />\n"

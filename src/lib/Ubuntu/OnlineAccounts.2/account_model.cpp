@@ -363,7 +363,7 @@ QList<QObject*> AccountModel::accountList() const
  * \list
  * \li \c account if access to an account was granted, this property will hold
  *     an \l Account object
- * \li \c errorCode error code, if an error occurred
+ * \li \c errorCode \l {errorCode} {error code}, if an error occurred
  * \li \c errorText is a textual description of the error, not meant for the
  *     end-user; it can be used for debugging purposes
  * \endlist

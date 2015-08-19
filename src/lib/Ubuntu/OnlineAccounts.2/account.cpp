@@ -108,6 +108,18 @@ void AccountPrivate::onAuthenticationFinished()
  *         }
  *     }
  * \endqml
+ *
+ * \target errorCode
+ * \section3 Error codes used in this module
+ * Some operations, such as the \l Account::authenticate() and the \l
+ * AccountModel::requestAccess() methods, can fail and return one of these
+ * error codes:
+ * \list
+ * \li \c Account.ErrorCodeNoAccount - The accounts is invalid
+ * \li \c Account.ErrorCodeUserCanceled - The operation was canceled by the user
+ * \li \c Account.ErrorCodePermissionDenied - The application has no
+ *     permission to complete the operation
+ * \endlist
  */
 
 Account::Account(OnlineAccounts::Account *account, QObject *parent):
@@ -216,7 +228,7 @@ OnlineAccounts::Account *Account::internalObject() const
  * will contain the authentication reply. If the authentication failed, the
  * following two keys will be present:
  * \list
- * \li \c errorCode is an error code
+ * \li \c errorCode is an \l {errorCode} {error code}
  * \li \c errorText is a textual description of the error, not meant for the
  *     end-user; it can be used for debugging purposes
  * \endlist

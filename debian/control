@@ -76,3 +76,14 @@ Depends: ${misc:Depends},
 Description: Online Accounts API for QML applications
  This module provides access to the new Online Accounts API from QML
  applications.
+
+Package: qml-module-ubuntu-onlineaccounts2-doc
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends},
+Description: Online Accounts API, HTML documentation
+ This module provides access to the new Online Accounts API from QML
+ applications.
+ .
+ This package contains the HTML documentation.

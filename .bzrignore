@@ -8,4 +8,5 @@
 /debian/online-accounts-daemon/
 /debian/online-accounts-daemon-dev/
 /debian/qml-module-ubuntu-onlineaccounts2/
+/debian/qml-module-ubuntu-onlineaccounts2-doc/
 /debian/tmp/

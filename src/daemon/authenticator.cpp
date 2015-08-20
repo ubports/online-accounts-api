@@ -29,10 +29,10 @@
 
 using namespace OnlineAccountsDaemon;
 
-namespace OnlineAccountsDaemon {
+namespace {
 
-static QVariantMap mergeMaps(const QVariantMap &map1,
-                             const QVariantMap &map2)
+QVariantMap mergeMaps(const QVariantMap &map1,
+                      const QVariantMap &map2)
 {
     if (map1.isEmpty()) return map2;
     if (map2.isEmpty()) return map1;
@@ -46,6 +46,10 @@ static QVariantMap mergeMaps(const QVariantMap &map1,
     }
     return map;
 }
+
+} // namespace
+
+namespace OnlineAccountsDaemon {
 
 class AuthenticatorPrivate: public QObject
 {

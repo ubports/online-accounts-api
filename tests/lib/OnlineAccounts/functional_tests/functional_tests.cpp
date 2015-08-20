@@ -24,7 +24,7 @@
 #include "OnlineAccounts/OAuth2Data"
 #include "OnlineAccounts/PasswordData"
 #include "OnlineAccounts/account_info.h"
-#include "OnlineAccounts/dbus_constants.h"
+#include "daemon/dbus_constants.h"
 #include <QDBusConnection>
 #include <QObject>
 #include <QSignalSpy>

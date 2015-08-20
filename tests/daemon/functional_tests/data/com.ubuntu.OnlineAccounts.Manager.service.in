@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=com.ubuntu.OnlineAccounts.Manager
+Exec=${OnlineAccountsDaemon_BINARY_DIR}/accountd

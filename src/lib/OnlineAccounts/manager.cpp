@@ -26,7 +26,7 @@
 #include <QDebug>
 #include "account_p.h"
 #include "authentication_data_p.h"
-#include "dbus_constants.h"
+#include "daemon/dbus_constants.h"
 #include "pending_call_p.h"
 
 using namespace OnlineAccounts;

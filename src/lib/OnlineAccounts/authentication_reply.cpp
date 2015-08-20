@@ -23,7 +23,7 @@
 #include <QDBusArgument>
 #include <QDBusMessage>
 #include <QDebug>
-#include "dbus_constants.h"
+#include "daemon/dbus_constants.h"
 #include "error_p.h"
 #include "pending_call_p.h"
 

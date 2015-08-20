@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 project(OnlineAccountsApi CXX)
 
+set(PROJECT_VERSION 0.1)
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -std=c++11")
 
@@ -17,6 +19,7 @@ set(CMAKE_AUTOMOC ON)
 
 add_subdirectory(src/daemon)
 add_subdirectory(src/lib/OnlineAccounts)
+add_subdirectory(src/lib/Ubuntu/OnlineAccounts.2)
 
 if(cmake_build_type_lower MATCHES coverage)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage" )
@@ -35,6 +38,6 @@ add_subdirectory(tests)
 
 include(EnableCoverageReport)
 if(cmake_build_type_lower MATCHES coverage)
-    ENABLE_COVERAGE_REPORT(TARGETS OnlineAccounts FILTER /usr/include ${CMAKE_SOURCE_DIR}/tests/* ${CMAKE_BINARY_DIR}/*)
+    ENABLE_COVERAGE_REPORT(TARGETS OnlineAccountsQt OnlineAccountsQML accountd FILTER /usr/include ${CMAKE_SOURCE_DIR}/tests/* ${CMAKE_BINARY_DIR}/*)
 endif()
 

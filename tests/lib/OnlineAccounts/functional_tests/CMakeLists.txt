@@ -10,6 +10,7 @@ add_executable(${TEST} ${SOURCES})
 include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     ${OnlineAccountsQt_SOURCE_DIR}/..
+    ${OnlineAccountsDaemon_SOURCE_DIR}/..
     ${QTDBUSMOCK_INCLUDE_DIRS}
     ${QTDBUSTEST_INCLUDE_DIRS}
 )
@@ -21,5 +22,5 @@ target_link_libraries(${TEST}
 )
 
 qt5_use_modules(${TEST} Core Test)
-add_test(${TEST} ${CMAKE_CURRENT_BINARY_DIR}/${TEST} -xunitxml -o ${TEST}.xml)
+add_test(${TEST} ${CMAKE_CURRENT_BINARY_DIR}/${TEST})
 add_dependencies(check ${TEST})

@@ -1,0 +1,3 @@
+usr/include/OnlineAccountsDaemon
+usr/lib/*/pkgconfig/OnlineAccountsDaemon.pc
+usr/share/dbus-1/interfaces

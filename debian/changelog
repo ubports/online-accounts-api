@@ -1,5 +1,63 @@
-online-accounts-api (0.1-0ubuntu1) UNRELEASED; urgency=low
+online-accounts-api (0.1+15.10.20150820-0ubuntu1) wily; urgency=low
 
+  [ Alberto Mardegan ]
   * Initial release.
+  * Add AccountInfo class to group the account ID plus details
+  * Add changelog added: debian/ debian/changelog
+  * Implement the D-Bus service
+  * Qt client API implementation added: cmake/EnableCoverageReport.cmake
+    cmake/FindLcov.cmake cmake/Findgcovr.cmake
+    cmake/ParseArguments.cmake src/lib/ src/lib/OnlineAccounts/
+    src/lib/OnlineAccounts/Account
+    src/lib/OnlineAccounts/AuthenticationData
+    src/lib/OnlineAccounts/AuthenticationReply
+    src/lib/OnlineAccounts/CMakeLists.txt src/lib/OnlineAccounts/Error
+    src/lib/OnlineAccounts/Manager src/lib/OnlineAccounts/OAuth1Data
+    src/lib/OnlineAccounts/OAuth2Data
+    src/lib/OnlineAccounts/PasswordData
+    src/lib/OnlineAccounts/PendingCall
+    src/lib/OnlineAccounts/PendingCallWatcher
+    src/lib/OnlineAccounts/account.cpp src/lib/OnlineAccounts/account.h
+    src/lib/OnlineAccounts/account_info.cpp
+    src/lib/OnlineAccounts/account_info.h
+    src/lib/OnlineAccounts/account_p.h
+    src/lib/OnlineAccounts/authentication_data.cpp
+    src/lib/OnlineAccounts/authentication_data.h
+    src/lib/OnlineAccounts/authentication_data_p.h
+    src/lib/OnlineAccounts/authentication_reply.cpp
+    src/lib/OnlineAccounts/dbus_constants.h
+    src/lib/OnlineAccounts/dbus_interface.cpp
+    src/lib/OnlineAccounts/dbus_interface.h
+    src/lib/OnlineAccounts/error.cpp src/lib/OnlineAccounts/error.h
+    src/lib/OnlineAccounts/error_p.h src/lib/OnlineAccounts/global.h
+    src/lib/OnlineAccounts/manager.cpp src/lib/OnlineAccounts/manager.h
+    src/lib/OnlineAccounts/manager_p.h
+    src/lib/OnlineAccounts/pending_call.cpp
+    src/lib/OnlineAccounts/pending_call.h
+    src/lib/OnlineAccounts/pending_call_p.h
+    src/lib/OnlineAccounts/request_access_reply.cpp tests/lib/
+    tests/lib/OnlineAccounts/ tests/lib/OnlineAccounts/CMakeLists.txt
+    tests/lib/OnlineAccounts/functional_tests/
+    tests/lib/OnlineAccounts/functional_tests/CMakeLists.txt
+    tests/lib/OnlineAccounts/functional_tests/functional_tests.cpp
+    tests/lib/OnlineAccounts/tst_authentication_data/
+    tests/lib/OnlineAccounts/tst_authentication_data/CMakeLists.txt
+    tests/lib/OnlineAccounts/tst_authentication_data/tst_authentication_
+    data.cpp
+  * Update DBus API
+  * bootstrap citrain added: .bzr-builddeb/ .bzr-builddeb/default.conf
+  * style
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Tue, 07 Jul 2015 17:37:02 +0300
+  [ James Henstridge ]
+  * Add checkAccess() to check for access to a particular service ID.
+  * Start of AppArmor policy checking code. added:
+    src/daemon/aacontext.cpp src/daemon/aacontext.h
+
+  [ Marcus Tomlinson ]
+  * Added the testing structure added: .bzrignore cmake/
+    cmake/FindGMock.cmake tests/ tests/CMakeLists.txt tests/unit/
+    tests/unit/CMakeLists.txt tests/unit/unit-test-template/
+    tests/unit/unit-test-template/CMakeLists.txt tests/unit/unit-test-
+    template/unit-test-template.cpp
+
+ -- CI Train Bot <ci-train-bot@canonical.com>  Thu, 20 Aug 2015 10:31:28 +0000

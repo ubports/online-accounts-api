@@ -70,7 +70,7 @@ private:
     QVariantMap m_reply;
     QString m_errorName;
     QString m_errorMessage;
-    mutable Authenticator *q_ptr;
+    Authenticator *q_ptr;
 };
 
 } // namespace

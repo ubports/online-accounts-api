@@ -53,7 +53,7 @@ private:
     QDBusConnection m_connection;
     QDBusServiceWatcher m_watcher;
     QHash<QString,QString> m_clientContexts;
-    mutable ClientRegistry *q_ptr;
+    ClientRegistry *q_ptr;
 };
 
 } // namespace

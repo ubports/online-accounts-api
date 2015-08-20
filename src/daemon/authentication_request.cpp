@@ -41,7 +41,7 @@ private Q_SLOTS:
 
 private:
     Authenticator m_authenticator;
-    mutable AuthenticationRequest *q_ptr;
+    AuthenticationRequest *q_ptr;
 };
 
 } // namespace

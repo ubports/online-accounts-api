@@ -32,6 +32,11 @@ AuthenticationDataPrivate::AuthenticationDataPrivate(AuthenticationMethod method
 {
 }
 
+AuthenticationData::AuthenticationData(AuthenticationMethod method):
+    d(new AuthenticationDataPrivate(method))
+{
+}
+
 AuthenticationData::AuthenticationData(AuthenticationDataPrivate *priv):
     d(priv)
 {

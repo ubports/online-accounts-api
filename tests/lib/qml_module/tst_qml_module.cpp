@@ -370,6 +370,7 @@ void ModuleTest::testModelRequestAccess_data()
     accessReply.clear();
     accessReply["accountDisplayName"] = "Bob";
     authenticationData.clear();
+    authenticationData.insert("AccessToken", "GoOn");
     QTest::newRow("access granted") <<
         "ret = ((1, {'displayName': 'Bob'}),{'AccessToken':'GoOn'})" <<
         accessReply <<

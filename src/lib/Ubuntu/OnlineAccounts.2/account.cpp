@@ -70,7 +70,7 @@ void AccountPrivate::onAuthenticationFinished()
         map["errorCode"] = reply.error().code();
         map["errorText"] = reply.error().text();
     } else {
-        map = replyToMap(*watcher, m_account->authenticationMethod());
+        map = replyToMap(*watcher);
     }
 
     Q_EMIT q->authenticationReply(map);

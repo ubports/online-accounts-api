@@ -37,6 +37,7 @@ class AuthenticationDataPrivate;
 class ONLINE_ACCOUNTS_EXPORT AuthenticationData
 {
 public:
+    AuthenticationData(AuthenticationMethod method);
     AuthenticationData(const AuthenticationData &other);
     virtual ~AuthenticationData();
 
@@ -58,7 +59,6 @@ protected:
 private:
     friend class Manager;
     friend class ManagerPrivate;
-    AuthenticationData();
 };
 
 class AuthenticationReplyPrivate;

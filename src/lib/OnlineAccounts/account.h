@@ -48,6 +48,7 @@ public:
     QString serviceId() const;
     AuthenticationMethod authenticationMethod() const;
 
+    QStringList keys() const;
     QVariant setting(const QString &key) const;
 
     PendingCall authenticate(const AuthenticationData &authData);

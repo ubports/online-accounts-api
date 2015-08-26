@@ -31,6 +31,15 @@
 #include <QTest>
 #include <libqtdbusmock/DBusMock.h>
 
+namespace QTest {
+template<>
+char *toString(const QVariantMap &map)
+{
+    QJsonDocument doc(QJsonObject::fromVariantMap(map));
+    return qstrdup(doc.toJson(QJsonDocument::Compact).data());
+}
+} // QTest namespace
+
 class FunctionalTests: public QObject
 {
     Q_OBJECT
@@ -316,9 +325,11 @@ void FunctionalTests::testAccountData()
     QCOMPARE(account->serviceId(), serviceId);
     QCOMPARE(int(account->authenticationMethod()), authenticationMethod);
 
-    Q_FOREACH(const QString &key, settings.keys()) {
-        QCOMPARE(account->setting(key), settings.value(key));
+    QVariantMap accountSettings;
+    Q_FOREACH(const QString &key, account->keys()) {
+        accountSettings.insert(key, account->setting(key));
     }
+    QCOMPARE(accountSettings, settings);
 
     delete account;
 }

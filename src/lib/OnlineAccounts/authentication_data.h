@@ -48,6 +48,9 @@ public:
     void invalidateCachedReply();
     bool mustInvalidateCachedReply() const;
 
+    void setParameters(const QVariantMap &parameters);
+    QVariantMap parameters() const;
+
 protected:
     AuthenticationData(AuthenticationDataPrivate *priv);
     QSharedDataPointer<AuthenticationDataPrivate> d;
@@ -67,6 +70,8 @@ public:
 
     bool hasError() const { return error().isValid(); }
     Error error() const;
+
+    QVariantMap data() const;
 
 protected:
     AuthenticationReply(AuthenticationReplyPrivate *priv);

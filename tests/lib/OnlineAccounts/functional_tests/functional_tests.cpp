@@ -492,6 +492,14 @@ void FunctionalTests::testAuthentication()
     QCOMPARE(oauth1reply.token(), QByteArray("a token"));
     QCOMPARE(oauth1reply.tokenSecret(), QByteArray("a token secret"));
     QCOMPARE(oauth1reply.signatureMethod(), QByteArray("PLAIN"));
+    /* Compare the whole data dictionary */
+    QVariantMap expectedData;
+    expectedData.insert(ONLINE_ACCOUNTS_AUTH_KEY_CONSUMER_KEY, "a key");
+    expectedData.insert(ONLINE_ACCOUNTS_AUTH_KEY_CONSUMER_SECRET, "a secret");
+    expectedData.insert(ONLINE_ACCOUNTS_AUTH_KEY_TOKEN, "a token");
+    expectedData.insert(ONLINE_ACCOUNTS_AUTH_KEY_TOKEN_SECRET, "a token secret");
+    expectedData.insert(ONLINE_ACCOUNTS_AUTH_KEY_SIGNATURE_METHOD, "PLAIN");
+    QCOMPARE(oauth1reply.data(), expectedData);
 
     /* Test OAuth 2.0 */
     account = manager.account(2);

@@ -71,6 +71,16 @@ bool AuthenticationData::mustInvalidateCachedReply() const
     return d->m_invalidateCachedReply;
 }
 
+void AuthenticationData::setParameters(const QVariantMap &parameters)
+{
+    d->m_parameters = parameters;
+}
+
+QVariantMap AuthenticationData::parameters() const
+{
+    return d->m_parameters;
+}
+
 /* OAuth 2.0 */
 
 OAuth2Data::OAuth2Data():

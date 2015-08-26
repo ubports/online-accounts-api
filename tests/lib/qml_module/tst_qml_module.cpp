@@ -157,17 +157,24 @@ void ModuleTest::testModelRoles_data()
     QTest::addColumn<QString>("displayName");
     QTest::addColumn<QString>("serviceId");
     QTest::addColumn<int>("authenticationMethod");
+    QTest::addColumn<QVariantMap>("settings");
 
+    QVariantMap settings;
     QTest::newRow("empty") <<
         "{}" <<
-        "" << "" << 0;
+        "" << "" << 0 << settings;
+
+    settings.insert("Server", "www.example.com");
+    settings.insert("Port", "9900");
     QTest::newRow("complete") <<
         "{"
         " '" ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME "': 'Tom',"
         " '" ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID "': 'cool',"
         " '" ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD "': 2,"
+        " '" ONLINE_ACCOUNTS_INFO_KEY_SETTINGS "Server': 'www.example.com',"
+        " '" ONLINE_ACCOUNTS_INFO_KEY_SETTINGS "Port': 9900,"
         "}" <<
-        "Tom" << "cool" << 2;
+        "Tom" << "cool" << 2 << settings;
 }
 
 void ModuleTest::testModelRoles()
@@ -176,6 +183,7 @@ void ModuleTest::testModelRoles()
     QFETCH(QString, displayName);
     QFETCH(QString, serviceId);
     QFETCH(int, authenticationMethod);
+    QFETCH(QVariantMap, settings);
 
     addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
                     QString("ret = [(1, %1)]").arg(accountData));
@@ -200,7 +208,7 @@ void ModuleTest::testModelRoles()
     QCOMPARE(get(model, 0, "authenticationMethod").toInt(),
              authenticationMethod);
     // until https://bugs.launchpad.net/bugs/1479768 is fixed
-    QCOMPARE(get(model, 0, "settings").toMap(), QVariantMap());
+    QCOMPARE(get(model, 0, "settings").toMap(), settings);
     QObject *account = get(model, 0, "account").value<QObject*>();
     QVERIFY(account != 0);
     QCOMPARE(account->metaObject()->className(), "OnlineAccountsModule::Account");

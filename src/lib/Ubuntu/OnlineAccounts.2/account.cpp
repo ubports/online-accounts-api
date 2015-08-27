@@ -239,7 +239,19 @@ OnlineAccounts::Account *Account::internalObject() const
  *
  * Perform the authentication on this account. The \a params parameter can be
  * used to pass authentication data, such as the ClientId and ClientSecret used
- * in the OAuth flow.
+ * in the OAuth flow. The list of the supported authentication parameters
+ * depend on the authentication method being used, and are documented in the
+ * Online Accounts development Guide in the Ubuntu Developer Portal.
+ *
+ * There are, however, two authentication parameters which are available
+ * regardless of the authentication method being used:
+ * \list
+ * \li \c invalidateCachedReply can be set to \c true when the previous
+ *     authentication reply returned an invalid access token. It will ensure
+ *     the creation of a new access token.
+ * \li \c interactive is \c true by default; if set to \c false, it will ensure
+ *     that no interaction with the user will occur.
+ * \endlist
  *
  * Each call to this method will cause the \l authenticationReply signal to be
  * emitted at some time later. Note that the authentication might involve

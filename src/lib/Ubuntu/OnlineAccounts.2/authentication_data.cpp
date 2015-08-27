@@ -34,10 +34,13 @@ authenticationDataFromMap(const QVariantMap &params,
                           OnlineAccounts::AuthenticationMethod method)
 {
     OnlineAccounts::AuthenticationData data(method);
+    QVariantMap cleanedParams(params);
     data.setInteractive(params.value("interactive", true).toBool());
     if (params["invalidateCachedReply"].toBool()) {
         data.invalidateCachedReply();
     }
-    data.setParameters(params);
+    cleanedParams.remove("interactive");
+    cleanedParams.remove("invalidateCachedReply");
+    data.setParameters(cleanedParams);
     return data;
 }

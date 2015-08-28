@@ -23,7 +23,7 @@
 
 #include <QVariantMap>
 
-#include "daemon/dbus_constants.h"
+#include "OnlineAccountsDaemon/dbus_constants.h"
 #include "global.h"
 
 class QDBusArgument;

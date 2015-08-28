@@ -6,4 +6,6 @@ includedir=${prefix}/include
 Name: @ACCOUNTD_LIB@
 Description: Binding development files for the Online Accounts simplified API
 Version: @PROJECT_VERSION@
-Cflags: -I${includedir}/@ACCOUNTD_LIB@
+Requires: Qt5Core
+Libs: -L${libdir} -l@ACCOUNTD_LIB@
+Cflags: -I${includedir}/

@@ -41,6 +41,9 @@ Depends: ${misc:Depends},
          ${shlibs:Depends},
          libonline-accounts-daemon1 (= ${binary:Version}),
 Pre-Depends: dpkg (>= 1.15.6~), ${misc:Pre-Depends},
+Breaks: online-accounts-daemon-dev
+Provides: online-accounts-daemon-dev
+Replaces: online-accounts-daemon-dev
 Description: Online Accounts simplified API (bindings development files)
  This module contains the necessary files for developing client libraries
  interfacing with the simplified Online Accounts API.

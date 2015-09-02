@@ -28,6 +28,7 @@
 #include <QString>
 #include <QVariantMap>
 #include <sys/types.h>
+#include "account_info.h"
 #include "manager.h"
 
 namespace OnlineAccountsDaemon {

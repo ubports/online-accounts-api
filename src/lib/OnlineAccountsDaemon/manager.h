@@ -26,10 +26,10 @@
 #include <QList>
 #include <QObject>
 #include <QVariantMap>
-#include "account_info.h"
 
 namespace OnlineAccountsDaemon {
 
+struct AccountInfo;
 class CallContext;
 class ManagerAdaptor;
 

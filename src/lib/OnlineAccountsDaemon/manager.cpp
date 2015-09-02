@@ -590,4 +590,9 @@ void Manager::onDisconnected()
     QCoreApplication::instance()->quit();
 }
 
+void *oad_create_manager(QObject *parent)
+{
+    return new Manager(parent);
+}
+
 #include "manager.moc"

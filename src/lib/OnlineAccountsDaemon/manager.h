@@ -27,6 +27,10 @@
 #include <QObject>
 #include <QVariantMap>
 
+extern "C" {
+void *oad_create_manager(QObject *parent);
+}
+
 namespace OnlineAccountsDaemon {
 
 struct AccountInfo;

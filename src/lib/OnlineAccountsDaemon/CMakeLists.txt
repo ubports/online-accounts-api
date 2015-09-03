@@ -5,6 +5,7 @@ pkg_check_modules(OACLIENT OnlineAccountsClient REQUIRED)
 pkg_check_modules(SIGNONQT libsignon-qt5 REQUIRED)
 
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 set(ACCOUNTD_LIB OnlineAccountsDaemon)
 
@@ -49,6 +50,7 @@ install(TARGETS ${ACCOUNTD_LIB}
 
 install(FILES
     Manager manager.h
+    global.h
     DESTINATION include/${ACCOUNTD_LIB}
 )
 configure_file(${ACCOUNTD_LIB}.pc.in ${ACCOUNTD_LIB}.pc @ONLY)

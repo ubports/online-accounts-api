@@ -186,8 +186,7 @@ void AccountModelPrivate::onAccessRequestFinished()
         OnlineAccounts::Account *account = reply.account();
         accountData["account"] =
             QVariant::fromValue<QObject*>(handleAccount(account));
-        auto method = account->authenticationMethod();
-        authenticationData = replyToMap(*watcher, method);
+        authenticationData = replyToMap(*watcher);
     }
 
     Q_EMIT q->accessReply(accountData, authenticationData);

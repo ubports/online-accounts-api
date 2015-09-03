@@ -70,7 +70,7 @@ void AccountPrivate::onAuthenticationFinished()
         map["errorCode"] = reply.error().code();
         map["errorText"] = reply.error().text();
     } else {
-        map = replyToMap(*watcher, m_account->authenticationMethod());
+        map = replyToMap(*watcher);
     }
 
     Q_EMIT q->authenticationReply(map);
@@ -210,9 +210,12 @@ Account::AuthenticationMethod Account::authenticationMethod() const
  */
 QVariantMap Account::settings() const
 {
-    /* FIXME: libOnlineAccountsQt lacks a way to retrieve the list of settings;
-     * until that is available, we cannot do much here */
-    return QVariantMap();
+    Q_D(const Account);
+    QVariantMap ret;
+    Q_FOREACH(const QString &key, d->m_account->keys()) {
+        ret.insert(key, d->m_account->setting(key));
+    }
+    return ret;
 }
 
 OnlineAccounts::Account *Account::internalObject() const

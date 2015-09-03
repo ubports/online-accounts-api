@@ -153,6 +153,12 @@ Error AuthenticationReply::error() const
     return d->m_error;
 }
 
+QVariantMap AuthenticationReply::data() const
+{
+    Q_D(const AuthenticationReply);
+    return d->data();
+}
+
 /* OAuth 2.0 */
 
 OAuth2Reply::OAuth2Reply(const PendingCall &call):

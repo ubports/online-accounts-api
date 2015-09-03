@@ -31,6 +31,15 @@
 #include <QTest>
 #include <libqtdbusmock/DBusMock.h>
 
+namespace QTest {
+template<>
+char *toString(const QVariantMap &map)
+{
+    QJsonDocument doc(QJsonObject::fromVariantMap(map));
+    return qstrdup(doc.toJson(QJsonDocument::Compact).data());
+}
+} // QTest namespace
+
 class FunctionalTests: public QObject
 {
     Q_OBJECT
@@ -316,9 +325,11 @@ void FunctionalTests::testAccountData()
     QCOMPARE(account->serviceId(), serviceId);
     QCOMPARE(int(account->authenticationMethod()), authenticationMethod);
 
-    Q_FOREACH(const QString &key, settings.keys()) {
-        QCOMPARE(account->setting(key), settings.value(key));
+    QVariantMap accountSettings;
+    Q_FOREACH(const QString &key, account->keys()) {
+        accountSettings.insert(key, account->setting(key));
     }
+    QCOMPARE(accountSettings, settings);
 
     delete account;
 }
@@ -481,6 +492,14 @@ void FunctionalTests::testAuthentication()
     QCOMPARE(oauth1reply.token(), QByteArray("a token"));
     QCOMPARE(oauth1reply.tokenSecret(), QByteArray("a token secret"));
     QCOMPARE(oauth1reply.signatureMethod(), QByteArray("PLAIN"));
+    /* Compare the whole data dictionary */
+    QVariantMap expectedData;
+    expectedData.insert(ONLINE_ACCOUNTS_AUTH_KEY_CONSUMER_KEY, "a key");
+    expectedData.insert(ONLINE_ACCOUNTS_AUTH_KEY_CONSUMER_SECRET, "a secret");
+    expectedData.insert(ONLINE_ACCOUNTS_AUTH_KEY_TOKEN, "a token");
+    expectedData.insert(ONLINE_ACCOUNTS_AUTH_KEY_TOKEN_SECRET, "a token secret");
+    expectedData.insert(ONLINE_ACCOUNTS_AUTH_KEY_SIGNATURE_METHOD, "PLAIN");
+    QCOMPARE(oauth1reply.data(), expectedData);
 
     /* Test OAuth 2.0 */
     account = manager.account(2);

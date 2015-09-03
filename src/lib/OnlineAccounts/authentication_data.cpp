@@ -32,6 +32,11 @@ AuthenticationDataPrivate::AuthenticationDataPrivate(AuthenticationMethod method
 {
 }
 
+AuthenticationData::AuthenticationData(AuthenticationMethod method):
+    d(new AuthenticationDataPrivate(method))
+{
+}
+
 AuthenticationData::AuthenticationData(AuthenticationDataPrivate *priv):
     d(priv)
 {
@@ -69,6 +74,16 @@ void AuthenticationData::invalidateCachedReply()
 bool AuthenticationData::mustInvalidateCachedReply() const
 {
     return d->m_invalidateCachedReply;
+}
+
+void AuthenticationData::setParameters(const QVariantMap &parameters)
+{
+    d->m_parameters = parameters;
+}
+
+QVariantMap AuthenticationData::parameters() const
+{
+    return d->m_parameters;
 }
 
 /* OAuth 2.0 */

@@ -37,6 +37,7 @@ class AuthenticationDataPrivate;
 class ONLINE_ACCOUNTS_EXPORT AuthenticationData
 {
 public:
+    AuthenticationData(AuthenticationMethod method);
     AuthenticationData(const AuthenticationData &other);
     virtual ~AuthenticationData();
 
@@ -48,6 +49,9 @@ public:
     void invalidateCachedReply();
     bool mustInvalidateCachedReply() const;
 
+    void setParameters(const QVariantMap &parameters);
+    QVariantMap parameters() const;
+
 protected:
     AuthenticationData(AuthenticationDataPrivate *priv);
     QSharedDataPointer<AuthenticationDataPrivate> d;
@@ -55,7 +59,6 @@ protected:
 private:
     friend class Manager;
     friend class ManagerPrivate;
-    AuthenticationData();
 };
 
 class AuthenticationReplyPrivate;
@@ -67,6 +70,8 @@ public:
 
     bool hasError() const { return error().isValid(); }
     Error error() const;
+
+    QVariantMap data() const;
 
 protected:
     AuthenticationReply(AuthenticationReplyPrivate *priv);

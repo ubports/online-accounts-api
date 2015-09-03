@@ -28,8 +28,7 @@ class PendingCall;
 #include "OnlineAccounts/AuthenticationData"
 #include <QVariantMap>
 
-QVariantMap replyToMap(const OnlineAccounts::PendingCall &call,
-                       OnlineAccounts::AuthenticationMethod method);
+QVariantMap replyToMap(const OnlineAccounts::PendingCall &call);
 
 OnlineAccounts::AuthenticationData
 authenticationDataFromMap(const QVariantMap &params,

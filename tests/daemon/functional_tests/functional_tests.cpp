@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "daemon/dbus_constants.h"
+#include "OnlineAccountsDaemon/dbus_constants.h"
 #include "daemon_interface.h"
 #include "fake_dbus_apparmor.h"
 #include "fake_online_accounts_service.h"

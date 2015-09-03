@@ -26,10 +26,14 @@
 #include <QList>
 #include <QObject>
 #include <QVariantMap>
-#include "account_info.h"
+
+extern "C" {
+void *oad_create_manager(QObject *parent);
+}
 
 namespace OnlineAccountsDaemon {
 
+struct AccountInfo;
 class CallContext;
 class ManagerAdaptor;
 

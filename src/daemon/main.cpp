@@ -22,7 +22,7 @@
 #include <QDBusConnection>
 #include <QProcessEnvironment>
 #include "inactivity_timer.h"
-#include "manager.h"
+#include "OnlineAccountsDaemon/Manager"
 
 int main(int argc, char **argv)
 {

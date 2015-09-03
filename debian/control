@@ -24,22 +24,26 @@ Homepage: https://launchpad.net/online-accounts-api
 # code again.
 Vcs-Bzr: https://code.launchpad.net/~online-accounts/online-accounts-api/trunk
 
-Package: online-accounts-daemon
+Package: libonline-accounts-daemon1
+Section: libs
 Architecture: any
 Depends: ${misc:Depends},
          ${shlibs:Depends},
-         signond,
+Pre-Depends: ${misc:Pre-Depends},
 Description: Online Accounts simplified API (D-Bus service)
  D-Bus service implementing the simplified Online Accounts API.
 
-Package: online-accounts-daemon-dev
+Package: libonline-accounts-daemon-dev
 Section: libdevel
 Architecture: any
 Multi-Arch: same
 Depends: ${misc:Depends},
          ${shlibs:Depends},
-         online-accounts-daemon (= ${binary:Version}),
+         libonline-accounts-daemon1 (= ${binary:Version}),
 Pre-Depends: dpkg (>= 1.15.6~), ${misc:Pre-Depends},
+Breaks: online-accounts-daemon-dev
+Provides: online-accounts-daemon-dev
+Replaces: online-accounts-daemon-dev
 Description: Online Accounts simplified API (bindings development files)
  This module contains the necessary files for developing client libraries
  interfacing with the simplified Online Accounts API.

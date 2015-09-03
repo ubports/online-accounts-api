@@ -30,8 +30,6 @@
 
 using namespace OnlineAccountsDaemon;
 
-static ClientRegistry *static_instance = 0;
-
 namespace OnlineAccountsDaemon {
 
 class ClientRegistryPrivate: public QObject
@@ -50,11 +48,14 @@ private Q_SLOTS:
     void onServiceUnregistered(const QString &client);
 
 private:
+    static ClientRegistry *m_instance;
     QDBusConnection m_connection;
     QDBusServiceWatcher m_watcher;
     QHash<QString,QString> m_clientContexts;
-    mutable ClientRegistry *q_ptr;
+    ClientRegistry *q_ptr;
 };
+
+ClientRegistry *ClientRegistryPrivate::m_instance = 0;
 
 } // namespace
 
@@ -136,10 +137,10 @@ ClientRegistry::~ClientRegistry()
 
 ClientRegistry *ClientRegistry::instance()
 {
-    if (!static_instance) {
-        static_instance = new ClientRegistry();
+    if (!ClientRegistryPrivate::m_instance) {
+        ClientRegistryPrivate::m_instance = new ClientRegistry();
     }
-    return static_instance;
+    return ClientRegistryPrivate::m_instance;
 }
 
 QString ClientRegistry::registerClient(const QDBusConnection &connection,

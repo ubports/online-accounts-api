@@ -53,7 +53,7 @@ private:
     Authenticator m_authenticator;
     QVariantMap m_parameters;
     AccountInfo m_accountInfo;
-    mutable AccessRequest *q_ptr;
+    AccessRequest *q_ptr;
 };
 
 } // namespace

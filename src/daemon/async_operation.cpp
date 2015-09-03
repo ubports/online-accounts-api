@@ -36,7 +36,7 @@ public:
 
 private:
     CallContext m_context;
-    mutable AsyncOperation *q_ptr;
+    AsyncOperation *q_ptr;
 };
 
 } // namespace

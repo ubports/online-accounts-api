@@ -108,7 +108,7 @@ private:
     ClientMap m_clients;
     QList<Accounts::Account*> m_watchedAccounts;
     bool m_isIdle;
-    mutable Manager *q_ptr;
+    Manager *q_ptr;
 };
 
 } // namespace

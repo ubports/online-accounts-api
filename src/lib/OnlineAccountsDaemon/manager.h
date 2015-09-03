@@ -27,8 +27,10 @@
 #include <QObject>
 #include <QVariantMap>
 
+#include "global.h"
+
 extern "C" {
-void *oad_create_manager(QObject *parent);
+OAD_EXPORT void *oad_create_manager(QObject *parent);
 }
 
 namespace OnlineAccountsDaemon {

@@ -27,10 +27,10 @@ add_library(${ACCOUNTD_LIB} SHARED
     manager_adaptor.cpp
     state_saver.cpp
 )
-set_target_properties(${ACCOUNTD_LIB} PROPERTIES
-    VERSION 1.0.0
-    SOVERSION 1
-)
+#set_target_properties(${ACCOUNTD_LIB} PROPERTIES
+#    VERSION 1.0.0
+#    SOVERSION 1
+#)
 qt5_use_modules(${ACCOUNTD_LIB} DBus)
 target_link_libraries(${ACCOUNTD_LIB}
     ${ACCOUNTSQT_LDFLAGS}
@@ -48,11 +48,6 @@ install(TARGETS ${ACCOUNTD_LIB}
 
 # Development files
 
-install(FILES
-    Manager manager.h
-    global.h
-    DESTINATION include/${ACCOUNTD_LIB}
-)
 configure_file(${ACCOUNTD_LIB}.pc.in ${ACCOUNTD_LIB}.pc @ONLY)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${ACCOUNTD_LIB}.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig)
 

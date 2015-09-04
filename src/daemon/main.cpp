@@ -42,7 +42,7 @@ int main(int argc, char **argv)
             daemonTimeout = value;
     }
 
-    auto manager = new OnlineAccountsDaemon::Manager();
+    auto manager = (QObject *)oad_create_manager(0);
 
     auto inactivityTimer =
         new OnlineAccountsDaemon::InactivityTimer(daemonTimeout * 1000);

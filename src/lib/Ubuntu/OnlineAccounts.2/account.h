@@ -35,7 +35,7 @@ class AccountPrivate;
 class Account: public QObject
 {
     Q_OBJECT
-    Q_ENUMS(AuthenticationMethod)
+    Q_ENUMS(AuthenticationMethod ErrorCode)
     Q_PROPERTY(bool valid READ isValid NOTIFY validChanged)
     Q_PROPERTY(QString displayName READ displayName NOTIFY accountChanged)
     Q_PROPERTY(int accountId READ accountId CONSTANT)
@@ -51,6 +51,16 @@ public:
         AuthenticationMethodOAuth1,
         AuthenticationMethodOAuth2,
         AuthenticationMethodPassword,
+    };
+
+    enum ErrorCode {
+        // Make sure these are kept in sync with those from OnlineAccountsQt
+        ErrorCodeNoError = 0,
+        ErrorCodeNoAccount,
+        ErrorCodeWrongType,
+        ErrorCodeUserCanceled,
+        ErrorCodePermissionDenied,
+        ErrorCodeInteractionRequired,
     };
 
     explicit Account(OnlineAccounts::Account *account, QObject *parent = 0);

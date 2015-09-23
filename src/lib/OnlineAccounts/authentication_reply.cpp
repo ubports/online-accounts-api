@@ -23,7 +23,7 @@
 #include <QDBusArgument>
 #include <QDBusMessage>
 #include <QDebug>
-#include "daemon/dbus_constants.h"
+#include "OnlineAccountsDaemon/dbus_constants.h"
 #include "error_p.h"
 #include "pending_call_p.h"
 
@@ -151,6 +151,12 @@ Error AuthenticationReply::error() const
 {
     Q_D(const AuthenticationReply);
     return d->m_error;
+}
+
+QVariantMap AuthenticationReply::data() const
+{
+    Q_D(const AuthenticationReply);
+    return d->data();
 }
 
 /* OAuth 2.0 */

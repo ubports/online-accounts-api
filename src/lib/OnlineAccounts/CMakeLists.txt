@@ -6,6 +6,7 @@ include_directories(.
     ${OnlineAccountsDaemon_SOURCE_DIR}/..
 )
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 add_library(${CLIENT_LIB} SHARED
     account.cpp

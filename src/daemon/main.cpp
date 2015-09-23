@@ -22,7 +22,7 @@
 #include <QDBusConnection>
 #include <QProcessEnvironment>
 #include "inactivity_timer.h"
-#include "manager.h"
+#include "OnlineAccountsDaemon/Manager"
 
 int main(int argc, char **argv)
 {
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
             daemonTimeout = value;
     }
 
-    auto manager = new OnlineAccountsDaemon::Manager();
+    auto manager = (QObject *)oad_create_manager(0);
 
     auto inactivityTimer =
         new OnlineAccountsDaemon::InactivityTimer(daemonTimeout * 1000);

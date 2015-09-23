@@ -1,5 +1,5 @@
 /*
- * This file is part of libOnlineAccounts
+ * This file is part of libOnlineAccountsDaemon
  *
  * Copyright (C) 2015 Canonical Ltd.
  *
@@ -18,25 +18,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "error_p.h"
+#ifndef ONLINE_ACCOUNTS_DAEMON_GLOBAL_H
+#define ONLINE_ACCOUNTS_DAEMON_GLOBAL_H
 
-#include <QDBusError>
-#include "OnlineAccountsDaemon/dbus_constants.h"
+#include <QtGlobal>
 
-namespace OnlineAccounts {
+#if defined(BUILDING_ONLINE_ACCOUNTS_DAEMON)
+#  define OAD_EXPORT Q_DECL_EXPORT
+#else
+#  define OAD_EXPORT Q_DECL_IMPORT
+#endif
 
-Error errorFromDBus(const QDBusError &dbusError)
-{
-    Error::Code code = Error::PermissionDenied;
-    QString name = dbusError.name();
-    if (name == ONLINE_ACCOUNTS_ERROR_NO_ACCOUNT) {
-        code = Error::NoAccount;
-    } else if (name == ONLINE_ACCOUNTS_ERROR_USER_CANCELED) {
-        code = Error::UserCanceled;
-    } else if (name == ONLINE_ACCOUNTS_ERROR_INTERACTION_REQUIRED) {
-        code = Error::InteractionRequired;
-    }
-    return Error(code, dbusError.message());
-}
-
-} // namespace
+#endif // ONLINE_ACCOUNTS_DAEMON_GLOBAL_H

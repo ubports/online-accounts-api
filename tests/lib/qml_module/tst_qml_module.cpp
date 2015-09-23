@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "daemon/dbus_constants.h"
+#include "OnlineAccountsDaemon/dbus_constants.h"
 #include <QDBusArgument>
 #include <QDBusConnection>
 #include <QJsonDocument>
@@ -157,17 +157,24 @@ void ModuleTest::testModelRoles_data()
     QTest::addColumn<QString>("displayName");
     QTest::addColumn<QString>("serviceId");
     QTest::addColumn<int>("authenticationMethod");
+    QTest::addColumn<QVariantMap>("settings");
 
+    QVariantMap settings;
     QTest::newRow("empty") <<
         "{}" <<
-        "" << "" << 0;
+        "" << "" << 0 << settings;
+
+    settings.insert("Server", "www.example.com");
+    settings.insert("Port", "9900");
     QTest::newRow("complete") <<
         "{"
         " '" ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME "': 'Tom',"
         " '" ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID "': 'cool',"
         " '" ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD "': 2,"
+        " '" ONLINE_ACCOUNTS_INFO_KEY_SETTINGS "Server': 'www.example.com',"
+        " '" ONLINE_ACCOUNTS_INFO_KEY_SETTINGS "Port': 9900,"
         "}" <<
-        "Tom" << "cool" << 2;
+        "Tom" << "cool" << 2 << settings;
 }
 
 void ModuleTest::testModelRoles()
@@ -176,6 +183,7 @@ void ModuleTest::testModelRoles()
     QFETCH(QString, displayName);
     QFETCH(QString, serviceId);
     QFETCH(int, authenticationMethod);
+    QFETCH(QVariantMap, settings);
 
     addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
                     QString("ret = [(1, %1)]").arg(accountData));
@@ -200,7 +208,7 @@ void ModuleTest::testModelRoles()
     QCOMPARE(get(model, 0, "authenticationMethod").toInt(),
              authenticationMethod);
     // until https://bugs.launchpad.net/bugs/1479768 is fixed
-    QCOMPARE(get(model, 0, "settings").toMap(), QVariantMap());
+    QCOMPARE(get(model, 0, "settings").toMap(), settings);
     QObject *account = get(model, 0, "account").value<QObject*>();
     QVERIFY(account != 0);
     QCOMPARE(account->metaObject()->className(), "OnlineAccountsModule::Account");
@@ -362,6 +370,7 @@ void ModuleTest::testModelRequestAccess_data()
     accessReply.clear();
     accessReply["accountDisplayName"] = "Bob";
     authenticationData.clear();
+    authenticationData.insert("AccessToken", "GoOn");
     QTest::newRow("access granted") <<
         "ret = ((1, {'displayName': 'Bob'}),{'AccessToken':'GoOn'})" <<
         accessReply <<
@@ -551,174 +560,6 @@ void ModuleTest::testAccountAuthentication()
 
     delete object;
 }
-/*
-void ModuleTest::testAuthentication()
-{
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
-                    "ret = ["
-                    "(1, {"
-                    "  'displayName': 'Bob',"
-                    "  'serviceId': 'MyService0',"
-                    "  'authMethod': 1,"
-                    "}),"
-                    "(2, {"
-                    "  'displayName': 'Tom',"
-                    "  'serviceId': 'MyService1',"
-                    "  'authMethod': 2,"
-                    "}),"
-                    "(3, {"
-                    "  'displayName': 'Sam',"
-                    "  'serviceId': 'MyService2',"
-                    "  'authMethod': 3,"
-                    "}),"
-                    "]");
-    addMockedMethod("Authenticate", "usbba{sv}", "a{sv}",
-                    "if args[0] == 1:\n"
-                    "  ret = {"
-                    "    'ConsumerKey': args[4]['ConsumerKey'],"
-                    "    'ConsumerSecret': args[4]['ConsumerSecret'],"
-                    "    'Token': 'a token',"
-                    "    'TokenSecret': 'a token secret',"
-                    "    'SignatureMethod': 'PLAIN',"
-                    "  }\n"
-                    "elif args[0] == 2:\n"
-                    "  ret = {"
-                    "    'AccessToken': 'my token',"
-                    "    'ExpiresIn': 3600,"
-                    "    'GrantedScopes': args[4]['Scopes'],"
-                    "  }\n"
-                    "elif args[0] == 3:\n"
-                    "  ret = {"
-                    "    'Username': 'admin',"
-                    "    'Password': 'rootme',"
-                    "  }\n"
-                    "else:\n"
-                    "  ret = {}");
-    OnlineAccounts::Manager manager("my-app");
-    manager.waitForReady();
-
-    OnlineAccounts::Account *account = manager.account(1);
-    QVERIFY(account);
-    QCOMPARE(account->authenticationMethod(),
-             OnlineAccounts::AuthenticationMethodOAuth1);
-    OnlineAccounts::OAuth1Data oauth1data;
-    oauth1data.setInteractive(false);
-    oauth1data.setConsumerKey("a key");
-    QCOMPARE(oauth1data.consumerKey(), QByteArray("a key"));
-    oauth1data.setConsumerSecret("a secret");
-    QCOMPARE(oauth1data.consumerSecret(), QByteArray("a secret"));
-
-    OnlineAccounts::OAuth1Reply oauth1reply(account->authenticate(oauth1data));
-    QCOMPARE(oauth1reply.consumerKey(), QByteArray("a key"));
-    QCOMPARE(oauth1reply.consumerSecret(), QByteArray("a secret"));
-    QCOMPARE(oauth1reply.token(), QByteArray("a token"));
-    QCOMPARE(oauth1reply.tokenSecret(), QByteArray("a token secret"));
-    QCOMPARE(oauth1reply.signatureMethod(), QByteArray("PLAIN"));
-
-    account = manager.account(2);
-    QVERIFY(account);
-    QCOMPARE(account->authenticationMethod(),
-             OnlineAccounts::AuthenticationMethodOAuth2);
-    OnlineAccounts::OAuth2Data oauth2data;
-    oauth2data.invalidateCachedReply();
-    QVERIFY(oauth2data.mustInvalidateCachedReply());
-    oauth2data.setClientId("a client");
-    QCOMPARE(oauth2data.clientId(), QByteArray("a client"));
-    oauth2data.setClientSecret("a secret");
-    QCOMPARE(oauth2data.clientSecret(), QByteArray("a secret"));
-    QList<QByteArray> scopes =
-        QList<QByteArray>() << "one" << "two" << "three";
-    oauth2data.setScopes(scopes);
-    QCOMPARE(oauth2data.scopes(), scopes);
-
-    OnlineAccounts::OAuth2Reply oauth2reply(account->authenticate(oauth2data));
-    QCOMPARE(oauth2reply.accessToken(), QByteArray("my token"));
-    QCOMPARE(oauth2reply.expiresIn(), 3600);
-    QCOMPARE(oauth2reply.grantedScopes(), scopes);
-
-    account = manager.account(3);
-    QVERIFY(account);
-    QCOMPARE(account->authenticationMethod(),
-             OnlineAccounts::AuthenticationMethodPassword);
-    OnlineAccounts::PasswordData pwdata;
-
-    OnlineAccounts::PasswordReply pwreply(account->authenticate(pwdata));
-    QCOMPARE(pwreply.username(), QByteArray("admin"));
-    QCOMPARE(pwreply.password(), QByteArray("rootme"));
-
-    OnlineAccounts::OAuth2Data copy(oauth2data);
-    QCOMPARE(copy.clientId(), QByteArray("a client"));
-    copy.setClientId("new client");
-    QCOMPARE(copy.clientId(), QByteArray("new client"));
-    QCOMPARE(oauth2data.clientId(), QByteArray("a client"));
-}
-
-void ModuleTest::testAuthenticationErrors_data()
-{
-    QTest::addColumn<QString>("reply");
-    QTest::addColumn<int>("errorCode");
-    QTest::addColumn<QString>("errorMessage");
-
-    QTest::newRow("random dbus error") <<
-        "raise dbus.exceptions.DBusException('not foobarized', name='org.foo.bar')" <<
-        int(OnlineAccounts::Error::PermissionDenied) <<
-        "not foobarized";
-
-    QTest::newRow("no account") <<
-        "raise dbus.exceptions.DBusException('Not there',"
-        "name='" ONLINE_ACCOUNTS_ERROR_NO_ACCOUNT "')" <<
-        int(OnlineAccounts::Error::NoAccount) <<
-        "Not there";
-
-    QTest::newRow("user canceled") <<
-        "raise dbus.exceptions.DBusException('Sorry',"
-        "name='" ONLINE_ACCOUNTS_ERROR_USER_CANCELED "')" <<
-        int(OnlineAccounts::Error::UserCanceled) <<
-        "Sorry";
-
-    QTest::newRow("permission denied") <<
-        "raise dbus.exceptions.DBusException('Nope',"
-        "name='" ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED "')" <<
-        int(OnlineAccounts::Error::PermissionDenied) <<
-        "Nope";
-
-    QTest::newRow("Interaction required") <<
-        "raise dbus.exceptions.DBusException('Ask the user',"
-        "name='" ONLINE_ACCOUNTS_ERROR_INTERACTION_REQUIRED "')" <<
-        int(OnlineAccounts::Error::InteractionRequired) <<
-        "Ask the user";
-}
-
-void ModuleTest::testAuthenticationErrors()
-{
-    QFETCH(QString, reply);
-    QFETCH(int, errorCode);
-    QFETCH(QString, errorMessage);
-
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
-                    "ret = [(1, {"
-                    "  'displayName': 'Bob',"
-                    "  'serviceId': 'MyService0',"
-                    "  'authMethod': 2,"
-                    "})]");
-    addMockedMethod("Authenticate", "usbba{sv}", "a{sv}", reply);
-    OnlineAccounts::Manager manager("my-app");
-    manager.waitForReady();
-
-    OnlineAccounts::Account *account = manager.account(1);
-    QVERIFY(account);
-
-    OnlineAccounts::OAuth2Data oauth2data;
-    oauth2data.setClientId("a client");
-    oauth2data.setClientSecret("a secret");
-    oauth2data.setScopes(QList<QByteArray>() << "one" << "two");
-
-    OnlineAccounts::OAuth2Reply r(account->authenticate(oauth2data));
-    QVERIFY(r.hasError());
-    QCOMPARE(int(r.error().code()), errorCode);
-    QCOMPARE(r.error().text(), errorMessage);
-}
-*/
 
 QTEST_MAIN(ModuleTest)
 #include "tst_qml_module.moc"

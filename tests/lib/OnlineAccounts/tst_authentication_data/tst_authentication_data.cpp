@@ -49,6 +49,17 @@ void AuthenticationDataTest::testData()
     oauth2.setClientId("client-changed");
     QCOMPARE(oauth2.clientId(), QByteArray("client-changed"));
     QCOMPARE(copy.clientId(), QByteArray("client"));
+
+    /* As dictionary */
+    QVariantMap expectedParameters;
+    expectedParameters.insert("ClientId", "client-changed");
+    QCOMPARE(oauth2.parameters(), expectedParameters);
+
+    QVariantMap parameters;
+    parameters.insert("UnknownKey", "some value");
+    parameters.insert("Hello", "World");
+    oauth2.setParameters(parameters);
+    QCOMPARE(oauth2.parameters(), parameters);
 }
 
 QTEST_MAIN(AuthenticationDataTest)

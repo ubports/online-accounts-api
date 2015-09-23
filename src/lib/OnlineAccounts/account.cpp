@@ -96,6 +96,12 @@ AuthenticationMethod Account::authenticationMethod() const
     return d->m_info.authenticationMethod();
 }
 
+QStringList Account::keys() const
+{
+    Q_D(const Account);
+    return d->m_info.keys();
+}
+
 QVariant Account::setting(const QString &key) const
 {
     Q_D(const Account);

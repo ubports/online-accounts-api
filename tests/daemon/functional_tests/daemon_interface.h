@@ -21,7 +21,7 @@
 #ifndef OAD_DAEMON_INTERFACE_H
 #define OAD_DAEMON_INTERFACE_H
 
-#include "daemon/dbus_constants.h"
+#include "OnlineAccountsDaemon/dbus_constants.h"
 
 #include <QDBusAbstractInterface>
 #include <QDBusArgument>

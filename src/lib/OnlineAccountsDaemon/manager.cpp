@@ -343,6 +343,16 @@ AccountInfo ManagerPrivate::readAccountInfo(const Accounts::AccountService *as)
 
     info[ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD] = authMethod(as->authData());
     QString settingsPrefix(QStringLiteral(ONLINE_ACCOUNTS_INFO_KEY_SETTINGS));
+    /* First, read the global settings */
+    Accounts::Account *a = as->account();
+    a->selectService();
+    Q_FOREACH(const QString &key, a->allKeys()) {
+        if (key == "enabled" || key == "CredentialsId" || key == "name" ||
+            key.startsWith("auth/")) continue;
+        info[settingsPrefix + key] = a->value(key);
+    }
+
+    /* Then, add service-specific settings */
     Q_FOREACH(const QString &key, as->allKeys()) {
         if (key == "enabled") continue;
         info[settingsPrefix + key] = as->value(key);
@@ -588,6 +598,11 @@ void Manager::onDisconnected()
 {
     qDebug() << "Disconnected from D-Bus: quitting";
     QCoreApplication::instance()->quit();
+}
+
+void *oad_create_manager(QObject *parent)
+{
+    return new Manager(parent);
 }
 
 #include "manager.moc"

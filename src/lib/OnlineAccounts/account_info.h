@@ -23,7 +23,7 @@
 
 #include <QVariantMap>
 
-#include "daemon/dbus_constants.h"
+#include "OnlineAccountsDaemon/dbus_constants.h"
 #include "global.h"
 
 class QDBusArgument;
@@ -59,6 +59,15 @@ public:
         }
     }
 
+    QStringList keys() const {
+        QStringList settingKeys;
+        Q_FOREACH(const QString &key, details.keys()) {
+            if (key.startsWith(ONLINE_ACCOUNTS_INFO_KEY_SETTINGS)) {
+                settingKeys.append(key.mid(sizeof(ONLINE_ACCOUNTS_INFO_KEY_SETTINGS) - 1));
+            }
+        }
+        return settingKeys;
+    }
     QVariant setting(const QString &key) const {
         return details.value(ONLINE_ACCOUNTS_INFO_KEY_SETTINGS + key);
     }

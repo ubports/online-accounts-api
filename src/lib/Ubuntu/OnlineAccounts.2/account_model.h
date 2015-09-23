@@ -68,6 +68,8 @@ public:
     Q_INVOKABLE void requestAccess(const QString &service,
                                    const QVariantMap &params);
 
+    Q_INVOKABLE QVariant get(int row, const QString &roleName) const;
+
     // reimplemented virtual methods
     int rowCount(const QModelIndex &parent = QModelIndex()) const;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;

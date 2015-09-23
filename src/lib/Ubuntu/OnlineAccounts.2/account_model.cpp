@@ -408,6 +408,17 @@ void AccountModel::requestAccess(const QString &service,
                      d, SLOT(onAccessRequestFinished()));
 }
 
+/*!
+ * \qmlmethod variant AccountModel::get(int row, string roleName)
+ *
+ * Returns the data at \a row for the role \a roleName.
+ */
+QVariant AccountModel::get(int row, const QString &roleName) const
+{
+    int role = roleNames().key(roleName.toLatin1(), -1);
+    return data(index(row), role);
+}
+
 int AccountModel::rowCount(const QModelIndex &parent) const
 {
     Q_D(const AccountModel);

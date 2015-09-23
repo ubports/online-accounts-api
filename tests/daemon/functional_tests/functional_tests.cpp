@@ -221,6 +221,8 @@ FunctionalTests::FunctionalTests():
     QVERIFY(account3 != 0);
     account3->setEnabled(true);
     account3->setDisplayName("CoolAccount 3");
+    account3->setValue("color", "red");
+    account3->setValue("size", "big");
     account3->setCredentialsId(m_account3CredentialsId);
     account3->selectService(coolMail);
     account3->setEnabled(true);
@@ -410,6 +412,7 @@ void FunctionalTests::testRequestAccess_data()
     accountInfo["settings/auth/oauth2/user_agent/host"] = "coolmail.ex";
     accountInfo["settings/auto-explode-after"] = 10;
     accountInfo["settings/color"] = "green";
+    accountInfo["settings/size"] = "big";
     credentials["host"] = "coolmail.ex";
     QTest::newRow("no auth params") <<
         "coolmail" <<

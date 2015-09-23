@@ -1,3 +1,10 @@
+online-accounts-api (0.1+15.10.20150923.1-0ubuntu1) wily; urgency=medium
+
+  [ Alberto Mardegan ]
+  * Docs, fixes, library install
+
+ -- David Barth <david.barth@canonical.com>  Wed, 23 Sep 2015 12:41:38 +0000
+
 online-accounts-api (0.1+15.10.20150820-0ubuntu1) wily; urgency=low
 
   [ Alberto Mardegan ]

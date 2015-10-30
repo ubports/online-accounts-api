@@ -134,6 +134,11 @@ void AccountModelPrivate::update()
         QStringList parts = QString::fromUtf8(qgetenv("APP_ID")).split('_');
         if (parts.count() == 3) {
             m_applicationId = QStringList(parts.mid(0, 2)).join('_');
+            m_applicationIdChanged = true;
+        } else {
+            qWarning() << "Ubuntu.OnlineAccounts: No APP_ID defined "
+                "and no applicationId given!";
+            return;
         }
     }
 

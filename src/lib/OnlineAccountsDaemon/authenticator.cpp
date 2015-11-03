@@ -72,6 +72,7 @@ private:
     SignOn::Identity *m_identity;
     QVariantMap m_parameters;
     QVariantMap m_reply;
+    QVariantMap m_extraReplyData;
     QString m_errorName;
     QString m_errorMessage;
     Authenticator *q_ptr;
@@ -106,13 +107,25 @@ void AuthenticatorPrivate::authenticate(const Accounts::AuthData &authData,
 
     QVariantMap allSessionData =
         mergeMaps(authData.parameters(), mergeMaps(parameters, m_parameters));
-    m_authSession->process(allSessionData, authData.mechanism());
+    QString mechanism = authData.mechanism();
+
+    m_extraReplyData.clear();
+    if (mechanism == "HMAC-SHA1" || mechanism == "PLAINTEXT") {
+        /* For OAuth 1.0, let's return also the Consumer key and secret along
+         * with the reply. */
+        m_extraReplyData[ONLINE_ACCOUNTS_AUTH_KEY_CONSUMER_KEY] =
+            allSessionData.value("ConsumerKey");
+        m_extraReplyData[ONLINE_ACCOUNTS_AUTH_KEY_CONSUMER_SECRET] =
+            allSessionData.value("ConsumerSecret");
+    }
+
+    m_authSession->process(allSessionData, mechanism);
 }
 
 void AuthenticatorPrivate::onAuthSessionResponse(const SignOn::SessionData &sessionData)
 {
     Q_Q(Authenticator);
-    m_reply = sessionData.toMap();
+    m_reply = mergeMaps(m_extraReplyData, sessionData.toMap());
     Q_EMIT q->finished();
 }
 

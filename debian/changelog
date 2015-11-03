@@ -1,3 +1,10 @@
+online-accounts-api (0.1+16.04.20151103.1-0ubuntu1) xenial; urgency=medium
+
+  [ Alberto Mardegan ]
+  * If the applicationId is not set, force using APP_ID (LP: #1511768)
+
+ -- David Barth <david.barth@canonical.com>  Tue, 03 Nov 2015 14:46:52 +0000
+
 online-accounts-api (0.1+15.10.20150923.1-0ubuntu1) wily; urgency=medium
 
   [ Alberto Mardegan ]

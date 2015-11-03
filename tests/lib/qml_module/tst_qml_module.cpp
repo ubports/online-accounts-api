@@ -26,6 +26,7 @@
 #include <QObject>
 #include <QQmlComponent>
 #include <QQmlEngine>
+#include <QRegularExpression>
 #include <QSignalSpy>
 #include <QTest>
 #include <libqtdbusmock/DBusMock.h>
@@ -98,6 +99,8 @@ private Q_SLOTS:
     void testModelRequestAccess();
     void testAccountAuthentication_data();
     void testAccountAuthentication();
+    void testInitialization_data();
+    void testInitialization();
 
 private:
     QtDBusTest::DBusTestRunner m_dbus;
@@ -558,6 +561,56 @@ void ModuleTest::testAccountAuthentication()
 
     QCOMPARE(authenticationData, expectedAuthenticationData);
 
+    delete object;
+}
+
+void ModuleTest::testInitialization_data()
+{
+    QTest::addColumn<QString>("appId");
+    QTest::addColumn<bool>("errorExpected");
+
+    QTest::newRow("empty APP_ID") <<
+        "" <<
+        true;
+
+    QTest::newRow("invalid APP_ID") <<
+        "" <<
+        true;
+
+    QTest::newRow("valid APP_ID") <<
+        "my.package_app_0.2" <<
+        false;
+}
+
+void ModuleTest::testInitialization()
+{
+    QFETCH(QString, appId);
+    QFETCH(bool, errorExpected);
+
+    qputenv("APP_ID", appId.toUtf8());
+
+    if (errorExpected) {
+        QTest::ignoreMessage(QtWarningMsg,
+                             QRegularExpression("Ubuntu.OnlineAccounts:.*"));
+    }
+
+    QQmlEngine engine;
+    QQmlComponent component(&engine);
+    component.setData("import Ubuntu.OnlineAccounts 2.0\n"
+                      "AccountModel {}",
+                      QUrl());
+    QObject *object = component.create();
+    QVERIFY(object != 0);
+
+    if (!errorExpected) {
+        /* We just want to check that invoking this method won't cause a crash */
+        QString serviceId = "bar";
+        QVariantMap params;
+        bool ok = QMetaObject::invokeMethod(object, "requestAccess",
+                                            Q_ARG(QString, serviceId),
+                                            Q_ARG(QVariantMap, params));
+        QVERIFY(ok);
+    }
     delete object;
 }
 

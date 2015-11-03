@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<service id="oauth1auth">
+  <type>e-mail</type>
+  <name>OAuth 1 test</name>
+  <icon>general_myservice</icon>
+  <provider>cool</provider>
+
+  <template>
+    <group name="auth">
+      <setting name="method">oauth2</setting>
+      <setting name="mechanism">HMAC-SHA1</setting>
+      <group name="oauth2/HMAC-SHA1">
+        <setting name="ConsumerKey">c0nsum3rk3y</setting>
+        <setting name="ConsumerSecret">c0nsum3rs3cr3t</setting>
+      </group>
+    </group>
+  </template>
+</service>

@@ -196,6 +196,7 @@ FunctionalTests::FunctionalTests():
     Accounts::Manager *manager = new Accounts::Manager(this);
     Accounts::Service coolMail = manager->service("coolmail");
     Accounts::Service coolShare = manager->service("com.ubuntu.tests_coolshare");
+    Accounts::Service oauth1auth = manager->service("oauth1auth");
     Accounts::Account *account1 = manager->createAccount("cool");
     QVERIFY(account1 != 0);
     account1->setEnabled(true);
@@ -225,6 +226,8 @@ FunctionalTests::FunctionalTests():
     account3->setValue("size", "big");
     account3->setCredentialsId(m_account3CredentialsId);
     account3->selectService(coolMail);
+    account3->setEnabled(true);
+    account3->selectService(oauth1auth);
     account3->setEnabled(true);
     account3->syncAndBlock();
 
@@ -341,6 +344,33 @@ void FunctionalTests::testAuthenticate_data()
         3 <<
         "coolmail" <<
         true << true <<
+        authParams <<
+        credentials <<
+        QString();
+
+    authParams.clear();
+    credentials.clear();
+    credentials["UiPolicy"] = 0;
+    credentials["ConsumerKey"] = "c0nsum3rk3y";
+    credentials["ConsumerSecret"] = "c0nsum3rs3cr3t";
+    QTest::newRow("OAuth1 client data") <<
+        3 <<
+        "oauth1auth" <<
+        true << false <<
+        authParams <<
+        credentials <<
+        QString();
+
+    authParams.clear();
+    authParams["ConsumerKey"] = "overridden";
+    credentials.clear();
+    credentials["UiPolicy"] = 0;
+    credentials["ConsumerKey"] = "overridden";
+    credentials["ConsumerSecret"] = "c0nsum3rs3cr3t";
+    QTest::newRow("OAuth1 client data, overridden") <<
+        3 <<
+        "oauth1auth" <<
+        true << false <<
         authParams <<
         credentials <<
         QString();

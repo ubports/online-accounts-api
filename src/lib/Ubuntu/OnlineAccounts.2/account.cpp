@@ -194,6 +194,7 @@ QString Account::serviceId() const
  * \list
  *   \li \c Account.AuthenticationMethodOAuth1 - OAuth 1.0
  *   \li \c Account.AuthenticationMethodOAuth2 - OAuth 2.0
+ *   \li \c Account.AuthenticationMethodSasl - SASL
  *   \li \c Account.AuthenticationMethodPassword - username/password
  * \endlist
  */

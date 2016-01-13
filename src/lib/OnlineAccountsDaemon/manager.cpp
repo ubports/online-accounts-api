@@ -1,7 +1,7 @@
 /*
  * This file is part of OnlineAccountsDaemon
  *
- * Copyright (C) 2015 Canonical Ltd.
+ * Copyright (C) 2015-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -327,6 +327,8 @@ int ManagerPrivate::authMethod(const Accounts::AuthData &authData)
         } else if (mechanism == "HMAC-SHA1" || mechanism == "PLAINTEXT") {
             return ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH1;
         }
+    } else if (method == "sasl") {
+        return ONLINE_ACCOUNTS_AUTH_METHOD_SASL;
     } else if (method == "password") {
         return ONLINE_ACCOUNTS_AUTH_METHOD_PASSWORD;
     }

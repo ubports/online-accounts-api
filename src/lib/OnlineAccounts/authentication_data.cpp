@@ -1,7 +1,7 @@
 /*
  * This file is part of libOnlineAccounts
  *
- * Copyright (C) 2015 Canonical Ltd.
+ * Copyright (C) 2015-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -149,6 +149,73 @@ void OAuth1Data::setConsumerSecret(const QByteArray &secret)
 QByteArray OAuth1Data::consumerSecret() const
 {
     return d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_CONSUMER_SECRET].toByteArray();
+}
+
+/* SASL */
+
+SaslData::SaslData():
+    AuthenticationData(new AuthenticationDataPrivate(AuthenticationMethodSasl))
+{
+}
+
+void SaslData::setService(const QString &service)
+{
+    d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_SERVICE] = service;
+}
+
+QString SaslData::service() const
+{
+    return d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_SERVICE].toString();
+}
+
+void SaslData::setMechanismList(const QByteArray &mechanisms)
+{
+    d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_MECHANISMS] = mechanisms;
+}
+
+QByteArray SaslData::mechanismList() const
+{
+    return d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_MECHANISMS].toByteArray();
+}
+
+void SaslData::setServerFqdn(const QString &fqdn)
+{
+    d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_FQDN] = fqdn;
+}
+
+QString SaslData::serverFqdn() const
+{
+    return d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_FQDN].toString();
+}
+
+void SaslData::setLocalIp(const QString &localIp)
+{
+    d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_LOCAL_IP] = localIp;
+}
+
+QString SaslData::localIp() const
+{
+    return d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_LOCAL_IP].toString();
+}
+
+void SaslData::setRemoteIp(const QString &remoteIp)
+{
+    d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_REMOTE_IP] = remoteIp;
+}
+
+QString SaslData::remoteIp() const
+{
+    return d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_REMOTE_IP].toString();
+}
+
+void SaslData::setChallenge(const QByteArray &challenge)
+{
+    d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_CHALLENGE] = challenge;
+}
+
+QByteArray SaslData::challenge() const
+{
+    return d->m_parameters[ONLINE_ACCOUNTS_AUTH_KEY_CHALLENGE].toByteArray();
 }
 
 /* Password */

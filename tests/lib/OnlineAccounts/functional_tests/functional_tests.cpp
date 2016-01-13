@@ -1,7 +1,7 @@
 /*
  * This file is part of libOnlineAccounts
  *
- * Copyright (C) 2015 Canonical Ltd.
+ * Copyright (C) 2015-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -448,6 +448,11 @@ void FunctionalTests::testAuthentication()
                     "  'serviceId': 'MyService2',"
                     "  'authMethod': 3,"
                     "}),"
+                    "(4, {"
+                    "  'displayName': 'Jim',"
+                    "  'serviceId': 'MyService3',"
+                    "  'authMethod': 4,"
+                    "}),"
                     "]");
     addMockedMethod("Authenticate", "usbba{sv}", "a{sv}",
                     "if args[0] == 1:\n"
@@ -468,6 +473,12 @@ void FunctionalTests::testAuthentication()
                     "  ret = {"
                     "    'Username': 'admin',"
                     "    'Password': 'rootme',"
+                    "  }\n"
+                    "elif args[0] == 4:\n"
+                    "  ret = {"
+                    "    'Response': 'pong',"
+                    "    'ChosenMechanism': 'tennis',"
+                    "    'State': 1,"
                     "  }\n"
                     "else:\n"
                     "  ret = {}");
@@ -522,6 +533,18 @@ void FunctionalTests::testAuthentication()
     QCOMPARE(oauth2reply.accessToken(), QByteArray("my token"));
     QCOMPARE(oauth2reply.expiresIn(), 3600);
     QCOMPARE(oauth2reply.grantedScopes(), scopes);
+
+    /* Test SASL */
+    account = manager.account(4);
+    QVERIFY(account);
+    QCOMPARE(account->authenticationMethod(),
+             OnlineAccounts::AuthenticationMethodSasl);
+    OnlineAccounts::SaslData sasldata;
+
+    OnlineAccounts::SaslReply saslreply(account->authenticate(sasldata));
+    QCOMPARE(saslreply.chosenMechanism(), QString("tennis"));
+    QCOMPARE(saslreply.response(), QByteArray("pong"));
+    QCOMPARE(saslreply.state(), OnlineAccounts::SaslReply::Continue);
 
     /* Test Password */
     account = manager.account(3);

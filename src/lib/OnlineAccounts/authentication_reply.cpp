@@ -1,7 +1,7 @@
 /*
  * This file is part of libOnlineAccounts
  *
- * Copyright (C) 2015 Canonical Ltd.
+ * Copyright (C) 2015-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -88,6 +88,10 @@ class OAuth2ReplyPrivate: public AuthenticationReplyPrivate
 };
 
 class OAuth1ReplyPrivate: public AuthenticationReplyPrivate
+{
+};
+
+class SaslReplyPrivate: public AuthenticationReplyPrivate
 {
 };
 
@@ -227,6 +231,42 @@ QByteArray OAuth1Reply::signatureMethod() const
 {
     Q_D(const AuthenticationReply);
     return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_SIGNATURE_METHOD).toByteArray();
+}
+
+/* SASL */
+
+SaslReply::SaslReply(const PendingCall &call):
+    AuthenticationReply(new AuthenticationReplyPrivate(AuthenticationMethodSasl, call))
+{
+}
+
+SaslReply::~SaslReply()
+{
+}
+
+QString SaslReply::chosenMechanism() const
+{
+    Q_D(const AuthenticationReply);
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_CHOSEN_MECHANISM).toString();
+}
+
+QByteArray SaslReply::response() const
+{
+    Q_D(const AuthenticationReply);
+    return d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_RESPONSE).toByteArray();
+}
+
+SaslReply::State SaslReply::state() const
+{
+    Q_D(const AuthenticationReply);
+    int state = d->data().value(ONLINE_ACCOUNTS_AUTH_KEY_STATE).toInt();
+    switch (state) {
+    case ONLINE_ACCOUNTS_AUTH_SASL_STATE_FINISHED: return Finished;
+    case ONLINE_ACCOUNTS_AUTH_SASL_STATE_CONTINUE: return Continue;
+    default:
+        qWarning() << "Unknown SASL state" << state;
+        return Finished;
+    }
 }
 
 /* Password */

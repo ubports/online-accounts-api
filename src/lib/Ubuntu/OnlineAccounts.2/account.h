@@ -51,6 +51,7 @@ public:
         AuthenticationMethodOAuth1,
         AuthenticationMethodOAuth2,
         AuthenticationMethodPassword,
+        AuthenticationMethodSasl,
     };
 
     enum ErrorCode {

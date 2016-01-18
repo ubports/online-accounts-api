@@ -60,6 +60,7 @@ private:
     QList<Account*> m_accounts;
     QString m_applicationId;
     QString m_serviceId;
+    bool m_isReady;
     bool m_updateQueued;
     bool m_applicationIdChanged;
     bool m_serviceIdChanged;
@@ -71,6 +72,7 @@ private:
 AccountModelPrivate::AccountModelPrivate(AccountModel *q):
     QObject(q),
     m_manager(0),
+    m_isReady(false),
     m_updateQueued(true), // because componentComplete will be called
     m_applicationIdChanged(false),
     m_serviceIdChanged(false),
@@ -87,10 +89,17 @@ AccountModelPrivate::AccountModelPrivate(AccountModel *q):
 
 void AccountModelPrivate::queueUpdate()
 {
+    Q_Q(AccountModel);
+
     if (m_updateQueued) return;
 
     m_updateQueued = true;
     QMetaObject::invokeMethod(this, "update", Qt::QueuedConnection);
+
+    if (m_isReady) {
+        m_isReady = false;
+        Q_EMIT q->isReadyChanged();
+    }
 }
 
 void AccountModelPrivate::updateAccountList()
@@ -106,6 +115,9 @@ void AccountModelPrivate::updateAccountList()
     }
     q->endResetModel();
     Q_EMIT q->accountListChanged();
+
+    m_isReady = true;
+    Q_EMIT q->isReadyChanged();
 }
 
 Account *AccountModelPrivate::handleAccount(OnlineAccounts::Account *account)
@@ -293,6 +305,21 @@ void AccountModel::componentComplete()
 {
     Q_D(AccountModel);
     d->update();
+}
+
+/*!
+ * \qmlproperty bool AccountModel::ready
+ *
+ * Whether the model is up to date: retrieving the account list is an
+ * asynchronous operation, and therefore short delays are expected between
+ * changing one model parameter and receiving the updated account list.
+ * Applications should not rely on the model contents while this property is
+ * false.
+ */
+bool AccountModel::isReady() const
+{
+    Q_D(const AccountModel);
+    return d->m_isReady;
 }
 
 /*!

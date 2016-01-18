@@ -36,6 +36,7 @@ class AccountModel: public QAbstractListModel, public QQmlParserStatus
     Q_OBJECT
     Q_INTERFACES(QQmlParserStatus)
     Q_PROPERTY(int count READ rowCount NOTIFY countChanged)
+    Q_PROPERTY(bool ready READ isReady NOTIFY isReadyChanged)
     Q_PROPERTY(QString applicationId READ applicationId \
                WRITE setApplicationId NOTIFY applicationIdChanged)
     Q_PROPERTY(QString serviceId READ serviceId \
@@ -56,6 +57,8 @@ public:
 
     explicit AccountModel(QObject *parent = 0);
     ~AccountModel();
+
+    bool isReady() const;
 
     void setApplicationId(const QString &applicationId);
     QString applicationId() const;
@@ -79,6 +82,7 @@ public:
     void componentComplete() Q_DECL_OVERRIDE;
 
 Q_SIGNALS:
+    void isReadyChanged();
     void countChanged();
     void applicationIdChanged();
     void serviceIdChanged();

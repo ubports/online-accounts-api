@@ -111,14 +111,18 @@ void AuthenticatorPrivate::authenticate(const Accounts::AuthData &authData,
         mergeMaps(authData.parameters(), mergeMaps(parameters, m_parameters));
     QString mechanism = authData.mechanism();
 
+    qDebug() << Q_FUNC_INFO << "invalidate cache:" << m_invalidateCache;
     if (m_invalidateCache) {
         /* This works for OAuth 1.0 and 2.0; other authentication plugins should
          * implement a similar flag. */
         allSessionData["ForceTokenRefresh"] = true;
+        qDebug() << "method" << authData.method();
         if (authData.method() == "password" || authData.method() == "sasl") {
             uint uiPolicy = allSessionData.value("UiPolicy").toUInt();
+            qDebug() << "old policy" << uiPolicy;
             if (uiPolicy != SignOn::NoUserInteractionPolicy) {
                 allSessionData["UiPolicy"] = SignOn::RequestPasswordPolicy;
+                qDebug() << "changed policy" << allSessionData;
             }
         }
     }
@@ -203,6 +207,7 @@ void Authenticator::setInteractive(bool interactive)
 void Authenticator::invalidateCache()
 {
     Q_D(Authenticator);
+    qDebug() << Q_FUNC_INFO;
     d->m_invalidateCache = true;
 }
 

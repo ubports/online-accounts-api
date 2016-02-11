@@ -478,7 +478,7 @@ void FunctionalTests::testAuthentication()
                     "  ret = {"
                     "    'Response': 'pong',"
                     "    'ChosenMechanism': 'tennis',"
-                    "    'State': 1,"
+                    "    'state': 1,"
                     "  }\n"
                     "else:\n"
                     "  ret = {}");

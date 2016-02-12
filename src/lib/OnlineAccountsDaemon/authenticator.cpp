@@ -75,6 +75,7 @@ private:
     QVariantMap m_extraReplyData;
     QString m_errorName;
     QString m_errorMessage;
+    bool m_invalidateCache;
     Authenticator *q_ptr;
 };
 
@@ -84,6 +85,7 @@ AuthenticatorPrivate::AuthenticatorPrivate(Authenticator *q):
     QObject(q),
     m_authSession(0),
     m_identity(0),
+    m_invalidateCache(false),
     q_ptr(q)
 {
 }
@@ -108,6 +110,18 @@ void AuthenticatorPrivate::authenticate(const Accounts::AuthData &authData,
     QVariantMap allSessionData =
         mergeMaps(authData.parameters(), mergeMaps(parameters, m_parameters));
     QString mechanism = authData.mechanism();
+
+    if (m_invalidateCache) {
+        /* This works for OAuth 1.0 and 2.0; other authentication plugins should
+         * implement a similar flag. */
+        allSessionData["ForceTokenRefresh"] = true;
+        if (authData.method() == "password" || authData.method() == "sasl") {
+            uint uiPolicy = allSessionData.value("UiPolicy").toUInt();
+            if (uiPolicy != SignOn::NoUserInteractionPolicy) {
+                allSessionData["UiPolicy"] = SignOn::RequestPasswordPolicy;
+            }
+        }
+    }
 
     m_extraReplyData.clear();
     if (mechanism == "HMAC-SHA1" || mechanism == "PLAINTEXT") {
@@ -189,9 +203,7 @@ void Authenticator::setInteractive(bool interactive)
 void Authenticator::invalidateCache()
 {
     Q_D(Authenticator);
-    /* This works for OAuth 1.0 and 2.0; other authentication plugins should
-     * implement a similar flag. */
-    d->m_parameters["ForceTokenRefresh"] = true;
+    d->m_invalidateCache = true;
 }
 
 void Authenticator::authenticate(const Accounts::AuthData &authData,

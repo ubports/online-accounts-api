@@ -1,7 +1,7 @@
 /*
  * This file is part of libOnlineAccounts
  *
- * Copyright (C) 2015 Canonical Ltd.
+ * Copyright (C) 2015-2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -145,6 +145,53 @@ public:
 private:
     Q_DECLARE_PRIVATE(OAuth1Reply)
     Q_DISABLE_COPY(OAuth1Reply)
+};
+
+/* SASL */
+
+class ONLINE_ACCOUNTS_EXPORT SaslData: public AuthenticationData
+{
+public:
+    SaslData();
+
+    void setService(const QString &service);
+    QString service() const;
+
+    void setMechanismList(const QByteArray &mechanisms);
+    QByteArray mechanismList() const;
+
+    void setServerFqdn(const QString &fqdn);
+    QString serverFqdn() const;
+
+    void setLocalIp(const QString &localIp);
+    QString localIp() const;
+
+    void setRemoteIp(const QString &remoteIp);
+    QString remoteIp() const;
+
+    void setChallenge(const QByteArray &challenge);
+    QByteArray challenge() const;
+};
+
+class SaslReplyPrivate;
+class ONLINE_ACCOUNTS_EXPORT SaslReply: public AuthenticationReply
+{
+public:
+    enum State {
+        Finished,
+        Continue,
+    };
+
+    SaslReply(const PendingCall &call);
+    ~SaslReply();
+
+    QString chosenMechanism() const;
+    QByteArray response() const;
+    State state() const;
+
+private:
+    Q_DECLARE_PRIVATE(SaslReply)
+    Q_DISABLE_COPY(SaslReply)
 };
 
 /* Password */

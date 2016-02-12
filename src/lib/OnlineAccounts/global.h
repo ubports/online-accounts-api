@@ -38,6 +38,7 @@ enum AuthenticationMethod {
     AuthenticationMethodOAuth1,
     AuthenticationMethodOAuth2,
     AuthenticationMethodPassword,
+    AuthenticationMethodSasl,
 };
 
 } // namespace

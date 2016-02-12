@@ -151,6 +151,8 @@ void ModuleTest::testModelProperties()
     QVERIFY(object->setProperty("serviceId", "bar"));
     QCOMPARE(object->property("serviceId").toString(), QString("bar"));
 
+    QCOMPARE(object->property("ready").toBool(), false);
+
     delete object;
 }
 
@@ -201,7 +203,13 @@ void ModuleTest::testModelRoles()
     QAbstractListModel *model = qobject_cast<QAbstractListModel*>(object);
     QVERIFY(model != 0);
 
-    QTRY_COMPARE(model->rowCount(), 1);
+    QCOMPARE(object->property("ready").toBool(), false);
+    QSignalSpy ready(object, SIGNAL(isReadyChanged()));
+
+    ready.wait();
+    QCOMPARE(object->property("ready").toBool(), true);
+
+    QCOMPARE(model->rowCount(), 1);
     QCOMPARE(model->data(model->index(0), Qt::DisplayRole).toString(),
              QString("%1 - %2").arg(displayName).arg(serviceId));
     QCOMPARE(get(model, 0, "displayName").toString(), displayName);

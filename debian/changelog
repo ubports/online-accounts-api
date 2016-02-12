@@ -1,3 +1,12 @@
+online-accounts-api (0.1+16.04.20160212-0ubuntu1) xenial; urgency=medium
+
+  [ Alberto Mardegan ]
+  * Add a property to signal when the account model is ready. (LP:
+    #1513075)
+  * Add support for SASL authentication. (LP: #1519330)
+
+ -- David Barth <david.barth@canonical.com>  Fri, 12 Feb 2016 07:46:42 +0000
+
 online-accounts-api (0.1+16.04.20151103.1-0ubuntu1) xenial; urgency=medium
 
   [ Alberto Mardegan ]

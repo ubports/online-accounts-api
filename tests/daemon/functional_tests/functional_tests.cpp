@@ -617,14 +617,14 @@ void FunctionalTests::cleanupTestCase()
 {
     QDBusConnection conn = QDBusConnection::sessionBus();
     QString serviceName(QStringLiteral(ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME));
+    QDBusServiceWatcher watcher(serviceName, conn,
+                                QDBusServiceWatcher::WatchForUnregistration);
+    QSignalSpy unregistered(&watcher,
+                            SIGNAL(serviceUnregistered(const QString &)));
     QDBusReply<bool> reply =
         conn.interface()->isServiceRegistered(serviceName);
     if (reply.value()) {
-        /* Let'äs wait for the daemon to quit */
-        QDBusServiceWatcher watcher(serviceName, conn,
-                                    QDBusServiceWatcher::WatchForUnregistration);
-        QSignalSpy unregistered(&watcher,
-                                SIGNAL(serviceUnregistered(const QString &)));
+        /* Let's wait for the daemon to quit */
         QTRY_COMPARE(unregistered.count(), 1);
     }
 }

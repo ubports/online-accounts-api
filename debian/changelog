@@ -1,3 +1,9 @@
+online-accounts-api (0.1+16.10.20160609-0ubuntu1) yakkety; urgency=medium
+
+  * Add symbols files (LP: #1548693)
+
+ -- Alberto Mardegan <mardy@users.sourceforge.net>  Thu, 09 Jun 2016 09:17:07 +0000
+
 online-accounts-api (0.1+16.04.20160212-0ubuntu1) xenial; urgency=medium
 
   [ Alberto Mardegan ]

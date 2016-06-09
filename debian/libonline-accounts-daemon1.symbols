@@ -1,0 +1,8 @@
+libOnlineAccountsDaemon.so libonline-accounts-daemon1 #MINVER#
+ _ZN10QByteArrayD1Ev@Base 0.1+16.04.20160212-0ubuntu1
+ _ZN10QByteArrayD2Ev@Base 0.1+16.04.20160212-0ubuntu1
+ _ZN7QStringD1Ev@Base 0.1+16.04.20160212-0ubuntu1
+ _ZN7QStringD2Ev@Base 0.1+16.04.20160212-0ubuntu1
+ _ZTI12QDBusContext@Base 0.1+16.04.20160212-0ubuntu1
+ _ZTS12QDBusContext@Base 0.1+16.04.20160212-0ubuntu1
+ oad_create_manager@Base 0.1+16.04.20160212-0ubuntu1

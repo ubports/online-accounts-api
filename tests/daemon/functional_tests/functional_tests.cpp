@@ -155,6 +155,7 @@ private Q_SLOTS:
 
 private:
     void clearDb();
+    bool replyIsValid(const QDBusMessage &reply);
 
 private:
     EnvSetup m_env;
@@ -240,6 +241,15 @@ void FunctionalTests::clearDb()
 {
     QDir dbroot(QString::fromLatin1(qgetenv("ACCOUNTS")));
     dbroot.remove("accounts.db");
+}
+
+bool FunctionalTests::replyIsValid(const QDBusMessage &msg)
+{
+    if (msg.type() == QDBusMessage::ErrorMessage) {
+        qDebug() << "Error name:" << msg.errorName();
+        qDebug() << "Error text:" << msg.errorMessage();
+    }
+    return msg.type() == QDBusMessage::ReplyMessage;
 }
 
 void FunctionalTests::testGetAccountsFiltering_data()
@@ -396,7 +406,7 @@ void FunctionalTests::testAuthenticate()
     reply.waitForFinished();
 
     if (errorName.isEmpty()) {
-        QVERIFY(!reply.isError());
+        QVERIFY(replyIsValid(reply.reply()));
         QVariantMap credentials = reply.argumentAt<0>();
         // Add the requestor PID
         expectedCredentials["requestorPid"] = getpid();
@@ -485,7 +495,7 @@ void FunctionalTests::testRequestAccess()
     reply.waitForFinished();
 
     if (errorName.isEmpty()) {
-        QVERIFY(!reply.isError());
+        QVERIFY(replyIsValid(reply.reply()));
         AccountInfo accountInfo = reply.argumentAt<0>();
         QVariantMap credentials = reply.argumentAt<1>();
         QCOMPARE(int(accountInfo.id()), expectedAccountId);
@@ -600,7 +610,7 @@ void FunctionalTests::testLifetime()
                              false, false, authParams);
     reply.waitForFinished();
 
-    QVERIFY(!reply.isError());
+    QVERIFY(replyIsValid(reply.reply()));
     QVariantMap expectedCredentials(authParams);
     expectedCredentials["UiPolicy"] = 2;
     expectedCredentials["host"] = "coolmail.ex";

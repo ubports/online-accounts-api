@@ -48,6 +48,7 @@ public:
 
     QList<Account*> availableAccounts(const QString &service = QString());
     Account *account(AccountId accountId);
+    Account *account(AccountId accountId, const QString &service);
 
     PendingCall requestAccess(const QString &service,
                               const AuthenticationData &authData);

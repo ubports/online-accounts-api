@@ -449,7 +449,7 @@ void FunctionalTests::testMultipleServices()
                     "  'serviceId': 'service2',"
                     "  'authMethod': 1,"
                     "}),"
-                    "(3, {"
+                    "(4, {"
                     "  'displayName': 'Three',"
                     "  'serviceId': 'service1',"
                     "  'authMethod': 1,"
@@ -476,6 +476,9 @@ void FunctionalTests::testMultipleServices()
     QCOMPARE(account->serviceId(), QString("service2"));
 
     account = manager.account(2, "service3");
+    QVERIFY(account == nullptr);
+
+    account = manager.account(3);
     QVERIFY(account == nullptr);
 }
 

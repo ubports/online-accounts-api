@@ -87,6 +87,7 @@ private Q_SLOTS:
     void testAccountData_data();
     void testAccountData();
     void testAccountChanges();
+    void testMultipleServices();
     void testPendingCallWatcher();
     void testAuthentication();
     void testAuthenticationErrors_data();
@@ -427,6 +428,55 @@ void FunctionalTests::testAccountChanges()
     QCOMPARE(changed.count(), 0);
     QCOMPARE(disabled.count(), 1);
     QVERIFY(!account->isValid());
+}
+
+void FunctionalTests::testMultipleServices()
+{
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
+                    "ret = ["
+                    "(1, {"
+                    "  'displayName': 'One',"
+                    "  'serviceId': 'service2',"
+                    "  'authMethod': 1,"
+                    "}),"
+                    "(2, {"
+                    "  'displayName': 'Two',"
+                    "  'serviceId': 'service1',"
+                    "  'authMethod': 1,"
+                    "}),"
+                    "(2, {"
+                    "  'displayName': 'Two',"
+                    "  'serviceId': 'service2',"
+                    "  'authMethod': 1,"
+                    "}),"
+                    "(3, {"
+                    "  'displayName': 'Three',"
+                    "  'serviceId': 'service1',"
+                    "  'authMethod': 1,"
+                    "}),"
+                    "]");
+    OnlineAccounts::Manager manager("my-app");
+    manager.waitForReady();
+
+    // All account services are available, including both from account #2
+    auto accounts = manager.availableAccounts();
+    QCOMPARE(accounts.count(), 4);
+
+    // Picks the first known service for the given account ID.
+    OnlineAccounts::Account *account = manager.account(2);
+    QVERIFY(account);
+    QVERIFY(account->isValid());
+    QCOMPARE(account->id(), OnlineAccounts::AccountId(2));
+    QCOMPARE(account->displayName(), QString("Two"));
+    QCOMPARE(account->serviceId(), QString("service1"));
+
+    account = manager.account(2, "service2");
+    QVERIFY(account);
+    QCOMPARE(account->id(), OnlineAccounts::AccountId(2));
+    QCOMPARE(account->serviceId(), QString("service2"));
+
+    account = manager.account(2, "service3");
+    QVERIFY(account == nullptr);
 }
 
 void FunctionalTests::testAuthentication()

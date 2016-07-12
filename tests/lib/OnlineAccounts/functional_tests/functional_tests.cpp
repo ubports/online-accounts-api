@@ -204,13 +204,13 @@ void FunctionalTests::testManagerRequestAccess_data()
         "";
 
     QTest::newRow("access granted") <<
-        "ret = ((1, {'displayName': 'Bob'}),{'AccessToken':'GoOn'})" <<
+        "ret = ((1, {'displayName': 'Bob', 'serviceId': 'my-service'}),{'AccessToken':'GoOn'})" <<
         true <<
         int(0) <<
         "Bob" <<
         "GoOn";
     QTest::newRow("access granted, no wait") <<
-        "ret = ((1, {'displayName': 'Bob'}),{'AccessToken':'GoOn'})" <<
+        "ret = ((1, {'displayName': 'Bob', 'serviceId': 'my-service'}),{'AccessToken':'GoOn'})" <<
         false <<
         int(0) <<
         "Bob" <<

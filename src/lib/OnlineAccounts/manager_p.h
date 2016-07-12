@@ -46,7 +46,8 @@ class ManagerPrivate: public QObject
     Q_DECLARE_PUBLIC(Manager)
 
 public:
-    inline ManagerPrivate(Manager *q, const QString &applicationId);
+    inline ManagerPrivate(Manager *q, const QString &applicationId,
+                          const QDBusConnection& bus);
     ~ManagerPrivate();
 
     PendingCall authenticate(const AccountInfo &info,

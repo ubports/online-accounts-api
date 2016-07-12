@@ -31,13 +31,14 @@
 
 using namespace OnlineAccounts;
 
-ManagerPrivate::ManagerPrivate(Manager *q, const QString &applicationId):
+ManagerPrivate::ManagerPrivate(Manager *q, const QString &applicationId,
+                               const QDBusConnection& bus):
     QObject(),
     m_applicationId(applicationId),
     m_daemon(ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME,
              ONLINE_ACCOUNTS_MANAGER_PATH,
              ONLINE_ACCOUNTS_MANAGER_INTERFACE,
-             QDBusConnection::sessionBus()),
+             bus),
     m_getAccountsCall(0),
     q_ptr(q)
 {
@@ -161,8 +162,14 @@ void ManagerPrivate::onAccountChanged(const QString &service,
 }
 
 Manager::Manager(const QString &applicationId, QObject *parent):
+    Manager(applicationId, QDBusConnection::sessionBus(), parent)
+{
+}
+
+Manager::Manager(const QString &applicationId, const QDBusConnection& bus,
+                 QObject *parent):
     QObject(parent),
-    d_ptr(new ManagerPrivate(this, applicationId))
+    d_ptr(new ManagerPrivate(this, applicationId, bus))
 {
 }
 

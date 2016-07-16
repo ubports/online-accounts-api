@@ -600,7 +600,7 @@ void FunctionalTests::testLifetime()
                              false, false, authParams);
     reply.waitForFinished();
 
-    QVERIFY(!reply.isError(), reply.error().message().toUtf8().constData());
+    QVERIFY2(!reply.isError(), reply.error().message().toUtf8().constData());
     QVariantMap expectedCredentials(authParams);
     expectedCredentials["UiPolicy"] = 2;
     expectedCredentials["host"] = "coolmail.ex";

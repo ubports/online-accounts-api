@@ -33,6 +33,11 @@ class TestProcess:
         print('%s' % json.dumps(self.manager.GetAccounts(filters), sort_keys=True),
                 flush=True)
 
+    def ping_service(self, args):
+        # Make an asynchronous call to GetAccounts, ignoring the result
+        filters = dbus.Dictionary(signature='sv')
+        self.manager.GetAccounts(filters, ignore_reply=True)
+
     def on_account_changed(self, serviceId, accountInfo):
         info = json.dumps(accountInfo, sort_keys=True)
         print('AccountChanged %s %s' % (serviceId, info), flush=True)
@@ -63,6 +68,9 @@ class TestProcess:
         parser_accounts = subparsers.add_parser('GetAccounts')
         parser_accounts.add_argument('-f', '--filters')
         parser_accounts.set_defaults(func=self.get_accounts)
+
+        parser_accounts = subparsers.add_parser('PingService')
+        parser_accounts.set_defaults(func=self.ping_service)
 
         return parser
 

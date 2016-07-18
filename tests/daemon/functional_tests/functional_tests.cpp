@@ -107,6 +107,10 @@ public:
         return accountInfos;
     }
 
+    void pingService() {
+        write("PingService\n");
+    }
+
 private Q_SLOTS:
     void onReadyRead() {
         if (m_replyExpected) return;
@@ -517,6 +521,8 @@ void FunctionalTests::testAccountChanges()
         initialAccountIds.append(info.id());
     }
 
+    testProcess.pingService();
+
     /* Create a new account */
     Accounts::Manager *manager = new Accounts::Manager(this);
     Accounts::Service coolShare = manager->service("com.ubuntu.tests_coolshare");
@@ -527,6 +533,8 @@ void FunctionalTests::testAccountChanges()
     account->selectService(coolShare);
     account->setEnabled(true);
     account->syncAndBlock();
+
+    testProcess.pingService();
 
     QTRY_COMPARE(accountChanged.count(), 1);
     QString serviceId = accountChanged.at(0).at(0).toString();
@@ -541,10 +549,14 @@ void FunctionalTests::testAccountChanges()
     expectedAccountInfo["serviceId"] = "com.ubuntu.tests_coolshare";
     QCOMPARE(accountInfo.data(), expectedAccountInfo);
 
+    testProcess.pingService();
+
     /* Change a setting */
     accountChanged.clear();
     account->setValue("color", "blue");
     account->syncAndBlock();
+
+    testProcess.pingService();
 
     QTRY_COMPARE(accountChanged.count(), 1);
     serviceId = accountChanged.at(0).at(0).toString();
@@ -559,10 +571,14 @@ void FunctionalTests::testAccountChanges()
     expectedAccountInfo["serviceId"] = "com.ubuntu.tests_coolshare";
     QCOMPARE(accountInfo.data(), expectedAccountInfo);
 
+    testProcess.pingService();
+
     /* Delete the account */
     accountChanged.clear();
     account->remove();
     account->syncAndBlock();
+
+    testProcess.pingService();
 
     QTRY_COMPARE(accountChanged.count(), 1);
     serviceId = accountChanged.at(0).at(0).toString();
@@ -581,6 +597,10 @@ void FunctionalTests::testAccountChanges()
 
 void FunctionalTests::testLifetime()
 {
+    /* Make a dummy call to ensure that the service is running */
+    TestProcess testProcess;
+    testProcess.getAccounts(QVariantMap());
+
     /* Make a dbus call, and have signond reply after 3 seconds; make sure that
      * the online accounts daemon doesn't time out. */
     m_signond.addIdentity(m_account3CredentialsId, QVariantMap());

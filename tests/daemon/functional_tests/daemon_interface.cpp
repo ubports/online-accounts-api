@@ -38,11 +38,11 @@ const QDBusArgument &operator>>(const QDBusArgument &argument, AccountInfo &info
 }
 
 
-DaemonInterface::DaemonInterface(QObject *parent):
+DaemonInterface::DaemonInterface(const QDBusConnection &connection, QObject *parent):
     QDBusAbstractInterface(ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME,
                            ONLINE_ACCOUNTS_MANAGER_PATH,
                            ONLINE_ACCOUNTS_MANAGER_INTERFACE,
-                           QDBusConnection::sessionBus(),
+                           connection,
                            parent)
 {
     setTimeout(INT_MAX);

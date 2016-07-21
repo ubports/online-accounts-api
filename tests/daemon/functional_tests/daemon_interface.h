@@ -60,7 +60,7 @@ class DaemonInterface: public QDBusAbstractInterface
     Q_OBJECT
 
 public:
-    DaemonInterface(QObject *parent = 0);
+    DaemonInterface(const QDBusConnection &connection, QObject *parent = 0);
     ~DaemonInterface() {}
 
     QDBusPendingCall getAccounts(const QVariantMap &filters) {

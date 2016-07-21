@@ -131,6 +131,31 @@ private:
     bool m_replyExpected;
 };
 
+class DBusService: public QtDBusTest::DBusTestRunner
+{
+public:
+    DBusService();
+
+    FakeDBusApparmor &dbusApparmor() { return m_dbusApparmor; }
+    FakeOnlineAccountsService &onlineAccounts() { return m_onlineAccounts; }
+    FakeSignond &signond() { return m_signond; }
+
+private:
+    QtDBusMock::DBusMock m_mock;
+    FakeDBusApparmor m_dbusApparmor;
+    FakeOnlineAccountsService m_onlineAccounts;
+    FakeSignond m_signond;
+};
+
+DBusService::DBusService():
+    QtDBusTest::DBusTestRunner(TEST_DBUS_CONFIG_FILE),
+    m_mock(*this),
+    m_dbusApparmor(&m_mock),
+    m_onlineAccounts(&m_mock),
+    m_signond(&m_mock)
+{
+}
+
 class FunctionalTests: public QObject
 {
     Q_OBJECT
@@ -143,6 +168,8 @@ public:
     FunctionalTests();
 
 private Q_SLOTS:
+    void init();
+    void cleanup();
     void testGetAccountsFiltering_data();
     void testGetAccountsFiltering();
     void testAuthenticate_data();
@@ -151,18 +178,13 @@ private Q_SLOTS:
     void testRequestAccess();
     void testAccountChanges();
     void testLifetime();
-    void cleanupTestCase();
 
 private:
     void clearDb();
 
 private:
     EnvSetup m_env;
-    QtDBusTest::DBusTestRunner m_dbus;
-    QtDBusMock::DBusMock m_mock;
-    FakeDBusApparmor m_dbusApparmor;
-    FakeOnlineAccountsService m_onlineAccounts;
-    FakeSignond m_signond;
+    DBusService *m_dbus;
     int m_firstAccountId;
     int m_account3CredentialsId;
 };
@@ -177,23 +199,19 @@ FunctionalTests::EnvSetup::EnvSetup() {
 
     qputenv("SSO_USE_PEER_BUS", "0");
 
-    qputenv("OAD_TIMEOUT", "2");
+    qputenv("OAD_TIMEOUT", "30");
     qputenv("OAD_TESTING", "1");
 }
 
 FunctionalTests::FunctionalTests():
     QObject(),
-    m_dbus(TEST_DBUS_CONFIG_FILE),
-    m_mock(m_dbus),
-    m_dbusApparmor(&m_mock),
-    m_onlineAccounts(&m_mock),
-    m_signond(&m_mock),
+    m_dbus(0),
     m_account3CredentialsId(35)
 {
     clearDb();
 
     /* Populate the accounts DB */
-    Accounts::Manager *manager = new Accounts::Manager(this);
+    Accounts::Manager *manager = new Accounts::Manager(Accounts::Manager::DisableNotifications, this);
     Accounts::Service coolMail = manager->service("coolmail");
     Accounts::Service coolShare = manager->service("com.ubuntu.tests_coolshare");
     Accounts::Service oauth1auth = manager->service("oauth1auth");
@@ -232,14 +250,23 @@ FunctionalTests::FunctionalTests():
     account3->syncAndBlock();
 
     delete manager;
-
-    m_dbus.startServices();
 }
 
 void FunctionalTests::clearDb()
 {
     QDir dbroot(QString::fromLatin1(qgetenv("ACCOUNTS")));
     dbroot.remove("accounts.db");
+}
+
+void FunctionalTests::init()
+{
+    m_dbus = new DBusService();
+    m_dbus->startServices();
+}
+
+void FunctionalTests::cleanup()
+{
+    delete m_dbus;
 }
 
 void FunctionalTests::testGetAccountsFiltering_data()
@@ -272,10 +299,10 @@ void FunctionalTests::testGetAccountsFiltering()
     QFETCH(QString, securityContext);
     QFETCH(QList<int>, expectedAccountIds);
 
-    DaemonInterface *daemon = new DaemonInterface;
+    DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
 
     TestProcess testProcess;
-    m_dbusApparmor.addClient(testProcess.uniqueName(), securityContext);
+    m_dbus->dbusApparmor().addClient(testProcess.uniqueName(), securityContext);
 
     QList<AccountInfo> accountInfos = testProcess.getAccounts(filters);
     QList<int> accountIds;
@@ -386,9 +413,9 @@ void FunctionalTests::testAuthenticate()
     QFETCH(QVariantMap, expectedCredentials);
     QFETCH(QString, errorName);
 
-    m_signond.addIdentity(m_account3CredentialsId, QVariantMap());
+    m_dbus->signond().addIdentity(m_account3CredentialsId, QVariantMap());
 
-    DaemonInterface *daemon = new DaemonInterface;
+    DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
 
     QDBusPendingReply<QVariantMap> reply =
         daemon->authenticate(m_firstAccountId + accountId, serviceId,
@@ -475,10 +502,10 @@ void FunctionalTests::testRequestAccess()
     QFETCH(QVariantMap, expectedCredentials);
     QFETCH(QString, errorName);
 
-    m_onlineAccounts.setRequestAccessReply(accessReply);
-    m_signond.addIdentity(m_account3CredentialsId, QVariantMap());
+    m_dbus->onlineAccounts().setRequestAccessReply(accessReply);
+    m_dbus->signond().addIdentity(m_account3CredentialsId, QVariantMap());
 
-    DaemonInterface *daemon = new DaemonInterface;
+    DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
 
     QDBusPendingReply<AccountInfo,QVariantMap> reply =
         daemon->requestAccess(serviceId, authParams);
@@ -501,7 +528,7 @@ void FunctionalTests::testRequestAccess()
 
 void FunctionalTests::testAccountChanges()
 {
-    DaemonInterface *daemon = new DaemonInterface;
+    DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
 
     /* First, we make a call to the service so that it knows about our client
      * and will later notify it about changes.
@@ -576,19 +603,29 @@ void FunctionalTests::testAccountChanges()
     expectedAccountInfo["serviceId"] = "com.ubuntu.tests_coolshare";
     QCOMPARE(accountInfo.data(), expectedAccountInfo);
 
+    delete manager;
     delete daemon;
 }
 
 void FunctionalTests::testLifetime()
 {
+    /* Destroy the D-Bus daemon, and create one with the OAD_TIMEOUT variable
+     * set to a lower value, to make this test meaningful */
+    delete m_dbus;
+
+    qputenv("OAD_TIMEOUT", "2");
+
+    m_dbus = new DBusService();
+    m_dbus->startServices();
+
     /* Make a dbus call, and have signond reply after 3 seconds; make sure that
      * the online accounts daemon doesn't time out. */
-    m_signond.addIdentity(m_account3CredentialsId, QVariantMap());
+    m_dbus->signond().addIdentity(m_account3CredentialsId, QVariantMap());
 
-    DaemonInterface *daemon = new DaemonInterface;
+    DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
 
     QDBusServiceWatcher watcher(ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME,
-                                QDBusConnection::sessionBus(),
+                                m_dbus->sessionConnection(),
                                 QDBusServiceWatcher::WatchForUnregistration);
     QSignalSpy unregistered(&watcher,
                             SIGNAL(serviceUnregistered(const QString &)));
@@ -611,22 +648,9 @@ void FunctionalTests::testLifetime()
     QCOMPARE(unregistered.count(), 0);
 
     delete daemon;
-}
 
-void FunctionalTests::cleanupTestCase()
-{
-    QDBusConnection conn = QDBusConnection::sessionBus();
-    QString serviceName(QStringLiteral(ONLINE_ACCOUNTS_MANAGER_SERVICE_NAME));
-    QDBusReply<bool> reply =
-        conn.interface()->isServiceRegistered(serviceName);
-    if (reply.value()) {
-        /* Let'äs wait for the daemon to quit */
-        QDBusServiceWatcher watcher(serviceName, conn,
-                                    QDBusServiceWatcher::WatchForUnregistration);
-        QSignalSpy unregistered(&watcher,
-                                SIGNAL(serviceUnregistered(const QString &)));
-        QTRY_COMPARE(unregistered.count(), 1);
-    }
+    /* We expect the OA service to exit within a couple of seconds */
+    unregistered.wait();
 }
 
 QTEST_MAIN(FunctionalTests)

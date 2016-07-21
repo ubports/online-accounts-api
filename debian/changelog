@@ -1,3 +1,17 @@
+online-accounts-api (0.1+16.10.20160721-0ubuntu1) yakkety; urgency=medium
+
+  [ Alberto Mardegan ]
+  * Tests: keep the service alive while running the test (LP: #1603706)
+  * Enable coverage reporting for the OnlineAccountsDaemon library
+
+  [ James Henstridge ]
+  * Add a constructor for OnlineAccounts::Manager that takes a custom D-
+    Bus connection. (LP: #1602153)
+  * Expose all serviceIds for each account rather than ignoring all but
+    the first. (LP: #1602159)
+
+ -- Robert Bruce Park <robert.park@canonical.com>  Thu, 21 Jul 2016 01:27:08 +0000
+
 online-accounts-api (0.1+16.10.20160609-0ubuntu1) yakkety; urgency=medium
 
   * Add symbols files (LP: #1548693)

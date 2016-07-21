@@ -84,10 +84,11 @@ PendingCall ManagerPrivate::requestAccess(const QString &service,
 Account *ManagerPrivate::ensureAccount(const AccountInfo &info)
 {
     if (Q_UNLIKELY(info.id() == 0)) return 0;
+    if (Q_UNLIKELY(info.service().isEmpty())) return 0;
 
-    QHash<AccountId,AccountData>::iterator i = m_accounts.find(info.id());
+    auto i = m_accounts.find({info.id(), info.service()});
     if (i == m_accounts.end()) {
-        i = m_accounts.insert(info.id(), AccountData(info));
+        i = m_accounts.insert({info.id(), info.service()}, AccountData(info));
     }
 
     AccountData &accountData = i.value();
@@ -130,7 +131,7 @@ void ManagerPrivate::onGetAccountsFinished()
     } else {
         QList<AccountInfo> accountInfos = reply.argumentAt<0>();
         Q_FOREACH(const AccountInfo &info, accountInfos) {
-            m_accounts.insert(info.id(), AccountData(info));
+            m_accounts.insert({info.id(), info.service()}, AccountData(info));
         }
     }
     m_getAccountsCall->deleteLater();
@@ -154,7 +155,7 @@ void ManagerPrivate::onAccountChanged(const QString &service,
          * we remove it from our list so that we won't return it to the client
          * anymore.
          */
-        m_accounts.remove(info.id());
+        m_accounts.remove({info.id(), service});
     }
 
     /* No need to handle the Update change type: ensureAccount already updates
@@ -198,8 +199,7 @@ QList<Account*> Manager::availableAccounts(const QString &service)
     Q_D(Manager);
 
     QList<Account*> result;
-    for (QHash<AccountId,AccountData>::iterator i = d->m_accounts.begin();
-         i != d->m_accounts.end(); i++) {
+    for (auto i = d->m_accounts.begin(); i != d->m_accounts.end(); i++) {
         AccountData &accountData = i.value();
         if (!service.isEmpty() && accountData.info.service() != service) continue;
 
@@ -216,10 +216,25 @@ QList<Account*> Manager::availableAccounts(const QString &service)
 
 Account *Manager::account(AccountId accountId)
 {
+    return account(accountId, QString());
+}
+
+Account *Manager::account(AccountId accountId, const QString &serviceId)
+{
     Q_D(Manager);
 
-    QHash<AccountId,AccountData>::iterator i = d->m_accounts.find(accountId);
-    if (Q_UNLIKELY(i == d->m_accounts.end())) return 0;
+    decltype(d->m_accounts)::iterator i;
+    if (serviceId.isEmpty()) {
+        // Any non-empty service ID will sort after the empty string
+        i = d->m_accounts.lowerBound({accountId, QString()});
+        if (Q_UNLIKELY(i == d->m_accounts.end() ||
+                       i.key().first != accountId)) {
+            return 0;
+        }
+    } else {
+        i = d->m_accounts.find({accountId, serviceId});
+        if (Q_UNLIKELY(i == d->m_accounts.end())) return 0;
+    }
 
     AccountData &accountData = i.value();
     if (!accountData.account) {

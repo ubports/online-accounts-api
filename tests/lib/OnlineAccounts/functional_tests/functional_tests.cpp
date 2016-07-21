@@ -77,6 +77,7 @@ public:
     }
 
 private Q_SLOTS:
+    void testConstructor();
     void testManagerReady_data();
     void testManagerReady();
     void testManagerAvailableAccounts_data();
@@ -106,6 +107,15 @@ FunctionalTests::FunctionalTests():
                               ONLINE_ACCOUNTS_MANAGER_INTERFACE,
                               QDBusConnection::SessionBus);
     m_dbus.startServices();
+}
+
+void FunctionalTests::testConstructor()
+{
+    // Standard constructor
+    OnlineAccounts::Manager manager1("my-app");
+
+    // Construct with custom connection
+    OnlineAccounts::Manager manager2("my-app", m_dbus.sessionConnection());
 }
 
 void FunctionalTests::testManagerReady_data()

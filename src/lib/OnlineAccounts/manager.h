@@ -28,6 +28,8 @@
 #include "global.h"
 #include "pending_call.h"
 
+class QDBusConnection;
+
 namespace OnlineAccounts {
 
 class Account;
@@ -41,6 +43,8 @@ class ONLINE_ACCOUNTS_EXPORT Manager: public QObject
 
 public:
     explicit Manager(const QString &applicationId, QObject *parent = 0);
+    Manager(const QString &applicationId, const QDBusConnection &bus,
+            QObject *parent = 0); 
     ~Manager();
 
     bool isReady() const;

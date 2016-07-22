@@ -23,8 +23,9 @@
 
 #include "manager.h"
 
-#include <QHash>
+#include <QMap>
 #include <QObject>
+#include <QPair>
 #include <QPointer>
 #include "account_info.h"
 #include "dbus_interface.h"
@@ -69,7 +70,7 @@ private:
     QString m_applicationId;
     DBusInterface m_daemon;
     QDBusPendingCallWatcher *m_getAccountsCall;
-    QHash<AccountId,AccountData> m_accounts;
+    QMap<QPair<AccountId,QString>,AccountData> m_accounts;
     mutable Manager *q_ptr;
 };
 

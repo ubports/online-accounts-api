@@ -98,11 +98,11 @@ libOnlineAccountsQt.so.1 libonline-accounts-qt1 #MINVER#
  _ZN14OnlineAccounts7Manager17availableAccountsERK7QString@Base 0.1+16.04.20160212-0ubuntu1
  _ZN14OnlineAccounts7Manager5readyEv@Base 0.1+16.04.20160212-0ubuntu1
  _ZN14OnlineAccounts7Manager7accountEj@Base 0.1+16.04.20160212-0ubuntu1
- _ZN14OnlineAccounts7Manager7accountEjRK7QString@Base 0replaceme
+ _ZN14OnlineAccounts7Manager7accountEjRK7QString@Base 0.1+16.10.20160722.4-0ubuntu1
  _ZN14OnlineAccounts7ManagerC1ERK7QStringP7QObject@Base 0.1+16.04.20160212-0ubuntu1
- _ZN14OnlineAccounts7ManagerC1ERK7QStringRK15QDBusConnectionP7QObject@Base 0replaceme
+ _ZN14OnlineAccounts7ManagerC1ERK7QStringRK15QDBusConnectionP7QObject@Base 0.1+16.10.20160722.4-0ubuntu1
  _ZN14OnlineAccounts7ManagerC2ERK7QStringP7QObject@Base 0.1+16.04.20160212-0ubuntu1
- _ZN14OnlineAccounts7ManagerC2ERK7QStringRK15QDBusConnectionP7QObject@Base 0replaceme
+ _ZN14OnlineAccounts7ManagerC2ERK7QStringRK15QDBusConnectionP7QObject@Base 0.1+16.10.20160722.4-0ubuntu1
  _ZN14OnlineAccounts7ManagerD0Ev@Base 0.1+16.04.20160212-0ubuntu1
  _ZN14OnlineAccounts7ManagerD1Ev@Base 0.1+16.04.20160212-0ubuntu1
  _ZN14OnlineAccounts7ManagerD2Ev@Base 0.1+16.04.20160212-0ubuntu1

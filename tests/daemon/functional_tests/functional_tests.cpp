@@ -396,7 +396,7 @@ void FunctionalTests::testAuthenticate()
     reply.waitForFinished();
 
     if (errorName.isEmpty()) {
-        QVERIFY(!reply.isError());
+        QVERIFY2(!reply.isError(), reply.error().message().toUtf8().constData());
         QVariantMap credentials = reply.argumentAt<0>();
         // Add the requestor PID
         expectedCredentials["requestorPid"] = getpid();
@@ -485,7 +485,7 @@ void FunctionalTests::testRequestAccess()
     reply.waitForFinished();
 
     if (errorName.isEmpty()) {
-        QVERIFY(!reply.isError());
+        QVERIFY2(!reply.isError(), reply.error().message().toUtf8().constData());
         AccountInfo accountInfo = reply.argumentAt<0>();
         QVariantMap credentials = reply.argumentAt<1>();
         QCOMPARE(int(accountInfo.id()), expectedAccountId);
@@ -600,7 +600,7 @@ void FunctionalTests::testLifetime()
                              false, false, authParams);
     reply.waitForFinished();
 
-    QVERIFY(!reply.isError());
+    QVERIFY2(!reply.isError(), reply.error().message().toUtf8().constData());
     QVariantMap expectedCredentials(authParams);
     expectedCredentials["UiPolicy"] = 2;
     expectedCredentials["host"] = "coolmail.ex";

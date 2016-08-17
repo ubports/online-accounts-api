@@ -15,6 +15,7 @@ Build-Depends: cmake (>= 2.8.9),
                qt5-default,
                qtbase5-dev (>= 5.4),
                qtdeclarative5-dev,
+               qttools5-dev-tools,
                signon-plugins-dev,
                xvfb,
 Standards-Version: 3.9.4

@@ -1,3 +1,12 @@
+online-accounts-api (0.1+16.10.20160722.4-0ubuntu2) UNRELEASED; urgency=medium
+
+  * debian/control:
+    - Depend on qttools5-dev-tools for qdoc (LP: #1608814)
+  * debian/rules:
+    - No need to invoke dh_python
+
+ -- Alberto Mardegan <alberto.mardegan@canonical.com>  Wed, 17 Aug 2016 14:44:49 +0300
+
 online-accounts-api (0.1+16.10.20160722.4-0ubuntu1) yakkety; urgency=medium
 
   [ Alberto Mardegan ]

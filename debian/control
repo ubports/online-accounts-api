@@ -17,7 +17,6 @@ Build-Depends: cmake (>= 2.8.9),
                qtdeclarative5-dev,
                qttools5-dev-tools,
                signon-plugins-dev,
-               upstart,
                xvfb,
 Standards-Version: 3.9.4
 Homepage: https://launchpad.net/online-accounts-api

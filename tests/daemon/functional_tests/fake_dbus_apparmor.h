@@ -21,7 +21,7 @@
 #ifndef OAD_FAKE_DBUS_APPARMOR_H
 #define OAD_FAKE_DBUS_APPARMOR_H
 
-#include <QString>
+#include <QVariantMap>
 #include <libqtdbusmock/DBusMock.h>
 
 class FakeDBusApparmor
@@ -33,8 +33,8 @@ public:
                                  QDBusConnection::SessionBus);
     }
 
-    void addClient(const QString &client, const QString context) {
-        mocked().call("AddClient", client, context);
+    void setCredentials(const QString &service, const QVariantMap &credentials) {
+        mocked().call("SetCredentials", service, credentials);
     }
 
 private:

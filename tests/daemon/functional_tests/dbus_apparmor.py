@@ -1,4 +1,7 @@
-'''D-Bus mock template for GetConnectionAppArmorSecurityContext
+'''dbus mock template
+
+This creates the expected methods and properties of the
+org.freedesktop.DBus service.
 '''
 
 # This program is free software; you can redistribute it and/or modify it under
@@ -9,28 +12,39 @@
 
 __author__ = 'Alberto Mardegan'
 __email__ = 'alberto.mardegan@canonical.com'
-__copyright__ = '(c) 2015 Canonical Ltd.'
+__copyright__ = '(c) 2016 Canonical Ltd.'
 __license__ = 'LGPL 3+'
 
 import dbus
+import time
 
 from dbusmock import MOCK_IFACE
+import dbusmock
 
 BUS_NAME = 'mocked.org.freedesktop.dbus'
 MAIN_OBJ = '/org/freedesktop/DBus'
 MAIN_IFACE = 'org.freedesktop.DBus'
 SYSTEM_BUS = False
 
+ERROR_PREFIX = 'org.freedesktop.DBus.Error.'
+ERROR_NAME_HAS_NO_OWNER = ERROR_PREFIX + 'NameHasNoOwner'
+
+def get_credentials(self, service):
+    if service not in self.credentials:
+        raise dbus.exceptions.DBusException('Service not found',
+                                            name=ERROR_NAME_HAS_NO_OWNER)
+    return self.credentials[service]
+
+
 def load(mock, parameters):
-    mock.AddMethod(MAIN_IFACE,
-                   'GetConnectionAppArmorSecurityContext',
-                   's', 's',
-                   'ret = self.contexts.get(args[0], "unconfined")')
+    mock.get_credentials = get_credentials
+    mock.AddMethods(MAIN_IFACE, [
+        ('GetConnectionCredentials', 's', 'a{sv}', 'ret = self.get_credentials(self, args[0])'),
+    ])
 
-    mock.contexts = {}
+    mock.credentials = {}
 
-@dbus.service.method(MOCK_IFACE, in_signature='ss', out_signature='')
-def AddClient(self, client, context):
-    '''Adds a client with its security context'''
-    self.contexts[client] = context
 
+@dbus.service.method(MOCK_IFACE, in_signature='sa{sv}', out_signature='')
+def SetCredentials(self, service, credentials):
+    self.credentials[service] = credentials

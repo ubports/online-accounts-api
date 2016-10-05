@@ -60,7 +60,26 @@ char *toString(const QVariantMap &map)
     return qstrdup(doc.toJson(QJsonDocument::Compact).data());
 }
 
+template<>
+char *toString(const QSet<QVariantMap> &set)
+{
+    QByteArray ba = "QSet<QVariantMap>(";
+    QStringList list;
+    Q_FOREACH(const QVariantMap &map, set) {
+        list.append(QJsonDocument::fromVariant(map).toJson(QJsonDocument::Compact));
+    }
+    ba += list.join(", ");
+    ba += ")";
+    return qstrdup(ba.data());
+}
+
 } // QTest namespace
+
+static inline uint qHash(const QVariantMap &m, uint seed = 0)
+{
+    QString signature = m.keys().join(' ') + m.value("providerId").toString();
+    return ::qHash(signature, seed);
+}
 
 class TestProcess: public QProcess
 {
@@ -89,6 +108,23 @@ public:
 
     void quit() { write("\n"); waitForFinished(); }
 
+    QList<QVariantMap> getProviders(const QVariantMap &filters) {
+        QJsonDocument doc(QJsonObject::fromVariantMap(filters));
+        m_replyExpected = true;
+        write("GetProviders -f ");
+        write(doc.toJson(QJsonDocument::Compact) + '\n');
+
+        waitForReadyRead();
+        doc = QJsonDocument::fromJson(readLine());
+        m_replyExpected = false;
+        QList<QVariantMap> providers;
+        if (checkError(doc)) return providers;
+        Q_FOREACH(const QJsonValue &v, doc.array()) {
+            providers.append(v.toObject().toVariantMap());
+        }
+        return providers;
+    }
+
     QList<AccountInfo> getAccounts(const QVariantMap &filters) {
         QJsonDocument doc(QJsonObject::fromVariantMap(filters));
         m_replyExpected = true;
@@ -99,12 +135,21 @@ public:
         doc = QJsonDocument::fromJson(readLine());
         m_replyExpected = false;
         QList<AccountInfo> accountInfos;
+        if (checkError(doc)) return accountInfos;
         Q_FOREACH(const QJsonValue &v, doc.array()) {
             QJsonArray a = v.toArray();
             accountInfos.append(AccountInfo(a.at(0).toInt(),
                                             a.at(1).toObject().toVariantMap()));
         }
         return accountInfos;
+    }
+
+    QString errorName() const { return m_errorName; }
+
+protected:
+    bool checkError(const QJsonDocument &doc) {
+        m_errorName = doc.object().value("error").toString();
+        return !m_errorName.isEmpty();
     }
 
 private Q_SLOTS:
@@ -128,6 +173,7 @@ Q_SIGNALS:
 
 private:
     QString m_uniqueName;
+    QString m_errorName;
     bool m_replyExpected;
 };
 
@@ -170,6 +216,8 @@ public:
 private Q_SLOTS:
     void init();
     void cleanup();
+    void testGetProvidersFiltering_data();
+    void testGetProvidersFiltering();
     void testGetAccountsFiltering_data();
     void testGetAccountsFiltering();
     void testAuthenticate_data();
@@ -267,6 +315,65 @@ void FunctionalTests::init()
 void FunctionalTests::cleanup()
 {
     delete m_dbus;
+}
+
+void FunctionalTests::testGetProvidersFiltering_data()
+{
+    QTest::addColumn<QVariantMap>("filters");
+    QTest::addColumn<QString>("securityContext");
+    QTest::addColumn<QString>("expectedError");
+    QTest::addColumn<QList<QVariantMap> >("expectedProviders");
+
+    QVariantMap filters;
+    QTest::newRow("empty filters") <<
+        filters <<
+        "unconfined" <<
+        ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED <<
+        QList<QVariantMap> {};
+
+    QTest::newRow("empty filters, confined") <<
+        filters <<
+        "com.ubuntu.tests_application_0.2" <<
+        QString() <<
+        QList<QVariantMap> {
+            {
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool provider" },
+                { ONLINE_ACCOUNTS_INFO_KEY_PROVIDER_ID, "cool" },
+                { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, ""},
+            },
+        };
+
+    filters["applicationId"] = "com.ubuntu.tests_application";
+    QTest::newRow("by app ID") <<
+        filters <<
+        "unconfined" <<
+        QString() <<
+        QList<QVariantMap> {
+            {
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool provider" },
+                { ONLINE_ACCOUNTS_INFO_KEY_PROVIDER_ID, "cool" },
+                { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, ""},
+            },
+        };
+}
+
+void FunctionalTests::testGetProvidersFiltering()
+{
+    QFETCH(QVariantMap, filters);
+    QFETCH(QString, securityContext);
+    QFETCH(QString, expectedError);
+    QFETCH(QList<QVariantMap>, expectedProviders);
+
+    DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
+
+    TestProcess testProcess;
+    m_dbus->dbusApparmor().addClient(testProcess.uniqueName(), securityContext);
+
+    QList<QVariantMap> providers = testProcess.getProviders(filters);
+    QCOMPARE(providers.toSet(), expectedProviders.toSet());
+    QCOMPARE(testProcess.errorName(), expectedError);
+
+    delete daemon;
 }
 
 void FunctionalTests::testGetAccountsFiltering_data()

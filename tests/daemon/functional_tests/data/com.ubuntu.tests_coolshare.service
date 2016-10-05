@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<service id="coolshare">
+<service id="com.ubuntu.tests_coolshare">
   <type>sharing</type>
   <name>Cool Share</name>
   <icon>general_otherservice</icon>

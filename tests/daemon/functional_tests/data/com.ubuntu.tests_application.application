@@ -5,7 +5,7 @@
   <desktop-entry>mailer.desktop</desktop-entry>
 
   <services>
-    <service id="coolshare">
+    <service id="com.ubuntu.tests_coolshare">
       <description>Mailer can even share stuff on CoolShare</description>
     </service>
   </services>

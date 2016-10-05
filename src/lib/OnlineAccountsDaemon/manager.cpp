@@ -25,6 +25,7 @@
 #include <Accounts/Application>
 #include <Accounts/AuthData>
 #include <Accounts/Manager>
+#include <Accounts/Provider>
 #include <Accounts/Service>
 #include <QCoreApplication>
 #include <QDebug>
@@ -78,6 +79,8 @@ public:
 
     int authMethod(const Accounts::AuthData &authData);
     AccountInfo readAccountInfo(const Accounts::AccountService *as);
+    QList<QVariantMap> getProviders(const QVariantMap &filters,
+                                    const CallContext &context);
     QList<AccountInfo> getAccounts(const QVariantMap &filters,
                                    const CallContext &context);
     void authenticate(uint accountId, const QString &serviceId,
@@ -88,6 +91,8 @@ public:
                        const QVariantMap &parameters,
                        const CallContext &context);
     bool canAccess(const QString &context, const QString &serviceId);
+
+    static QString applicationIdFromLabel(const QString &label);
 
     void notifyAccountChange(const ActiveAccount &account, uint change);
 
@@ -363,6 +368,46 @@ AccountInfo ManagerPrivate::readAccountInfo(const Accounts::AccountService *as)
     return AccountInfo(as->account()->id(), info);
 }
 
+QList<QVariantMap> ManagerPrivate::getProviders(const QVariantMap &filters,
+                                                const CallContext &context)
+{
+    QString desiredApplicationId = filters.value("applicationId").toString();
+    QString applicationId = desiredApplicationId.isEmpty() ?
+        applicationIdFromLabel(context.securityContext()) : desiredApplicationId;
+
+    Accounts::Application application = m_manager.application(applicationId);
+
+    QList<QVariantMap> providers;
+
+    if (!application.isValid() ||
+        !canAccess(context.securityContext(), applicationId)) {
+        context.sendError(ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED,
+                          QString("App '%1' cannot act as '%2'").
+                          arg(applicationId).arg(desiredApplicationId));
+        return providers;
+    }
+
+    m_clients.insert(context.clientName(), application);
+
+    QSet<QString> providerList;
+    const auto services = m_manager.serviceList(application);
+    for (const Accounts::Service &service: services) {
+        providerList.insert(service.provider());
+    }
+
+    for (const QString &providerId: providerList) {
+        Accounts::Provider provider = m_manager.provider(providerId);
+        if (Q_UNLIKELY(!provider.isValid())) continue;
+        providers.append({
+            { ONLINE_ACCOUNTS_INFO_KEY_PROVIDER_ID, providerId },
+            { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, provider.displayName() },
+            { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, provider.trCatalog() },
+        });
+    }
+
+    return providers;
+}
+
 QList<AccountInfo> ManagerPrivate::getAccounts(const QVariantMap &filters,
                                                const CallContext &context)
 {
@@ -492,6 +537,16 @@ bool ManagerPrivate::canAccess(const QString &context,
     return serviceId.left(pos) == pkgname;
 }
 
+QString ManagerPrivate::applicationIdFromLabel(const QString &label)
+{
+    QStringList parts = label.split('_');
+    if (parts.count() == 3) {
+        return QStringList(parts.mid(0, 2)).join('_');
+    } else {
+        return QString();
+    }
+}
+
 void ManagerPrivate::onAccountServiceEnabled(bool enabled)
 {
     auto as = qobject_cast<Accounts::AccountService*>(sender());
@@ -569,6 +624,13 @@ bool Manager::isIdle() const
 {
     Q_D(const Manager);
     return d->m_isIdle;
+}
+
+QList<QVariantMap> Manager::getProviders(const QVariantMap &filters,
+                                         const CallContext &context)
+{
+    Q_D(Manager);
+    return d->getProviders(filters, context);
 }
 
 QList<AccountInfo> Manager::getAccounts(const QVariantMap &filters,

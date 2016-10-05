@@ -147,6 +147,7 @@ ManagerAdaptor::ManagerAdaptor(Manager *parent):
     qRegisterMetaType<QList<AccountInfo> >("QList<AccountInfo>");
     qDBusRegisterMetaType<AccountInfo>();
     qDBusRegisterMetaType<QList<AccountInfo>>();
+    qDBusRegisterMetaType<QList<QVariantMap>>();
 
     setAutoRelaySignals(false);
 }
@@ -162,6 +163,12 @@ void ManagerAdaptor::notifyAccountChange(const AccountInfo &info,
     AccountInfo copy(info);
     copy.details[ONLINE_ACCOUNTS_INFO_KEY_CHANGE_TYPE] = changeType;
     Q_EMIT AccountChanged(copy.serviceId(), copy);
+}
+
+QList<QVariantMap> ManagerAdaptor::GetProviders(const QVariantMap &filters)
+{
+    return parent()->getProviders(filters,
+                                  CallContext(dbusContext()));
 }
 
 QVariantMap ManagerAdaptor::Authenticate(uint accountId,

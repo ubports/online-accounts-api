@@ -26,6 +26,17 @@ class TestProcess:
         self.manager.connect_to_signal("AccountChanged", self.on_account_changed,
                 dbus_interface=MAIN_IFACE)
 
+    def get_providers(self, args):
+        filters = dbus.Dictionary(signature='sv')
+        if args.filters:
+            filters.update(json.loads(args.filters))
+        try:
+            print('%s' % json.dumps(self.manager.GetProviders(filters), sort_keys=True),
+                    flush=True)
+        except dbus.exceptions.DBusException as err:
+            print('{ "error": "%s" }' % err.get_dbus_name(), flush=True)
+
+
     def get_accounts(self, args):
         filters = dbus.Dictionary(signature='sv')
         if args.filters:
@@ -59,6 +70,10 @@ class TestProcess:
     def create_parser(self):
         parser = argparse.ArgumentParser(description='Test process')
         subparsers = parser.add_subparsers()
+
+        parser_providers = subparsers.add_parser('GetProviders')
+        parser_providers.add_argument('-f', '--filters')
+        parser_providers.set_defaults(func=self.get_providers)
 
         parser_accounts = subparsers.add_parser('GetAccounts')
         parser_accounts.add_argument('-f', '--filters')

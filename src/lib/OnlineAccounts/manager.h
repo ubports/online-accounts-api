@@ -44,7 +44,7 @@ class ONLINE_ACCOUNTS_EXPORT Manager: public QObject
 public:
     explicit Manager(const QString &applicationId, QObject *parent = 0);
     Manager(const QString &applicationId, const QDBusConnection &bus,
-            QObject *parent = 0); 
+            QObject *parent = 0);
     ~Manager();
 
     bool isReady() const;

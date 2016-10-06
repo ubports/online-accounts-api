@@ -82,9 +82,9 @@ class ManagerAdaptor: public QDBusAbstractAdaptor
     Q_CLASSINFO("D-Bus Interface", "com.ubuntu.OnlineAccounts.Manager")
     Q_CLASSINFO("D-Bus Introspection", ""
 "  <interface name=\"com.ubuntu.OnlineAccounts.Manager\">\n"
-"    <method name=\"GetProviders\">\n"
+"    <method name=\"GetServices\">\n"
 "      <arg name=\"filters\" type=\"a{sv}\" direction=\"in\"/>\n"
-"      <arg name=\"accounts\" type=\"aa{sv}\" direction=\"out\"/>\n"
+"      <arg name=\"services\" type=\"aa{sv}\" direction=\"out\"/>\n"
 "    </method>\n"
 "    <method name=\"GetAccounts\">\n"
 "      <arg direction=\"in\" type=\"a{sv}\" name=\"filters\"/>\n"
@@ -124,7 +124,7 @@ public:
     void notifyAccountChange(const AccountInfo &info, uint changeType);
 
 public Q_SLOTS:
-    QList<QVariantMap> GetProviders(const QVariantMap &filters);
+    QList<QVariantMap> GetServices(const QVariantMap &filters);
     QVariantMap Authenticate(uint accountId, const QString &serviceId,
                              bool interactive, bool invalidate,
                              const QVariantMap &parameters);

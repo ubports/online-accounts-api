@@ -77,7 +77,8 @@ char *toString(const QSet<QVariantMap> &set)
 
 static inline uint qHash(const QVariantMap &m, uint seed = 0)
 {
-    QString signature = m.keys().join(' ') + m.value("providerId").toString();
+    QString signature = m.keys().join(' ') +
+        m.value(ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID).toString();
     return ::qHash(signature, seed);
 }
 
@@ -108,21 +109,21 @@ public:
 
     void quit() { write("\n"); waitForFinished(); }
 
-    QList<QVariantMap> getProviders(const QVariantMap &filters) {
+    QList<QVariantMap> getServices(const QVariantMap &filters) {
         QJsonDocument doc(QJsonObject::fromVariantMap(filters));
         m_replyExpected = true;
-        write("GetProviders -f ");
+        write("GetServices -f ");
         write(doc.toJson(QJsonDocument::Compact) + '\n');
 
         waitForReadyRead();
         doc = QJsonDocument::fromJson(readLine());
         m_replyExpected = false;
-        QList<QVariantMap> providers;
-        if (checkError(doc)) return providers;
+        QList<QVariantMap> services;
+        if (checkError(doc)) return services;
         Q_FOREACH(const QJsonValue &v, doc.array()) {
-            providers.append(v.toObject().toVariantMap());
+            services.append(v.toObject().toVariantMap());
         }
-        return providers;
+        return services;
     }
 
     QList<AccountInfo> getAccounts(const QVariantMap &filters) {
@@ -216,8 +217,8 @@ public:
 private Q_SLOTS:
     void init();
     void cleanup();
-    void testGetProvidersFiltering_data();
-    void testGetProvidersFiltering();
+    void testGetServicesFiltering_data();
+    void testGetServicesFiltering();
     void testGetAccountsFiltering_data();
     void testGetAccountsFiltering();
     void testAuthenticate_data();
@@ -317,12 +318,12 @@ void FunctionalTests::cleanup()
     delete m_dbus;
 }
 
-void FunctionalTests::testGetProvidersFiltering_data()
+void FunctionalTests::testGetServicesFiltering_data()
 {
     QTest::addColumn<QVariantMap>("filters");
     QTest::addColumn<QString>("securityContext");
     QTest::addColumn<QString>("expectedError");
-    QTest::addColumn<QList<QVariantMap> >("expectedProviders");
+    QTest::addColumn<QList<QVariantMap> >("expectedServices");
 
     QVariantMap filters;
     QTest::newRow("empty filters") <<
@@ -337,8 +338,8 @@ void FunctionalTests::testGetProvidersFiltering_data()
         QString() <<
         QList<QVariantMap> {
             {
-                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool provider" },
-                { ONLINE_ACCOUNTS_INFO_KEY_PROVIDER_ID, "cool" },
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
+                { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "com.ubuntu.tests_coolshare" },
                 { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, ""},
             },
         };
@@ -350,27 +351,27 @@ void FunctionalTests::testGetProvidersFiltering_data()
         QString() <<
         QList<QVariantMap> {
             {
-                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool provider" },
-                { ONLINE_ACCOUNTS_INFO_KEY_PROVIDER_ID, "cool" },
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
+                { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "com.ubuntu.tests_coolshare" },
                 { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, ""},
             },
         };
 }
 
-void FunctionalTests::testGetProvidersFiltering()
+void FunctionalTests::testGetServicesFiltering()
 {
     QFETCH(QVariantMap, filters);
     QFETCH(QString, securityContext);
     QFETCH(QString, expectedError);
-    QFETCH(QList<QVariantMap>, expectedProviders);
+    QFETCH(QList<QVariantMap>, expectedServices);
 
     DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
 
     TestProcess testProcess;
     m_dbus->dbusApparmor().addClient(testProcess.uniqueName(), securityContext);
 
-    QList<QVariantMap> providers = testProcess.getProviders(filters);
-    QCOMPARE(providers.toSet(), expectedProviders.toSet());
+    QList<QVariantMap> providers = testProcess.getServices(filters);
+    QCOMPARE(providers.toSet(), expectedServices.toSet());
     QCOMPARE(testProcess.errorName(), expectedError);
 
     delete daemon;

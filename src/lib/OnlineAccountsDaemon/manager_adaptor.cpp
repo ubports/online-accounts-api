@@ -165,10 +165,9 @@ void ManagerAdaptor::notifyAccountChange(const AccountInfo &info,
     Q_EMIT AccountChanged(copy.serviceId(), copy);
 }
 
-QList<QVariantMap> ManagerAdaptor::GetProviders(const QVariantMap &filters)
+QList<QVariantMap> ManagerAdaptor::GetServices(const QVariantMap &filters)
 {
-    return parent()->getProviders(filters,
-                                  CallContext(dbusContext()));
+    return parent()->getServices(filters, CallContext(dbusContext()));
 }
 
 QVariantMap ManagerAdaptor::Authenticate(uint accountId,

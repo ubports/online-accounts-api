@@ -23,27 +23,27 @@
     -->
 
     <!--
-      GetProviders: returns a list of account providers that satisfy the given
+      GetServices: returns a list of account services that satisfy the given
       filters.
 
       Allowed keys for the "filters" parameter:
 
       - "applicationId" ("s"): the "<package>_<app>" of the client. An
         unconfined application can specify this in order to restrict the set
-        of results to only those accounts that the application has been
-        authorized to use. For confined apps, OA will deduce the
-        applicationId from the apparmor label of the caller.
+				of results to only those account services that the application can
+				use. For confined apps, OA will deduce the applicationId from the
+				apparmor label of the caller.
     -->
-    <method name="GetProviders">
+    <method name="GetServices">
       <arg name="filters" type="a{sv}" direction="in" />
       <!--
-        The return value is a list of dictionaries of the providers' data.
+        The return value is a list of dictionaries of the services' data.
         This will always include:
-        - "providerId" (s)
+        - "serviceId" (s)
         - "displayName" (s)
         - "translations" (s): the translation domain for the display name.
       -->
-      <arg name="accounts" type="aa{sv}" direction="out" />
+      <arg name="services" type="aa{sv}" direction="out" />
       <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0"
         value="QList&lt;QVariantMap&gt;"/>

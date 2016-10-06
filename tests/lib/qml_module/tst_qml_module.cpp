@@ -298,6 +298,8 @@ void ModuleTest::testModelChanges()
     QAbstractListModel *model = qobject_cast<QAbstractListModel*>(object);
     QVERIFY(model != 0);
 
+    QTRY_COMPARE(object->property("ready").toBool(), true);
+
     QSignalSpy countChanged(model, SIGNAL(countChanged()));
     QSignalSpy dataChanged(model, SIGNAL(dataChanged(const QModelIndex&,
                                                      const QModelIndex&)));
@@ -310,6 +312,7 @@ void ModuleTest::testModelChanges()
     emitAccountChanged("coolService", 5, changes);
 
     QVERIFY(countChanged.wait());
+    QCOMPARE(countChanged.count(), 1);
     QCOMPARE(dataChanged.count(), 0);
     QTRY_COMPARE(model->rowCount(), 1);
     QCOMPARE(model->property("accountList").value<QObjectList>().count(), 1);

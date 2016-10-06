@@ -51,6 +51,8 @@ public:
     QString errorName() const;
     QString errorMessage() const;
 
+    static int authMethod(const Accounts::AuthData &authData);
+
 Q_SIGNALS:
     void finished();
 

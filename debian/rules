@@ -5,7 +5,7 @@
 #export DH_VERBOSE=1
 
 # Skip tests on the archs they are known to be flaky with current configuration
-# See https://launchpad.net/bugs/1606927
+# See https://launchpad.net/bugs/1630906
 testskip_architectures := arm64
 
 override_dh_auto_test:

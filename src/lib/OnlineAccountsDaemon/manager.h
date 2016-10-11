@@ -51,10 +51,9 @@ public:
 
     bool isIdle() const;
 
-    QList<QVariantMap> getServices(const QVariantMap &filters,
-                                   const CallContext &context);
     QList<AccountInfo> getAccounts(const QVariantMap &filters,
-                                   const CallContext &context);
+                                   const CallContext &context,
+                                   QList<QVariantMap> &services);
     void authenticate(uint accountId, const QString &serviceId,
                       bool interactive, bool invalidate,
                       const QVariantMap &parameters,

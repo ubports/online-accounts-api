@@ -109,24 +109,13 @@ public:
 
     void quit() { write("\n"); waitForFinished(); }
 
-    QList<QVariantMap> getServices(const QVariantMap &filters) {
-        QJsonDocument doc(QJsonObject::fromVariantMap(filters));
-        m_replyExpected = true;
-        write("GetServices -f ");
-        write(doc.toJson(QJsonDocument::Compact) + '\n');
-
-        waitForReadyRead();
-        doc = QJsonDocument::fromJson(readLine());
-        m_replyExpected = false;
+    QList<AccountInfo> getAccounts(const QVariantMap &filters) {
         QList<QVariantMap> services;
-        if (checkError(doc)) return services;
-        Q_FOREACH(const QJsonValue &v, doc.array()) {
-            services.append(v.toObject().toVariantMap());
-        }
-        return services;
+        return getAccounts(filters, services);
     }
 
-    QList<AccountInfo> getAccounts(const QVariantMap &filters) {
+    QList<AccountInfo> getAccounts(const QVariantMap &filters,
+                                   QList<QVariantMap> &services) {
         QJsonDocument doc(QJsonObject::fromVariantMap(filters));
         m_replyExpected = true;
         write("GetAccounts -f ");
@@ -134,13 +123,19 @@ public:
 
         waitForReadyRead();
         doc = QJsonDocument::fromJson(readLine());
+        qDebug() << "Got Json:" << doc;
         m_replyExpected = false;
         QList<AccountInfo> accountInfos;
         if (checkError(doc)) return accountInfos;
-        Q_FOREACH(const QJsonValue &v, doc.array()) {
+        const QJsonArray accountsJson = doc.array().at(0).toArray();
+        const QJsonArray servicesJson = doc.array().at(1).toArray();
+        Q_FOREACH(const QJsonValue &v, accountsJson) {
             QJsonArray a = v.toArray();
             accountInfos.append(AccountInfo(a.at(0).toInt(),
                                             a.at(1).toObject().toVariantMap()));
+        }
+        Q_FOREACH(const QJsonValue &v, servicesJson) {
+            services.append(v.toObject().toVariantMap());
         }
         return accountInfos;
     }
@@ -217,8 +212,6 @@ public:
 private Q_SLOTS:
     void init();
     void cleanup();
-    void testGetServicesFiltering_data();
-    void testGetServicesFiltering();
     void testGetAccountsFiltering_data();
     void testGetAccountsFiltering();
     void testAuthenticate_data();
@@ -318,24 +311,28 @@ void FunctionalTests::cleanup()
     delete m_dbus;
 }
 
-void FunctionalTests::testGetServicesFiltering_data()
+
+void FunctionalTests::testGetAccountsFiltering_data()
 {
     QTest::addColumn<QVariantMap>("filters");
     QTest::addColumn<QString>("securityContext");
     QTest::addColumn<QString>("expectedError");
+    QTest::addColumn<QList<int> >("expectedAccountIds");
     QTest::addColumn<QList<QVariantMap> >("expectedServices");
 
     QVariantMap filters;
     QTest::newRow("empty filters") <<
         filters <<
         "unconfined" <<
-        ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED <<
+        QString() <<
+        (QList<int>() << 1 << 2 << 3) <<
         QList<QVariantMap> {};
 
     QTest::newRow("empty filters, confined") <<
         filters <<
         "com.ubuntu.tests_application_0.2" <<
         QString() <<
+        (QList<int>() << 2) <<
         QList<QVariantMap> {
             {
                 { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
@@ -343,12 +340,37 @@ void FunctionalTests::testGetServicesFiltering_data()
                 { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, ""},
             },
         };
+
+    filters[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = "coolmail";
+    QTest::newRow("unconfined, by service ID") <<
+        filters <<
+        "unconfined" <<
+        QString() <<
+        (QList<int>() << 1 << 3) <<
+        QList<QVariantMap> {};
+    filters.clear();
+
+    filters[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = "coolmail";
+    QTest::newRow("confined, by service ID") <<
+        filters <<
+        "com.ubuntu.tests_application_0.2" <<
+        QString() <<
+        (QList<int>()) <<
+        QList<QVariantMap> {
+            {
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
+                { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "com.ubuntu.tests_coolshare" },
+                { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, ""},
+            },
+        };
+    filters.clear();
 
     filters["applicationId"] = "com.ubuntu.tests_application";
     QTest::newRow("by app ID") <<
         filters <<
         "unconfined" <<
         QString() <<
+        (QList<int>() << 2) <<
         QList<QVariantMap> {
             {
                 { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
@@ -356,13 +378,24 @@ void FunctionalTests::testGetServicesFiltering_data()
                 { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, ""},
             },
         };
+    filters.clear();
+
+    filters["applicationId"] = "mailer";
+    QTest::newRow("confined app requesting other app ID") <<
+        filters <<
+        "com.ubuntu.tests_application_0.2" <<
+        ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED <<
+        (QList<int>()) <<
+        QList<QVariantMap> {};
+    filters.clear();
 }
 
-void FunctionalTests::testGetServicesFiltering()
+void FunctionalTests::testGetAccountsFiltering()
 {
     QFETCH(QVariantMap, filters);
     QFETCH(QString, securityContext);
     QFETCH(QString, expectedError);
+    QFETCH(QList<int>, expectedAccountIds);
     QFETCH(QList<QVariantMap>, expectedServices);
 
     DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
@@ -370,49 +403,10 @@ void FunctionalTests::testGetServicesFiltering()
     TestProcess testProcess;
     m_dbus->dbusApparmor().addClient(testProcess.uniqueName(), securityContext);
 
-    QList<QVariantMap> providers = testProcess.getServices(filters);
-    QCOMPARE(providers.toSet(), expectedServices.toSet());
+    QList<QVariantMap> services;
+    QList<AccountInfo> accountInfos = testProcess.getAccounts(filters, services);
     QCOMPARE(testProcess.errorName(), expectedError);
-
-    delete daemon;
-}
-
-void FunctionalTests::testGetAccountsFiltering_data()
-{
-    QTest::addColumn<QVariantMap>("filters");
-    QTest::addColumn<QString>("securityContext");
-    QTest::addColumn<QList<int> >("expectedAccountIds");
-
-    QVariantMap filters;
-    QTest::newRow("empty filters") <<
-        filters <<
-        "unconfined" <<
-        (QList<int>() << 1 << 2 << 3);
-
-    QTest::newRow("empty filters, confined") <<
-        filters <<
-        "com.ubuntu.tests_application_0.2" <<
-        (QList<int>() << 2);
-
-    filters[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = "coolmail";
-    QTest::newRow("by service ID") <<
-        filters <<
-        "unconfined" <<
-        (QList<int>() << 1 << 3);
-}
-
-void FunctionalTests::testGetAccountsFiltering()
-{
-    QFETCH(QVariantMap, filters);
-    QFETCH(QString, securityContext);
-    QFETCH(QList<int>, expectedAccountIds);
-
-    DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
-
-    TestProcess testProcess;
-    m_dbus->dbusApparmor().addClient(testProcess.uniqueName(), securityContext);
-
-    QList<AccountInfo> accountInfos = testProcess.getAccounts(filters);
+    QCOMPARE(services.toSet(), expectedServices.toSet());
     QList<int> accountIds;
     Q_FOREACH(const AccountInfo &info, accountInfos) {
         accountIds.append(info.id() + m_firstAccountId);

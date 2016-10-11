@@ -27,6 +27,7 @@
 #include "error.h"
 #include "global.h"
 #include "pending_call.h"
+#include "service.h"
 
 class QDBusConnection;
 
@@ -49,6 +50,8 @@ public:
 
     bool isReady() const;
     void waitForReady();
+
+    QList<Service> availableServices();
 
     QList<Account*> availableAccounts(const QString &service = QString());
     Account *account(AccountId accountId);

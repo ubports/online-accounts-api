@@ -165,11 +165,6 @@ void ManagerAdaptor::notifyAccountChange(const AccountInfo &info,
     Q_EMIT AccountChanged(copy.serviceId(), copy);
 }
 
-QList<QVariantMap> ManagerAdaptor::GetServices(const QVariantMap &filters)
-{
-    return parent()->getServices(filters, CallContext(dbusContext()));
-}
-
 QVariantMap ManagerAdaptor::Authenticate(uint accountId,
                                          const QString &serviceId,
                                          bool interactive, bool invalidate,
@@ -181,10 +176,13 @@ QVariantMap ManagerAdaptor::Authenticate(uint accountId,
     return QVariantMap();
 }
 
-QList<AccountInfo> ManagerAdaptor::GetAccounts(const QVariantMap &filters)
+void ManagerAdaptor::GetAccounts(const QVariantMap &filters,
+                                 QList<AccountInfo> &accounts,
+                                 QList<QVariantMap> &services)
 {
-    return parent()->getAccounts(filters,
-                                 CallContext(dbusContext()));
+    accounts = parent()->getAccounts(filters,
+                                     CallContext(dbusContext()),
+                                     services);
 }
 
 AccountInfo ManagerAdaptor::RequestAccess(const QString &serviceId,

@@ -26,23 +26,15 @@ class TestProcess:
         self.manager.connect_to_signal("AccountChanged", self.on_account_changed,
                 dbus_interface=MAIN_IFACE)
 
-    def get_services(self, args):
-        filters = dbus.Dictionary(signature='sv')
-        if args.filters:
-            filters.update(json.loads(args.filters))
-        try:
-            print('%s' % json.dumps(self.manager.GetServices(filters), sort_keys=True),
-                    flush=True)
-        except dbus.exceptions.DBusException as err:
-            print('{ "error": "%s" }' % err.get_dbus_name(), flush=True)
-
-
     def get_accounts(self, args):
         filters = dbus.Dictionary(signature='sv')
         if args.filters:
             filters.update(json.loads(args.filters))
-        print('%s' % json.dumps(self.manager.GetAccounts(filters), sort_keys=True),
-                flush=True)
+        try:
+            print('%s' % json.dumps(self.manager.GetAccounts(filters), sort_keys=True),
+                    flush=True)
+        except dbus.exceptions.DBusException as err:
+            print('{ "error": "%s" }' % err.get_dbus_name(), flush=True)
 
     def on_account_changed(self, serviceId, accountInfo):
         info = json.dumps(accountInfo, sort_keys=True)
@@ -70,10 +62,6 @@ class TestProcess:
     def create_parser(self):
         parser = argparse.ArgumentParser(description='Test process')
         subparsers = parser.add_subparsers()
-
-        parser_services = subparsers.add_parser('GetServices')
-        parser_services.add_argument('-f', '--filters')
-        parser_services.set_defaults(func=self.get_services)
 
         parser_accounts = subparsers.add_parser('GetAccounts')
         parser_accounts.add_argument('-f', '--filters')

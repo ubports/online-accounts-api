@@ -78,10 +78,10 @@ public:
 
     int authMethod(const Accounts::AuthData &authData);
     AccountInfo readAccountInfo(const Accounts::AccountService *as);
-    QList<QVariantMap> getServices(const QVariantMap &filters,
-                                   const CallContext &context);
+    QList<QVariantMap> buildServiceList(const Accounts::Application &app) const;
     QList<AccountInfo> getAccounts(const QVariantMap &filters,
-                                   const CallContext &context);
+                                   const CallContext &context,
+                                   QList<QVariantMap> &services);
     void authenticate(uint accountId, const QString &serviceId,
                       bool interactive, bool invalidate,
                       const QVariantMap &parameters,
@@ -367,28 +367,12 @@ AccountInfo ManagerPrivate::readAccountInfo(const Accounts::AccountService *as)
     return AccountInfo(as->account()->id(), info);
 }
 
-QList<QVariantMap> ManagerPrivate::getServices(const QVariantMap &filters,
-                                               const CallContext &context)
+QList<QVariantMap>
+ManagerPrivate::buildServiceList(const Accounts::Application &app) const
 {
-    QString desiredApplicationId = filters.value("applicationId").toString();
-    QString applicationId = desiredApplicationId.isEmpty() ?
-        applicationIdFromLabel(context.securityContext()) : desiredApplicationId;
-
-    Accounts::Application application = m_manager.application(applicationId);
-
     QList<QVariantMap> services;
 
-    if (!application.isValid() ||
-        !canAccess(context.securityContext(), applicationId)) {
-        context.sendError(ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED,
-                          QString("App '%1' cannot act as '%2'").
-                          arg(applicationId).arg(desiredApplicationId));
-        return services;
-    }
-
-    m_clients.insert(context.clientName(), application);
-
-    const auto serviceList = m_manager.serviceList(application);
+    const auto serviceList = m_manager.serviceList(app);
     for (const Accounts::Service &service: serviceList) {
         services.append({
             { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, service.name() },
@@ -401,21 +385,33 @@ QList<QVariantMap> ManagerPrivate::getServices(const QVariantMap &filters,
 }
 
 QList<AccountInfo> ManagerPrivate::getAccounts(const QVariantMap &filters,
-                                               const CallContext &context)
+                                               const CallContext &context,
+                                               QList<QVariantMap> &services)
 {
     QString desiredApplicationId = filters.value("applicationId").toString();
     QString desiredServiceId = filters.value("serviceId").toString();
     Accounts::AccountId desiredAccountId = filters.value("accountId").toUInt();
 
-    Accounts::Application application = desiredApplicationId.isEmpty() ?
-        Accounts::Application() : m_manager.application(desiredApplicationId);
+    QString applicationId = desiredApplicationId.isEmpty() ?
+        applicationIdFromLabel(context.securityContext()) : desiredApplicationId;
 
-    if (application.isValid() &&
-        canAccess(context.securityContext(), desiredApplicationId)) {
+    Accounts::Application application = m_manager.application(applicationId);
+
+    QList<AccountInfo> accounts;
+
+    if (!application.isValid() ||
+        !canAccess(context.securityContext(), applicationId)) {
+        if (!desiredApplicationId.isEmpty()) {
+            context.sendError(ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED,
+                              QString("App '%1' cannot act as '%2'").
+                              arg(applicationId).arg(desiredApplicationId));
+            return accounts;
+        }
+    } else {
         m_clients.insert(context.clientName(), application);
     }
 
-    QList<AccountInfo> accounts;
+    services = buildServiceList(application);
 
     Q_FOREACH(Accounts::AccountId accountId, m_manager.accountListEnabled()) {
         if (desiredAccountId != 0 && accountId != desiredAccountId) {
@@ -618,18 +614,12 @@ bool Manager::isIdle() const
     return d->m_isIdle;
 }
 
-QList<QVariantMap> Manager::getServices(const QVariantMap &filters,
-                                        const CallContext &context)
-{
-    Q_D(Manager);
-    return d->getServices(filters, context);
-}
-
 QList<AccountInfo> Manager::getAccounts(const QVariantMap &filters,
-                                        const CallContext &context)
+                                        const CallContext &context,
+                                        QList<QVariantMap> &services)
 {
     Q_D(Manager);
-    return d->getAccounts(filters, context);
+    return d->getAccounts(filters, context, services);
 }
 
 void Manager::authenticate(uint accountId, const QString &serviceId,

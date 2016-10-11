@@ -82,13 +82,10 @@ class ManagerAdaptor: public QDBusAbstractAdaptor
     Q_CLASSINFO("D-Bus Interface", "com.ubuntu.OnlineAccounts.Manager")
     Q_CLASSINFO("D-Bus Introspection", ""
 "  <interface name=\"com.ubuntu.OnlineAccounts.Manager\">\n"
-"    <method name=\"GetServices\">\n"
-"      <arg name=\"filters\" type=\"a{sv}\" direction=\"in\"/>\n"
-"      <arg name=\"services\" type=\"aa{sv}\" direction=\"out\"/>\n"
-"    </method>\n"
 "    <method name=\"GetAccounts\">\n"
 "      <arg direction=\"in\" type=\"a{sv}\" name=\"filters\"/>\n"
 "      <arg direction=\"out\" type=\"a(ua{sv})\" name=\"accounts\"/>\n"
+"      <arg direction=\"out\" type=\"aa{sv}\" name=\"services\"/>\n"
 "    </method>\n"
 "    <method name=\"Authenticate\">\n"
 "      <arg direction=\"in\" type=\"u\" name=\"accountId\"/>\n"
@@ -124,11 +121,12 @@ public:
     void notifyAccountChange(const AccountInfo &info, uint changeType);
 
 public Q_SLOTS:
-    QList<QVariantMap> GetServices(const QVariantMap &filters);
     QVariantMap Authenticate(uint accountId, const QString &serviceId,
                              bool interactive, bool invalidate,
                              const QVariantMap &parameters);
-    QList<AccountInfo> GetAccounts(const QVariantMap &filters);
+    void GetAccounts(const QVariantMap &filters,
+                     QList<AccountInfo> &accounts,
+                     QList<QVariantMap> &services);
     AccountInfo RequestAccess(const QString &serviceId,
                               const QVariantMap &parameters,
                               QVariantMap &credentials);

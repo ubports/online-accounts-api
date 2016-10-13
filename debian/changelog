@@ -1,3 +1,10 @@
+online-accounts-api (0.1+16.10.20161013.1-0ubuntu1) yakkety; urgency=medium
+
+  * Use GetConnectionCredentials() method instead of the deprecated
+    apparmor-specific method. (LP: #1489489)
+
+ -- Alberto Mardegan <mardy@users.sourceforge.net>  Thu, 13 Oct 2016 14:43:47 +0000
+
 online-accounts-api (0.1+16.10.20161006.3-0ubuntu1) yakkety; urgency=medium
 
   * Fix reply of password-based authentication (LP: #1628473)

@@ -308,7 +308,10 @@ void FunctionalTests::testGetAccountsFiltering()
     DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
 
     TestProcess testProcess;
-    m_dbus->dbusApparmor().addClient(testProcess.uniqueName(), securityContext);
+    QVariantMap credentials {
+        { "LinuxSecurityLabel", securityContext.toUtf8() },
+    };
+    m_dbus->dbusApparmor().setCredentials(testProcess.uniqueName(), credentials);
 
     QList<AccountInfo> accountInfos = testProcess.getAccounts(filters);
     QList<int> accountIds;

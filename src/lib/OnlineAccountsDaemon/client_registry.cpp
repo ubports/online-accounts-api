@@ -20,12 +20,15 @@
 
 #include "client_registry.h"
 
+#include <QByteArray>
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 #include <QDBusMessage>
+#include <QDBusReply>
 #include <QDBusServiceWatcher>
 #include <QDebug>
 #include <QHash>
+#include <QVariantMap>
 #include <sys/apparmor.h>
 
 using namespace OnlineAccountsDaemon;
@@ -91,18 +94,25 @@ QString ClientRegistryPrivate::getSecurityContext(const QString &client) const
         QDBusMessage::createMethodCall(dbusService,
                                        "/org/freedesktop/DBus",
                                        "org.freedesktop.DBus",
-                                       "GetConnectionAppArmorSecurityContext");
+                                       "GetConnectionCredentials");
     msg << client;
-    QDBusMessage reply = m_connection.call(msg, QDBus::Block);
+    QDBusReply<QVariantMap> reply = m_connection.call(msg, QDBus::Block);
 
     QString context;
-    if (reply.type() == QDBusMessage::ReplyMessage) {
-        context = reply.arguments().value(0).value<QString>();
+    if (reply.isValid()) {
+        QVariantMap map = reply.value();
+        QByteArray label = map.value("LinuxSecurityLabel").toByteArray();
+        if (!label.isEmpty()) {
+            aa_splitcon(label.data(), NULL);
+            context = QString::fromUtf8(label);
+        }
     } else {
-        qWarning() << "Could not determine AppArmor context: " <<
-            reply.errorName() << ": " << reply.errorMessage();
+        QDBusError error = reply.error();
+        qWarning() << "Error getting app ID:" << error.name() <<
+            error.message();
         context = QStringLiteral("unconfined");
     }
+    qDebug() << "Client security context:" << context;
 
     return context;
 }

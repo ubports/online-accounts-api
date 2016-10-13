@@ -71,6 +71,7 @@ private:
     SignOn::AuthSession *m_authSession;
     SignOn::Identity *m_identity;
     QVariantMap m_parameters;
+    int m_authMethod;
     QVariantMap m_reply;
     QVariantMap m_extraReplyData;
     QString m_errorName;
@@ -85,6 +86,7 @@ AuthenticatorPrivate::AuthenticatorPrivate(Authenticator *q):
     QObject(q),
     m_authSession(0),
     m_identity(0),
+    m_authMethod(ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN),
     m_invalidateCache(false),
     q_ptr(q)
 {
@@ -111,11 +113,14 @@ void AuthenticatorPrivate::authenticate(const Accounts::AuthData &authData,
         mergeMaps(authData.parameters(), mergeMaps(parameters, m_parameters));
     QString mechanism = authData.mechanism();
 
+    m_authMethod = Authenticator::authMethod(authData);
+
     if (m_invalidateCache) {
         /* This works for OAuth 1.0 and 2.0; other authentication plugins should
          * implement a similar flag. */
         allSessionData["ForceTokenRefresh"] = true;
-        if (authData.method() == "password" || authData.method() == "sasl") {
+        if (m_authMethod == ONLINE_ACCOUNTS_AUTH_METHOD_PASSWORD ||
+            m_authMethod == ONLINE_ACCOUNTS_AUTH_METHOD_SASL) {
             uint uiPolicy = allSessionData.value("UiPolicy").toUInt();
             if (uiPolicy != SignOn::NoUserInteractionPolicy) {
                 allSessionData["UiPolicy"] = SignOn::RequestPasswordPolicy;
@@ -124,7 +129,7 @@ void AuthenticatorPrivate::authenticate(const Accounts::AuthData &authData,
     }
 
     m_extraReplyData.clear();
-    if (mechanism == "HMAC-SHA1" || mechanism == "PLAINTEXT") {
+    if (m_authMethod == ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH1) {
         /* For OAuth 1.0, let's return also the Consumer key and secret along
          * with the reply. */
         m_extraReplyData[ONLINE_ACCOUNTS_AUTH_KEY_CONSUMER_KEY] =
@@ -139,7 +144,17 @@ void AuthenticatorPrivate::authenticate(const Accounts::AuthData &authData,
 void AuthenticatorPrivate::onAuthSessionResponse(const SignOn::SessionData &sessionData)
 {
     Q_Q(Authenticator);
-    m_reply = mergeMaps(m_extraReplyData, sessionData.toMap());
+    QVariantMap signonReply;
+
+    /* Perform some method-specific translation of reply keys */
+    if (m_authMethod == ONLINE_ACCOUNTS_AUTH_METHOD_PASSWORD) {
+        signonReply[ONLINE_ACCOUNTS_AUTH_KEY_USERNAME] = sessionData.UserName();
+        signonReply[ONLINE_ACCOUNTS_AUTH_KEY_PASSWORD] = sessionData.Secret();
+    } else {
+        signonReply = sessionData.toMap();
+    }
+
+    m_reply = mergeMaps(m_extraReplyData, signonReply);
     Q_EMIT q->finished();
 }
 
@@ -229,6 +244,25 @@ QString Authenticator::errorMessage() const
 {
     Q_D(const Authenticator);
     return d->m_errorMessage;
+}
+
+int Authenticator::authMethod(const Accounts::AuthData &authData)
+{
+    QString method = authData.method();
+    QString mechanism = authData.mechanism();
+    if (method == "oauth2") {
+        if (mechanism == "web_server" || mechanism == "user_agent") {
+            return ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH2;
+        } else if (mechanism == "HMAC-SHA1" || mechanism == "PLAINTEXT") {
+            return ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH1;
+        }
+    } else if (method == "sasl") {
+        return ONLINE_ACCOUNTS_AUTH_METHOD_SASL;
+    } else if (method == "password") {
+        return ONLINE_ACCOUNTS_AUTH_METHOD_PASSWORD;
+    }
+
+    return ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN;
 }
 
 #include "authenticator.moc"

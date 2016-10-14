@@ -1,7 +1,7 @@
 /*
- * This file is part of OnlineAccountsModule
+ * This file is part of libOnlineAccounts
  *
- * Copyright (C) 2015 Canonical Ltd.
+ * Copyright (C) 2016 Canonical Ltd.
  *
  * Contact: Alberto Mardegan <alberto.mardegan@canonical.com>
  *
@@ -18,20 +18,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "plugin.h"
+#include "service.h"
 
-#include "account_model.h"
+#include <QVariantMap>
+#include "OnlineAccountsDaemon/dbus_constants.h"
 
-#include <QDebug>
-#include <QQmlComponent>
+using namespace OnlineAccounts;
 
-using namespace OnlineAccountsModule;
-
-void Plugin::registerTypes(const char* uri)
+Service::ServiceData::ServiceData(const QVariantMap &map):
+    m_id(map.value(ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID).toString()),
+    m_displayName(map.value(ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME).toString()),
+    m_translations(map.value(ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS).toString())
 {
-    qDebug() << Q_FUNC_INFO << uri;
+}
 
-    qmlRegisterType<AccountModel>(uri, 2, 0, "AccountModel");
-    qmlRegisterUncreatableType<OnlineAccounts::Service>(uri, 2, 0, "Service",
-                                                        "Cannot be created from QML");
+Service::Service():
+    d(new ServiceData(QVariantMap()))
+{
+}
+
+Service::Service(const QVariantMap &map):
+    d(new ServiceData(map))
+{
 }

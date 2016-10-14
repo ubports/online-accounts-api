@@ -386,6 +386,28 @@ QList<QObject*> AccountModel::accountList() const
     return objects;
 }
 
+QJSValue AccountModel::serviceList() const
+{
+    Q_D(const AccountModel);
+    qDebug() << "returning" << d->m_manager->availableServices().count();
+    QJSEngine *engine = qjsEngine(this);
+    QJSValue ret = engine->newArray();
+    int i = 0;
+    Q_FOREACH(const auto &service, d->m_manager->availableServices()) {
+        QJSValue v = engine->toScriptValue(
+#if 1
+                                           service
+#else
+                                           QVariantMap {
+                                           { "key", "a value" },
+                                           }
+#endif
+                                           );
+        ret.setProperty(i++, v);
+    }
+    return ret;
+}
+
 /*!
  * \qmlsignal AccountModel::accessReply(jsobject reply, jsobject authenticationData)
  *

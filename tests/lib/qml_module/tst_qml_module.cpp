@@ -55,12 +55,16 @@ public:
     }
 
     void addMockedMethod(const QString &name,
-                                        const QString &in_sig,
-                                        const QString &out_sig,
-                                        const QString &code)
+                         const QString &in_sig,
+                         const QString &out_sig,
+                         const QString &code)
     {
         return mocked().AddMethod(ONLINE_ACCOUNTS_MANAGER_INTERFACE,
                                   name, in_sig, out_sig, code).waitForFinished();
+    }
+
+    void addGetAccountsMethod(const QString &code) {
+        addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}", code);
     }
 
     void emitAccountChanged(const QString &service,
@@ -90,6 +94,8 @@ private Q_SLOTS:
     void initTestCase();
     void testModuleImport();
     void testModelProperties();
+    void testServices_data();
+    void testServices();
     void testModelRoles_data();
     void testModelRoles();
     void testModelFilters_data();
@@ -156,6 +162,72 @@ void ModuleTest::testModelProperties()
     delete object;
 }
 
+void ModuleTest::testServices_data()
+{
+    QTest::addColumn<QString>("reply");
+    QTest::addColumn<QList<QVariantMap>>("expectedServices");
+
+    QTest::newRow("no services") <<
+        "[]" <<
+        QList<QVariantMap> {};
+
+    QTest::newRow("one service") <<
+        "[{"
+        "'" ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID "': 'app_coolshare',"
+        "'" ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME "': 'Cool Share',"
+        "'" ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS "': 'this package',"
+        "}]" <<
+        QList<QVariantMap> {
+            {
+                { "serviceId", "app_coolshare" },
+                { "displayName", "Cool Share" },
+                { "translations", "this package"},
+            },
+        };
+}
+
+void ModuleTest::testServices()
+{
+    QFETCH(QString, reply);
+    QFETCH(QList<QVariantMap>, expectedServices);
+
+    addGetAccountsMethod(QString("ret = ([], %1)").arg(reply));
+
+    QQmlEngine engine;
+    QQmlComponent component(&engine);
+    component.setData("import Ubuntu.OnlineAccounts 2.0\n"
+                      "AccountModel {\n"
+                      "  applicationId: \"foo\"\n"
+                      "  function getServices() {\n"
+                      "    console.log(\"Servicees: \" + JSON.stringify(serviceList));\n"
+                      "    console.log(\"Services: \" + serviceList);\n"
+                      "    var ret = [];\n"
+#if 1
+                      "    for (var i = 0; i < serviceList.length; i++) {\n"
+                      "      console.log(\"Service: \" + JSON.stringify(serviceList[i]));\n"
+                      "      ret.append(serviceList[i]);\n"
+                      "    }\n"
+#endif
+                      "    return ret;\n"
+                      "  }\n"
+                      "}",
+                      QUrl());
+    QObject *object = component.create();
+    QVERIFY(object != 0);
+    QAbstractListModel *model = qobject_cast<QAbstractListModel*>(object);
+    QVERIFY(model != 0);
+
+    QSignalSpy ready(object, SIGNAL(isReadyChanged()));
+    ready.wait();
+
+    QVariant serviceList;
+    bool ok = QMetaObject::invokeMethod(object, "getServices",
+                                        Q_RETURN_ARG(QVariant, serviceList));
+    QVERIFY(ok);
+
+    delete object;
+}
+
 void ModuleTest::testModelRoles_data()
 {
     QTest::addColumn<QString>("accountData");
@@ -190,8 +262,7 @@ void ModuleTest::testModelRoles()
     QFETCH(int, authenticationMethod);
     QFETCH(QVariantMap, settings);
 
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
-                    QString("ret = [(1, %1)]").arg(accountData));
+    addGetAccountsMethod(QString("ret = ([(1, %1)], [])").arg(accountData));
 
     QQmlEngine engine;
     QQmlComponent component(&engine);
@@ -237,17 +308,17 @@ void ModuleTest::testModelFilters_data()
     QTest::addColumn<QStringList>("expectedDisplayNames");
 
     QTest::newRow("no accounts") <<
-        "ret = []" <<
+        "[]" <<
         "" <<
         QList<int>();
 
     QTest::newRow("one account, no service filter") <<
-        "ret = [(1, {'displayName': 'Tom', 'serviceId': 'Foo' })]" <<
+        "[(1, {'displayName': 'Tom', 'serviceId': 'Foo' })]" <<
         "" <<
         (QList<int>() << 1);
 
     QTest::newRow("one account, with service filter") <<
-        "ret = [(1, {'displayName': 'Tom', 'serviceId': 'Foo' })]" <<
+        "[(1, {'displayName': 'Tom', 'serviceId': 'Foo' })]" <<
         "serviceId: \"bar\"" <<
         QList<int>();
 }
@@ -258,7 +329,7 @@ void ModuleTest::testModelFilters()
     QFETCH(QString, filters);
     QFETCH(QList<int>, expectedIds);
 
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})", reply);
+    addGetAccountsMethod(QString("ret = (%1, [])").arg(reply));
 
     QQmlEngine engine;
     QQmlComponent component(&engine);
@@ -287,7 +358,7 @@ void ModuleTest::testModelFilters()
 
 void ModuleTest::testModelChanges()
 {
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})", "ret = []");
+    addGetAccountsMethod("ret = ([], [])");
     QQmlEngine engine;
     QQmlComponent component(&engine);
     component.setData("import Ubuntu.OnlineAccounts 2.0\n"
@@ -394,8 +465,7 @@ void ModuleTest::testModelRequestAccess()
     QFETCH(QVariantMap, expectedAccessReply);
     QFETCH(QVariantMap, expectedAuthenticationData);
 
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
-                    "ret = [(1, {'displayName': 'Tom', 'serviceId': 'Foo' })]");
+    addGetAccountsMethod("ret = ([(1, {'displayName': 'Tom', 'serviceId': 'Foo' })], [])");
     addMockedMethod("RequestAccess", "sa{sv}", "(ua{sv})a{sv}", reply);
 
     QQmlEngine engine;
@@ -533,12 +603,11 @@ void ModuleTest::testAccountAuthentication()
     QFETCH(QVariantMap, params);
     QFETCH(QVariantMap, expectedAuthenticationData);
 
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
-                    QString("ret = [(1, {"
-                            "  'displayName': 'Bob',"
-                            "  'serviceId': 'MyService0',"
-                            "  'authMethod': %1,"
-                            "})]").arg(authMethod));
+    addGetAccountsMethod(QString("ret = ([(1, {"
+                                 "  'displayName': 'Bob',"
+                                 "  'serviceId': 'MyService0',"
+                                 "  'authMethod': %1,"
+                                 "})], [])").arg(authMethod));
     addMockedMethod("Authenticate", "usbba{sv}", "a{sv}", reply);
 
     QQmlEngine engine;

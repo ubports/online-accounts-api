@@ -58,6 +58,8 @@ public:
 
     Account *ensureAccount(const AccountInfo &info);
 
+    static Service serviceFromMap(const QVariantMap &map);
+
 private:
     void retrieveAccounts();
 
@@ -71,6 +73,7 @@ private:
     DBusInterface m_daemon;
     QDBusPendingCallWatcher *m_getAccountsCall;
     QMap<QPair<AccountId,QString>,AccountData> m_accounts;
+    QList<Service> m_services;
     mutable Manager *q_ptr;
 };
 

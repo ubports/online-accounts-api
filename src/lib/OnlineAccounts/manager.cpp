@@ -123,7 +123,7 @@ void ManagerPrivate::onGetAccountsFinished()
 
     Q_ASSERT(m_getAccountsCall);
 
-    QDBusPendingReply<QList<AccountInfo> > reply = *m_getAccountsCall;
+    QDBusPendingReply<QList<AccountInfo>,QList<QVariantMap>> reply = *m_getAccountsCall;
     if (Q_UNLIKELY(reply.isError())) {
         qWarning() << "GetAccounts call failed:" << reply.error();
         /* No special handling of the error: the Manager will simply not have
@@ -132,6 +132,12 @@ void ManagerPrivate::onGetAccountsFinished()
         QList<AccountInfo> accountInfos = reply.argumentAt<0>();
         Q_FOREACH(const AccountInfo &info, accountInfos) {
             m_accounts.insert({info.id(), info.service()}, AccountData(info));
+        }
+
+        QList<QVariantMap> services = reply.argumentAt<1>();
+        m_services.reserve(services.count());
+        for (const QVariantMap &data: services) {
+            m_services.append(Service(new Service::ServiceData(data)));
         }
     }
     m_getAccountsCall->deleteLater();
@@ -192,6 +198,12 @@ void Manager::waitForReady()
     if (d->m_getAccountsCall) {
         d->m_getAccountsCall->waitForFinished();
     }
+}
+
+QList<Service> Manager::availableServices() const
+{
+    Q_D(const Manager);
+    return d->m_services;
 }
 
 QList<Account*> Manager::availableAccounts(const QString &service)

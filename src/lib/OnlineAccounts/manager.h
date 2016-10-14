@@ -51,7 +51,7 @@ public:
     bool isReady() const;
     void waitForReady();
 
-    QList<Service> availableServices();
+    QList<Service> availableServices() const;
 
     QList<Account*> availableAccounts(const QString &service = QString());
     Account *account(AccountId accountId);

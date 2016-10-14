@@ -26,18 +26,22 @@
 #include "OnlineAccounts/account_info.h"
 #include "OnlineAccountsDaemon/dbus_constants.h"
 #include <QDBusConnection>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QObject>
 #include <QSignalSpy>
 #include <QTest>
 #include <libqtdbusmock/DBusMock.h>
 
 namespace QTest {
+
 template<>
 char *toString(const QVariantMap &map)
 {
     QJsonDocument doc(QJsonObject::fromVariantMap(map));
     return qstrdup(doc.toJson(QJsonDocument::Compact).data());
 }
+
 } // QTest namespace
 
 class FunctionalTests: public QObject
@@ -82,6 +86,8 @@ private Q_SLOTS:
     void testManagerReady();
     void testManagerAvailableAccounts_data();
     void testManagerAvailableAccounts();
+    void testManagerAvailableServices_data();
+    void testManagerAvailableServices();
     void testManagerAccount();
     void testManagerRequestAccess_data();
     void testManagerRequestAccess();
@@ -132,7 +138,7 @@ void FunctionalTests::testManagerReady()
     QFETCH(bool, haveGetAccountsMethod);
 
     if (haveGetAccountsMethod) {
-        addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})", "ret = []");
+        addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}", "ret = ([], [])");
     }
     OnlineAccounts::Manager manager("my-app");
 
@@ -150,12 +156,12 @@ void FunctionalTests::testManagerAvailableAccounts_data()
     QTest::addColumn<QStringList>("expectedDisplayNames");
 
     QTest::newRow("no accounts") <<
-        "ret = []" <<
+        "ret = ([], [])" <<
         QList<int>() <<
         QStringList();
 
     QTest::newRow("one account, no data") <<
-        "ret = [(1, {'displayName': 'Tom'})]" <<
+        "ret = ([(1, {'displayName': 'Tom'})], [])" <<
         (QList<int>() << 1) <<
         (QStringList() << "Tom");
 }
@@ -166,7 +172,7 @@ void FunctionalTests::testManagerAvailableAccounts()
     QFETCH(QList<int>, expectedIds);
     QFETCH(QStringList, expectedDisplayNames);
 
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})", reply);
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}", reply);
     OnlineAccounts::Manager manager("my-app");
 
     manager.waitForReady();
@@ -181,10 +187,60 @@ void FunctionalTests::testManagerAvailableAccounts()
     QCOMPARE(displayNames, expectedDisplayNames);
 }
 
+void FunctionalTests::testManagerAvailableServices_data()
+{
+    QTest::addColumn<QString>("reply");
+    QTest::addColumn<QList<QVariantMap>>("expectedServices");
+
+    QTest::newRow("no services") <<
+        "ret = ([], [])" <<
+        QList<QVariantMap> {};
+
+    QTest::newRow("one service") <<
+        "ret = ([], [{"
+        "'" ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID "': 'app_coolshare',"
+        "'" ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME "': 'Cool Share',"
+        "'" ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS "': 'this package',"
+        "}])" <<
+        QList<QVariantMap> {
+            {
+                { "serviceId", "app_coolshare" },
+                { "displayName", "Cool Share" },
+                { "translations", "this package"},
+            },
+        };
+}
+
+void FunctionalTests::testManagerAvailableServices()
+{
+    QFETCH(QString, reply);
+    QFETCH(QList<QVariantMap>, expectedServices);
+
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}", reply);
+    OnlineAccounts::Manager manager("my-app");
+
+    manager.waitForReady();
+    QList<QVariantMap> services;
+    const auto availableServices = manager.availableServices();
+    for (const OnlineAccounts::Service &service: availableServices) {
+        QVariantMap data;
+
+        const QMetaObject &mo = service.staticMetaObject;
+        for (int i = mo.propertyOffset(); i < mo.propertyCount(); i++) {
+            const QMetaProperty prop = mo.property(i);
+            data.insert(prop.name(), prop.readOnGadget(&service));
+        }
+
+        services.append(data);
+    }
+
+    QCOMPARE(services, expectedServices);
+}
+
 void FunctionalTests::testManagerAccount()
 {
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
-                    "ret = [(1, {'displayName': 'John'})]");
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}",
+                    "ret = ([(1, {'displayName': 'John'})], [])");
     OnlineAccounts::Manager manager("my-app");
 
     manager.waitForReady();
@@ -236,7 +292,7 @@ void FunctionalTests::testManagerRequestAccess()
     QFETCH(QString, displayName);
     QFETCH(QString, accessToken);
 
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})", "ret = []");
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}", "ret = ([], [])");
     addMockedMethod("RequestAccess", "sa{sv}", "(ua{sv})a{sv}", reply);
     OnlineAccounts::Manager manager("my-app");
 
@@ -277,12 +333,12 @@ void FunctionalTests::testAccountData_data()
     QTest::addColumn<QVariantMap>("settings");
 
     QTest::newRow("empty account") <<
-        "ret = [(1, {})]" <<
+        "[(1, {})]" <<
         1 <<
         "" << "" << 0 << QVariantMap();
 
     QTest::newRow("no settings") <<
-        "ret = [(3, {"
+        "[(3, {"
         "  'displayName': 'Bob',"
         "  'serviceId': 'MyService',"
         "  'authMethod': 1,"
@@ -297,7 +353,7 @@ void FunctionalTests::testAccountData_data()
     settings.insert("Host", "example.com");
     settings.insert("Port", int(7000));
     QTest::newRow("with settings") <<
-        "ret = [(4, {"
+        "[(4, {"
         "  'displayName': 'Tom',"
         "  'serviceId': 'MyService',"
         "  'authMethod': 2,"
@@ -320,7 +376,8 @@ void FunctionalTests::testAccountData()
     QFETCH(int, authenticationMethod);
     QFETCH(QVariantMap, settings);
 
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})", reply);
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}",
+                    QString("ret = (%1, [])").arg(reply));
     OnlineAccounts::Manager manager("my-app");
 
     manager.waitForReady();
@@ -347,7 +404,7 @@ void FunctionalTests::testAccountData()
 
 void FunctionalTests::testPendingCallWatcher()
 {
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})", "ret = []");
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}", "ret = ([], [])");
     addMockedMethod("RequestAccess", "sa{sv}", "(ua{sv})a{sv}",
                     "ret = ((1, {'displayName': 'Bob'}),{})");
     OnlineAccounts::Manager manager("my-app");
@@ -378,7 +435,7 @@ void FunctionalTests::testPendingCallWatcher()
 
 void FunctionalTests::testAccountChanges()
 {
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})", "ret = []");
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}", "ret = ([], [])");
     OnlineAccounts::Manager manager("my-app");
     QSignalSpy accountAvailable(&manager,
                                 SIGNAL(accountAvailable(OnlineAccounts::Account*)));
@@ -442,8 +499,8 @@ void FunctionalTests::testAccountChanges()
 
 void FunctionalTests::testMultipleServices()
 {
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
-                    "ret = ["
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}",
+                    "ret = (["
                     "(1, {"
                     "  'displayName': 'One',"
                     "  'serviceId': 'service2',"
@@ -464,7 +521,7 @@ void FunctionalTests::testMultipleServices()
                     "  'serviceId': 'service1',"
                     "  'authMethod': 1,"
                     "}),"
-                    "]");
+                    "], [])");
     OnlineAccounts::Manager manager("my-app");
     manager.waitForReady();
 
@@ -494,8 +551,8 @@ void FunctionalTests::testMultipleServices()
 
 void FunctionalTests::testAuthentication()
 {
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
-                    "ret = ["
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}",
+                    "ret = (["
                     "(1, {"
                     "  'displayName': 'Bob',"
                     "  'serviceId': 'MyService0',"
@@ -516,7 +573,7 @@ void FunctionalTests::testAuthentication()
                     "  'serviceId': 'MyService3',"
                     "  'authMethod': 4,"
                     "}),"
-                    "]");
+                    "], [])");
     addMockedMethod("Authenticate", "usbba{sv}", "a{sv}",
                     "if args[0] == 1:\n"
                     "  ret = {"
@@ -671,12 +728,12 @@ void FunctionalTests::testAuthenticationErrors()
     QFETCH(int, errorCode);
     QFETCH(QString, errorMessage);
 
-    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})",
-                    "ret = [(1, {"
+    addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}",
+                    "ret = ([(1, {"
                     "  'displayName': 'Bob',"
                     "  'serviceId': 'MyService0',"
                     "  'authMethod': 2,"
-                    "})]");
+                    "})], [])");
     addMockedMethod("Authenticate", "usbba{sv}", "a{sv}", reply);
     OnlineAccounts::Manager manager("my-app");
     manager.waitForReady();

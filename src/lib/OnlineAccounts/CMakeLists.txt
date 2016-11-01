@@ -8,6 +8,10 @@ include_directories(.
 set(CMAKE_SHARED_LINKER_FLAGS "-Wl,--no-undefined")
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
+add_definitions(
+    -DBUILDING_ONLINE_ACCOUNTS
+)
+
 add_library(${CLIENT_LIB} SHARED
     account.cpp
     account_info.cpp

@@ -1,3 +1,9 @@
+online-accounts-api (0.1+17.04.20161101-0ubuntu1) zesty; urgency=medium
+
+  * Disable debug output by default (LP: #1638166)
+
+ -- Alberto Mardegan <mardy@users.sourceforge.net>  Tue, 01 Nov 2016 11:09:36 +0000
+
 online-accounts-api (0.1+16.10.20161013.1-0ubuntu1) yakkety; urgency=medium
 
   * Use GetConnectionCredentials() method instead of the deprecated

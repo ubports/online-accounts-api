@@ -29,6 +29,11 @@
 #  define ONLINE_ACCOUNTS_EXPORT Q_DECL_IMPORT
 #endif
 
+#if defined(BUILDING_ONLINE_ACCOUNTS)
+#include <QLoggingCategory>
+Q_DECLARE_LOGGING_CATEGORY(DBG_ONLINE_ACCOUNTS)
+#endif
+
 namespace OnlineAccounts {
 
 typedef uint AccountId;

@@ -57,7 +57,8 @@ RequestAccessReplyPrivate::RequestAccessReplyPrivate(const PendingCall &call):
 
     if (Q_UNLIKELY(pCall->dbusCall().isError())) {
         /* Treat all errors as permission denied. */
-        qWarning() << "Error:" << pCall->dbusCall().error().message();
+        qCWarning(DBG_ONLINE_ACCOUNTS) << "Error:" <<
+            pCall->dbusCall().error().message();
         m_error = Error(Error::PermissionDenied,
                         pCall->dbusCall().error().message());
         return;

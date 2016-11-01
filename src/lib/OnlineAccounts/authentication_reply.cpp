@@ -50,7 +50,8 @@ static QVariant expandDBusArguments(const QVariant &variant)
                 return QVariant::fromValue(arrayList);
             } else {
                 /* We don't know how to handle other types */
-                qWarning() << "unhandled type" << argument.currentSignature();
+                qCWarning(DBG_ONLINE_ACCOUNTS) << "unhandled type" <<
+                    argument.currentSignature();
                 return argument.asVariant();
             }
         } else {
@@ -133,7 +134,7 @@ AuthenticationReplyPrivate::AuthenticationReplyPrivate(AuthenticationMethod meth
     } else {
         qFatal("Unknown invoked method %d", invokedMethod);
     }
-    qDebug() << "reply data:" << m_replyData;
+    qCDebug(DBG_ONLINE_ACCOUNTS) << "reply data:" << m_replyData;
 }
 
 AuthenticationReply::AuthenticationReply(const PendingCall &call):
@@ -264,7 +265,7 @@ SaslReply::State SaslReply::state() const
     case ONLINE_ACCOUNTS_AUTH_SASL_STATE_FINISHED: return Finished;
     case ONLINE_ACCOUNTS_AUTH_SASL_STATE_CONTINUE: return Continue;
     default:
-        qWarning() << "Unknown SASL state" << state;
+        qCWarning(DBG_ONLINE_ACCOUNTS) << "Unknown SASL state" << state;
         return Finished;
     }
 }

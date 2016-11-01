@@ -31,6 +31,8 @@
 
 using namespace OnlineAccounts;
 
+Q_LOGGING_CATEGORY(DBG_ONLINE_ACCOUNTS, "OnlineAccounts", QtWarningMsg)
+
 ManagerPrivate::ManagerPrivate(Manager *q, const QString &applicationId,
                                const QDBusConnection& bus):
     QObject(),
@@ -125,7 +127,8 @@ void ManagerPrivate::onGetAccountsFinished()
 
     QDBusPendingReply<QList<AccountInfo> > reply = *m_getAccountsCall;
     if (Q_UNLIKELY(reply.isError())) {
-        qWarning() << "GetAccounts call failed:" << reply.error();
+        qCWarning(DBG_ONLINE_ACCOUNTS) << "GetAccounts call failed:" <<
+            reply.error();
         /* No special handling of the error: the Manager will simply not have
          * any account */
     } else {

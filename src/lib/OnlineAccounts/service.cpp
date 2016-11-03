@@ -28,7 +28,7 @@ using namespace OnlineAccounts;
 Service::ServiceData::ServiceData(const QVariantMap &map):
     m_id(map.value(ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID).toString()),
     m_displayName(map.value(ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME).toString()),
-    m_translations(map.value(ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS).toString())
+    m_iconSource(map.value(ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE).toString())
 {
 }
 

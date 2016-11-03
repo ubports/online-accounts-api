@@ -43,7 +43,7 @@
 #  define ONLINE_ACCOUNTS_INFO_CHANGE_UPDATED 2
 
 /* Keys for the service info dictionary */
-#define ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS "translations"
+#define ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE "iconSource"
 
 /* Error codes */
 #define ONLINE_ACCOUNTS_ERROR_PREFIX "com.ubuntu.OnlineAccounts.Error."

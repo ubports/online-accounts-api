@@ -37,6 +37,8 @@ public:
     void setInvalid();
     void update(const AccountInfo &info);
 
+    Service service() const;
+
 private:
     Manager *m_manager;
     AccountInfo m_info;

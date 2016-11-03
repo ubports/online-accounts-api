@@ -343,7 +343,7 @@ void FunctionalTests::testGetAccountsFiltering_data()
             {
                 { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
                 { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "com.ubuntu.tests_coolshare" },
-                { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, ""},
+                { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, "image://theme/general_otherservice" },
             },
         };
 
@@ -366,7 +366,7 @@ void FunctionalTests::testGetAccountsFiltering_data()
             {
                 { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
                 { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "com.ubuntu.tests_coolshare" },
-                { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, ""},
+                { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, "image://theme/general_otherservice" },
             },
         };
     filters.clear();
@@ -381,7 +381,7 @@ void FunctionalTests::testGetAccountsFiltering_data()
             {
                 { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
                 { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "com.ubuntu.tests_coolshare" },
-                { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, ""},
+                { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, "image://theme/general_otherservice" },
             },
         };
     filters.clear();

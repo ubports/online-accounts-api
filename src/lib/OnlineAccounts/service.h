@@ -24,6 +24,7 @@
 #include <QObject>
 #include <QSharedData>
 #include <QSharedDataPointer>
+#include <QUrl>
 #include <QVariantMap>
 
 #include "global.h"
@@ -38,7 +39,7 @@ class ONLINE_ACCOUNTS_EXPORT Service
     Q_GADGET
     Q_PROPERTY(QString serviceId READ id CONSTANT)
     Q_PROPERTY(QString displayName READ displayName CONSTANT)
-    Q_PROPERTY(QString translations READ translations CONSTANT)
+    Q_PROPERTY(QUrl iconSource READ iconSource CONSTANT)
 
 private:
     class ServiceData: public QSharedData {
@@ -47,7 +48,7 @@ private:
         friend class Service;
         QString m_id;
         QString m_displayName;
-        QString m_translations;
+        QString m_iconSource;
     };
 
 public:
@@ -56,9 +57,10 @@ public:
 
     Service(const Service &other): d(other.d) {}
 
+    bool isValid() const { return !d->m_id.isEmpty(); }
     QString id() const { return d->m_id; }
     QString displayName() const { return d->m_displayName; }
-    QString translations() const { return d->m_translations; }
+    QString iconSource() const { return d->m_iconSource; }
 
 protected:
     Service(const QVariantMap &map);

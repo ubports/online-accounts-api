@@ -34,6 +34,7 @@ class QDBusConnection;
 namespace OnlineAccounts {
 
 class Account;
+class AccountPrivate;
 class AuthenticationData;
 class RequestAccessReplyPrivate;
 
@@ -66,6 +67,7 @@ Q_SIGNALS:
 
 private:
     friend class Account;
+    friend class AccountPrivate;
     friend class RequestAccessReplyPrivate;
     Q_DECLARE_PRIVATE(Manager)
     Q_DISABLE_COPY(Manager)

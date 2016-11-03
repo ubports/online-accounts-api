@@ -36,6 +36,7 @@
 #include "authenticator.h"
 #include "client_registry.h"
 #include "dbus_constants.h"
+#include "i18n.h"
 #include "manager_adaptor.h"
 #include "state_saver.h"
 
@@ -355,10 +356,20 @@ ManagerPrivate::buildServiceList(const Accounts::Application &app) const
 
     const auto serviceList = m_manager.serviceList(app);
     for (const Accounts::Service &service: serviceList) {
+        QString displayName = translate(service.displayName(),
+                                        service.trCatalog());
+        QString icon = service.iconName();
+        QString iconSource;
+        if (icon.startsWith('/')) {
+            iconSource = QStringLiteral("file:/") + icon;
+        } else {
+            iconSource = QStringLiteral("image://theme/") + icon;
+        }
+
         services.append({
             { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, service.name() },
-            { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, service.displayName() },
-            { ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS, service.trCatalog() },
+            { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, displayName },
+            { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, iconSource },
         });
     }
 

@@ -23,6 +23,7 @@ add_library(${ACCOUNTD_LIB} SHARED
     authentication_request.cpp
     authenticator.cpp
     client_registry.cpp
+    i18n.cpp
     manager.cpp
     manager_adaptor.cpp
     state_saver.cpp

@@ -67,8 +67,9 @@
         The returned "services" is a list of dictionaries of the services' data.
         This will always include:
         - "serviceId" (s)
-        - "displayName" (s)
-        - "translations" (s): the translation domain for the display name.
+        - "displayName" (s): the translated display name
+        - "iconSource" (s): URL to the service icon; if the URL starts with
+          "image://theme/", then what follows is the symbolic icon name
       -->
       <arg name="services" type="aa{sv}" direction="out" />
 

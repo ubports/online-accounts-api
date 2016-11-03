@@ -200,13 +200,13 @@ void FunctionalTests::testManagerAvailableServices_data()
         "ret = ([], [{"
         "'" ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID "': 'app_coolshare',"
         "'" ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME "': 'Cool Share',"
-        "'" ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS "': 'this package',"
+        "'" ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE "': 'image://theme/coolshare',"
         "}])" <<
         QList<QVariantMap> {
             {
                 { "serviceId", "app_coolshare" },
                 { "displayName", "Cool Share" },
-                { "translations", "this package"},
+                { "iconSource", "image://theme/coolshare"},
             },
         };
 }
@@ -240,7 +240,20 @@ void FunctionalTests::testManagerAvailableServices()
 void FunctionalTests::testManagerAccount()
 {
     addMockedMethod("GetAccounts", "a{sv}", "a(ua{sv})aa{sv}",
-                    "ret = ([(1, {'displayName': 'John'})], [])");
+                    "ret = (["
+                    "  (1, {"
+                    "    'displayName': 'John',"
+                    "    'serviceId': 'app_coolshare',"
+                    "  }),"
+                    "  (2, {"
+                    "    'displayName': 'Bob',"
+                    "    'serviceId': 'a missing one',"
+                    "  }),"
+                    "], [{"
+                    "  'serviceId': 'app_coolshare',"
+                    "  'displayName': 'Cool Share',"
+                    "  'iconSource': 'image://theme/coolshare',"
+                    "}])");
     OnlineAccounts::Manager manager("my-app");
 
     manager.waitForReady();
@@ -249,10 +262,22 @@ void FunctionalTests::testManagerAccount()
     OnlineAccounts::Account *account = manager.account(4);
     QVERIFY(!account);
 
+    // valid account linking to invalid service
+    account = manager.account(2);
+    QVERIFY(account);
+    QCOMPARE(account->displayName(), QString("Bob"));
+    QCOMPARE(account->serviceId(), QString("a missing one"));
+    QVERIFY(!account->service().isValid());
+
     // valid account
     account = manager.account(1);
     QVERIFY(account);
     QCOMPARE(account->displayName(), QString("John"));
+    QCOMPARE(account->serviceId(), QString("app_coolshare"));
+    QVERIFY(account->service().isValid());
+    QCOMPARE(account->service().displayName(), QString("Cool Share"));
+    QCOMPARE(account->service().iconSource(),
+             QString("image://theme/coolshare"));
 }
 
 void FunctionalTests::testManagerRequestAccess_data()

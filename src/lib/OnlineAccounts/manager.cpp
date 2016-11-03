@@ -137,9 +137,9 @@ void ManagerPrivate::onGetAccountsFinished()
         }
 
         QList<QVariantMap> services = reply.argumentAt<1>();
-        m_services.reserve(services.count());
         for (const QVariantMap &data: services) {
-            m_services.append(Service(new Service::ServiceData(data)));
+            Service service(new Service::ServiceData(data));
+            m_services.insert(service.id(), service);
         }
     }
     m_getAccountsCall->deleteLater();
@@ -205,7 +205,7 @@ void Manager::waitForReady()
 QList<Service> Manager::availableServices() const
 {
     Q_D(const Manager);
-    return d->m_services;
+    return d->m_services.values();
 }
 
 QList<Account*> Manager::availableAccounts(const QString &service)

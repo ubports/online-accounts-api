@@ -33,6 +33,7 @@
 #include <QSet>
 #include "access_request.h"
 #include "authentication_request.h"
+#include "authenticator.h"
 #include "client_registry.h"
 #include "dbus_constants.h"
 #include "manager_adaptor.h"
@@ -76,7 +77,6 @@ public:
                                     const QString &serviceName,
                                     const QStringList &clients);
 
-    int authMethod(const Accounts::AuthData &authData);
     AccountInfo readAccountInfo(const Accounts::AccountService *as);
     QList<QVariantMap> buildServiceList(const Accounts::Application &app) const;
     QList<AccountInfo> getAccounts(const QVariantMap &filters,
@@ -321,25 +321,6 @@ ActiveAccount &ManagerPrivate::addActiveAccount(Accounts::AccountId accountId,
     return activeAccount;
 }
 
-int ManagerPrivate::authMethod(const Accounts::AuthData &authData)
-{
-    QString method = authData.method();
-    QString mechanism = authData.mechanism();
-    if (method == "oauth2") {
-        if (mechanism == "web_server" || mechanism == "user_agent") {
-            return ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH2;
-        } else if (mechanism == "HMAC-SHA1" || mechanism == "PLAINTEXT") {
-            return ONLINE_ACCOUNTS_AUTH_METHOD_OAUTH1;
-        }
-    } else if (method == "sasl") {
-        return ONLINE_ACCOUNTS_AUTH_METHOD_SASL;
-    } else if (method == "password") {
-        return ONLINE_ACCOUNTS_AUTH_METHOD_PASSWORD;
-    }
-
-    return ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN;
-}
-
 AccountInfo ManagerPrivate::readAccountInfo(const Accounts::AccountService *as)
 {
     QVariantMap info;
@@ -347,7 +328,7 @@ AccountInfo ManagerPrivate::readAccountInfo(const Accounts::AccountService *as)
     info[ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME] = as->account()->displayName();
     info[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = as->service().name();
 
-    info[ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD] = authMethod(as->authData());
+    info[ONLINE_ACCOUNTS_INFO_KEY_AUTH_METHOD] = Authenticator::authMethod(as->authData());
     QString settingsPrefix(QStringLiteral(ONLINE_ACCOUNTS_INFO_KEY_SETTINGS));
     /* First, read the global settings */
     Accounts::Account *a = as->account();

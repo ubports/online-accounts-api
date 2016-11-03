@@ -228,6 +228,7 @@ private:
     EnvSetup m_env;
     DBusService *m_dbus;
     int m_firstAccountId;
+    int m_account2CredentialsId;
     int m_account3CredentialsId;
 };
 
@@ -248,6 +249,7 @@ FunctionalTests::EnvSetup::EnvSetup() {
 FunctionalTests::FunctionalTests():
     QObject(),
     m_dbus(0),
+    m_account2CredentialsId(41),
     m_account3CredentialsId(35)
 {
     clearDb();
@@ -272,6 +274,7 @@ FunctionalTests::FunctionalTests():
     QVERIFY(account2 != 0);
     account2->setEnabled(true);
     account2->setDisplayName("CoolAccount 2");
+    account2->setCredentialsId(m_account2CredentialsId);
     account2->selectService(coolMail);
     account2->setEnabled(false);
     account2->selectService(coolShare);
@@ -304,6 +307,9 @@ void FunctionalTests::init()
 {
     m_dbus = new DBusService();
     m_dbus->startServices();
+
+    /* Uncomment next line to debug DBus calls */
+    // QProcess::startDetached("/usr/bin/dbus-monitor");
 }
 
 void FunctionalTests::cleanup()
@@ -401,7 +407,10 @@ void FunctionalTests::testGetAccountsFiltering()
     DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
 
     TestProcess testProcess;
-    m_dbus->dbusApparmor().addClient(testProcess.uniqueName(), securityContext);
+    QVariantMap credentials {
+        { "LinuxSecurityLabel", securityContext.toUtf8() },
+    };
+    m_dbus->dbusApparmor().setCredentials(testProcess.uniqueName(), credentials);
 
     QList<QVariantMap> services;
     QList<AccountInfo> accountInfos = testProcess.getAccounts(filters, services);
@@ -423,16 +432,19 @@ void FunctionalTests::testAuthenticate_data()
     QTest::addColumn<bool>("interactive");
     QTest::addColumn<bool>("invalidate");
     QTest::addColumn<QVariantMap>("authParams");
+    QTest::addColumn<QVariantMap>("signonReply");
     QTest::addColumn<QVariantMap>("expectedCredentials");
     QTest::addColumn<QString>("errorName");
 
     QVariantMap authParams;
+    QVariantMap signonReply;
     QVariantMap credentials;
     QTest::newRow("invalid account ID") <<
         12412341 <<
         "coolmail" <<
         false << false <<
         authParams <<
+        signonReply <<
         credentials <<
         ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED;
 
@@ -443,6 +455,7 @@ void FunctionalTests::testAuthenticate_data()
         "coolmail" <<
         false << false <<
         authParams <<
+        signonReply <<
         credentials <<
         "com.ubuntu.OnlineAccounts.Error.Network";
     authParams.clear();
@@ -456,6 +469,7 @@ void FunctionalTests::testAuthenticate_data()
         "coolmail" <<
         false << false <<
         authParams <<
+        signonReply <<
         credentials <<
         QString();
 
@@ -465,6 +479,7 @@ void FunctionalTests::testAuthenticate_data()
         "coolmail" <<
         true << false <<
         authParams <<
+        signonReply <<
         credentials <<
         QString();
 
@@ -474,6 +489,7 @@ void FunctionalTests::testAuthenticate_data()
         "coolmail" <<
         true << true <<
         authParams <<
+        signonReply <<
         credentials <<
         QString();
 
@@ -487,6 +503,7 @@ void FunctionalTests::testAuthenticate_data()
         "oauth1auth" <<
         true << false <<
         authParams <<
+        signonReply <<
         credentials <<
         QString();
 
@@ -501,6 +518,25 @@ void FunctionalTests::testAuthenticate_data()
         "oauth1auth" <<
         true << false <<
         authParams <<
+        signonReply <<
+        credentials <<
+        QString();
+
+    authParams.clear();
+    credentials = QVariantMap {
+        { ONLINE_ACCOUNTS_AUTH_KEY_USERNAME, "my name" },
+        { ONLINE_ACCOUNTS_AUTH_KEY_PASSWORD, "don't tell" },
+    };
+    signonReply = QVariantMap {
+        { "UserName", "my name" },
+        { "Secret", "don't tell" },
+    };
+    QTest::newRow("password") <<
+        2 <<
+        "com.ubuntu.tests_coolshare" <<
+        true << false <<
+        authParams <<
+        signonReply <<
         credentials <<
         QString();
 }
@@ -512,10 +548,16 @@ void FunctionalTests::testAuthenticate()
     QFETCH(bool, interactive);
     QFETCH(bool, invalidate);
     QFETCH(QVariantMap, authParams);
+    QFETCH(QVariantMap, signonReply);
     QFETCH(QVariantMap, expectedCredentials);
     QFETCH(QString, errorName);
 
+    m_dbus->signond().addIdentity(m_account2CredentialsId, QVariantMap());
     m_dbus->signond().addIdentity(m_account3CredentialsId, QVariantMap());
+    if (!signonReply.isEmpty()) {
+        m_dbus->signond().setNextReply(m_account2CredentialsId, signonReply);
+        m_dbus->signond().setNextReply(m_account3CredentialsId, signonReply);
+    }
 
     DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
 
@@ -527,8 +569,10 @@ void FunctionalTests::testAuthenticate()
     if (errorName.isEmpty()) {
         QVERIFY2(!reply.isError(), reply.error().message().toUtf8().constData());
         QVariantMap credentials = reply.argumentAt<0>();
-        // Add the requestor PID
-        expectedCredentials["requestorPid"] = getpid();
+        if (credentials.contains("requestorPid")) {
+            // Add the requestor PID
+            expectedCredentials["requestorPid"] = getpid();
+        }
         QCOMPARE(credentials, expectedCredentials);
     } else {
         QVERIFY(reply.isError());
@@ -663,11 +707,14 @@ void FunctionalTests::testAccountChanges()
 
     QCOMPARE(serviceId, coolShare.name());
     QCOMPARE(accountInfo.id(), account->id());
-    QVariantMap expectedAccountInfo;
-    expectedAccountInfo["authMethod"] = ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN;
-    expectedAccountInfo["changeType"] = ONLINE_ACCOUNTS_INFO_CHANGE_ENABLED;
-    expectedAccountInfo["displayName"] = "New account";
-    expectedAccountInfo["serviceId"] = "com.ubuntu.tests_coolshare";
+    QVariantMap expectedAccountInfo {
+        { "authMethod", ONLINE_ACCOUNTS_AUTH_METHOD_PASSWORD },
+        { "changeType", ONLINE_ACCOUNTS_INFO_CHANGE_ENABLED },
+        { "displayName", "New account" },
+        { "serviceId", "com.ubuntu.tests_coolshare" },
+        { "settings/auth/mechanism", "password" },
+        { "settings/auth/method", "password" },
+    };
     QCOMPARE(accountInfo.data(), expectedAccountInfo);
 
     /* Change a setting */
@@ -681,11 +728,15 @@ void FunctionalTests::testAccountChanges()
 
     QCOMPARE(serviceId, coolShare.name());
     QCOMPARE(accountInfo.id(), account->id());
-    expectedAccountInfo["authMethod"] = ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN;
-    expectedAccountInfo["changeType"] = ONLINE_ACCOUNTS_INFO_CHANGE_UPDATED;
-    expectedAccountInfo["settings/color"] = "blue";
-    expectedAccountInfo["displayName"] = "New account";
-    expectedAccountInfo["serviceId"] = "com.ubuntu.tests_coolshare";
+    expectedAccountInfo = QVariantMap {
+        { "authMethod", ONLINE_ACCOUNTS_AUTH_METHOD_PASSWORD },
+        { "changeType", ONLINE_ACCOUNTS_INFO_CHANGE_UPDATED },
+        { "settings/color", "blue" },
+        { "displayName", "New account" },
+        { "serviceId", "com.ubuntu.tests_coolshare" },
+        { "settings/auth/mechanism", "password" },
+        { "settings/auth/method", "password" },
+    };
     QCOMPARE(accountInfo.data(), expectedAccountInfo);
 
     /* Delete the account */
@@ -699,10 +750,15 @@ void FunctionalTests::testAccountChanges()
 
     QCOMPARE(serviceId, coolShare.name());
     QCOMPARE(accountInfo.id(), account->id());
-    expectedAccountInfo["authMethod"] = ONLINE_ACCOUNTS_AUTH_METHOD_UNKNOWN;
-    expectedAccountInfo["changeType"] = ONLINE_ACCOUNTS_INFO_CHANGE_DISABLED;
-    expectedAccountInfo["displayName"] = "New account";
-    expectedAccountInfo["serviceId"] = "com.ubuntu.tests_coolshare";
+    expectedAccountInfo = QVariantMap {
+        { "authMethod", ONLINE_ACCOUNTS_AUTH_METHOD_PASSWORD },
+        { "changeType", ONLINE_ACCOUNTS_INFO_CHANGE_DISABLED },
+        { "displayName", "New account" },
+        { "serviceId", "com.ubuntu.tests_coolshare" },
+        { "settings/color", "blue" },
+        { "settings/auth/mechanism", "password" },
+        { "settings/auth/method", "password" },
+    };
     QCOMPARE(accountInfo.data(), expectedAccountInfo);
 
     delete manager;

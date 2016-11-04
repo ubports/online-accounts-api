@@ -59,6 +59,7 @@ public:
         AuthenticationMethodRole,
         SettingsRole,
         AccountRole,
+        ServiceRole,
     };
 
     explicit AccountModel(QObject *parent = 0);

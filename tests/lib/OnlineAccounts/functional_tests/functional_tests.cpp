@@ -277,7 +277,7 @@ void FunctionalTests::testManagerAccount()
     QVERIFY(account->service().isValid());
     QCOMPARE(account->service().displayName(), QString("Cool Share"));
     QCOMPARE(account->service().iconSource(),
-             QString("image://theme/coolshare"));
+             QUrl("image://theme/coolshare"));
 }
 
 void FunctionalTests::testManagerRequestAccess_data()

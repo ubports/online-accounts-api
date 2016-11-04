@@ -175,13 +175,13 @@ void ModuleTest::testServices_data()
         "[{"
         "'" ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID "': 'app_coolshare',"
         "'" ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME "': 'Cool Share',"
-        "'" ONLINE_ACCOUNTS_INFO_KEY_TRANSLATIONS "': 'this package',"
+        "'" ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE "': 'image://theme/coolshare',"
         "}]" <<
         QList<QVariantMap> {
             {
                 { "serviceId", "app_coolshare" },
                 { "displayName", "Cool Share" },
-                { "translations", "this package"},
+                { "iconSource", "image://theme/coolshare"},
             },
         };
 }
@@ -195,19 +195,21 @@ void ModuleTest::testServices()
 
     QQmlEngine engine;
     QQmlComponent component(&engine);
+    /* We could return the serviceList property directly, but that would be
+     * passing a OnlineAccounts::Service as QJSValue, which might not be a
+     * proof that every property is properly accessible from QML. Therefore, we
+     * explicitly run through the list and copy it as a new object. */
     component.setData("import Ubuntu.OnlineAccounts 2.0\n"
                       "AccountModel {\n"
                       "  applicationId: \"foo\"\n"
                       "  function getServices() {\n"
-                      "    console.log(\"Servicees: \" + JSON.stringify(serviceList));\n"
-                      "    console.log(\"Services: \" + serviceList);\n"
                       "    var ret = [];\n"
-#if 1
                       "    for (var i = 0; i < serviceList.length; i++) {\n"
-                      "      console.log(\"Service: \" + JSON.stringify(serviceList[i]));\n"
-                      "      ret.append(serviceList[i]);\n"
+                      "      var s = serviceList[i];\n"
+                      "      var service = {};\n"
+                      "      for (var key in s) { service[key] = s[key]; }\n"
+                      "      ret.push(service);\n"
                       "    }\n"
-#endif
                       "    return ret;\n"
                       "  }\n"
                       "}",
@@ -225,12 +227,20 @@ void ModuleTest::testServices()
                                         Q_RETURN_ARG(QVariant, serviceList));
     QVERIFY(ok);
 
+    QVariantList serviceVariantList = serviceList.toList();
+    QList<QVariantMap> services;
+    for (const QVariant &v: serviceVariantList) {
+        services.append(v.toMap());
+    }
+
+    QCOMPARE(services, expectedServices);
     delete object;
 }
 
 void ModuleTest::testModelRoles_data()
 {
     QTest::addColumn<QString>("accountData");
+    QTest::addColumn<QString>("serviceData");
     QTest::addColumn<QString>("displayName");
     QTest::addColumn<QString>("serviceId");
     QTest::addColumn<int>("authenticationMethod");
@@ -239,6 +249,7 @@ void ModuleTest::testModelRoles_data()
     QVariantMap settings;
     QTest::newRow("empty") <<
         "{}" <<
+        "" <<
         "" << "" << 0 << settings;
 
     settings.insert("Server", "www.example.com");
@@ -251,18 +262,23 @@ void ModuleTest::testModelRoles_data()
         " '" ONLINE_ACCOUNTS_INFO_KEY_SETTINGS "Server': 'www.example.com',"
         " '" ONLINE_ACCOUNTS_INFO_KEY_SETTINGS "Port': 9900,"
         "}" <<
+        "{"
+        " '" ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID "': 'cool',"
+        "}" <<
         "Tom" << "cool" << 2 << settings;
 }
 
 void ModuleTest::testModelRoles()
 {
     QFETCH(QString, accountData);
+    QFETCH(QString, serviceData);
     QFETCH(QString, displayName);
     QFETCH(QString, serviceId);
     QFETCH(int, authenticationMethod);
     QFETCH(QVariantMap, settings);
 
-    addGetAccountsMethod(QString("ret = ([(1, %1)], [])").arg(accountData));
+    addGetAccountsMethod(QString("ret = ([(1, %1)], [%2])").
+                         arg(accountData).arg(serviceData));
 
     QQmlEngine engine;
     QQmlComponent component(&engine);
@@ -289,13 +305,16 @@ void ModuleTest::testModelRoles()
     QCOMPARE(get(model, 0, "serviceId").toString(), serviceId);
     QCOMPARE(get(model, 0, "authenticationMethod").toInt(),
              authenticationMethod);
-    // until https://bugs.launchpad.net/bugs/1479768 is fixed
     QCOMPARE(get(model, 0, "settings").toMap(), settings);
     QObject *account = get(model, 0, "account").value<QObject*>();
     QVERIFY(account != 0);
     QCOMPARE(account->metaObject()->className(), "OnlineAccountsModule::Account");
     QCOMPARE(account,
              model->property("accountList").value<QList<QObject*> >().first());
+
+    QJSValue service = get(model, 0, "service").value<QJSValue>();
+    QVERIFY(service.isObject());
+    QCOMPARE(service.property("serviceId").toString(), serviceId);
 
     delete object;
 }

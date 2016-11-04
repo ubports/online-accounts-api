@@ -48,7 +48,7 @@ private:
         friend class Service;
         QString m_id;
         QString m_displayName;
-        QString m_iconSource;
+        QUrl m_iconSource;
     };
 
 public:
@@ -60,7 +60,7 @@ public:
     bool isValid() const { return !d->m_id.isEmpty(); }
     QString id() const { return d->m_id; }
     QString displayName() const { return d->m_displayName; }
-    QString iconSource() const { return d->m_iconSource; }
+    QUrl iconSource() const { return d->m_iconSource; }
 
 protected:
     Service(const QVariantMap &map);

@@ -212,7 +212,7 @@ QJSValue Account::service() const
 #if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
     return d->m_engine->toScriptValue(d->m_account->service());
 #else
-    return d->m_account->service().toMap();
+    return d->m_engine->toScriptValue(d->m_account->service().toMap());
 #endif
 }
 

@@ -77,7 +77,7 @@ char *toString(const QSet<QVariantMap> &set)
 
 static inline uint qHash(const QVariantMap &m, uint seed = 0)
 {
-    QString signature = m.keys().join(' ') +
+    QString signature = QStringList(m.keys()).join(' ') +
         m.value(ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID).toString();
     return ::qHash(signature, seed);
 }

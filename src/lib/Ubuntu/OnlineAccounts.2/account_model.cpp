@@ -395,7 +395,7 @@ QList<QObject*> AccountModel::accountList() const
 QJSValue AccountModel::serviceList() const
 {
     Q_D(const AccountModel);
-    QJSEngine *engine = qjsEngine(this);
+    QJSEngine *engine = qmlEngine(this);
     QJSValue ret = engine->newArray();
     int i = 0;
     Q_FOREACH(const auto &service, d->m_manager->availableServices()) {

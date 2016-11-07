@@ -30,6 +30,7 @@
 #include <QDebug>
 #include <QQmlEngine>
 #include <QVariantMap>
+#include <QtQml>
 
 using namespace OnlineAccountsModule;
 
@@ -132,7 +133,7 @@ Account *AccountModelPrivate::handleAccount(OnlineAccounts::Account *account)
         }
     }
 
-    QJSEngine *engine = qjsEngine(q);
+    QQmlEngine *engine = qmlEngine(q);
     Account *a = new Account(account, engine, this);
     QQmlEngine::setObjectOwnership(a, QQmlEngine::CppOwnership);
     QObject::connect(a, SIGNAL(validChanged()),

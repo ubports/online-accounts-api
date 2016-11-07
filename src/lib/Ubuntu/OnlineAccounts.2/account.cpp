@@ -209,7 +209,11 @@ QString Account::serviceId() const
 QJSValue Account::service() const
 {
     Q_D(const Account);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
     return d->m_engine->toScriptValue(d->m_account->service());
+#else
+    return d-m_account->service().toMap();
+#endif
 }
 
 /*!

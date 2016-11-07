@@ -515,7 +515,11 @@ QVariant AccountModel::data(const QModelIndex &index, int role) const
         ret = QVariant::fromValue<QObject*>(account);
         break;
     case ServiceRole:
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
         ret = QVariant::fromValue(account->service());
+#else
+        ret = account->service().toMap();
+#endif
         break;
     }
 

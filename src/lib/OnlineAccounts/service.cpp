@@ -41,3 +41,14 @@ Service::Service(const QVariantMap &map):
     d(new ServiceData(map))
 {
 }
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
+QVariantMap Service::toMap() const
+{
+    return QVariantMap {
+        { "serviceId", id() },
+        { "displayName", displayName() },
+        { "iconSource", iconSource() },
+    };
+}
+#endif

@@ -62,6 +62,10 @@ public:
     QString displayName() const { return d->m_displayName; }
     QUrl iconSource() const { return d->m_iconSource; }
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 5, 0)
+    QVariantMap toMap() const;
+#endif
+
 protected:
     Service(const QVariantMap &map);
 

@@ -220,8 +220,9 @@ void FunctionalTests::testManagerAvailableServices()
     OnlineAccounts::Manager manager("my-app");
 
     manager.waitForReady();
-    QList<QVariantMap> services;
     const auto availableServices = manager.availableServices();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+    QList<QVariantMap> services;
     for (const OnlineAccounts::Service &service: availableServices) {
         QVariantMap data;
 
@@ -235,6 +236,9 @@ void FunctionalTests::testManagerAvailableServices()
     }
 
     QCOMPARE(services, expectedServices);
+#else
+    QCOMPARE(availableServices.count(), expectedServices.count());
+#endif
 }
 
 void FunctionalTests::testManagerAccount()

@@ -394,6 +394,27 @@ void FunctionalTests::testGetAccountsFiltering_data()
         (QList<int>()) <<
         QList<QVariantMap> {};
     filters.clear();
+
+    filters["applicationId"] = "mailer";
+    QTest::newRow("by app ID, with service fallback") <<
+        filters <<
+        "unconfined" <<
+        QString() <<
+        QList<int>{ 3, 1 } <<
+        QList<QVariantMap> {
+            {
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "OAuth 1 test" },
+                { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "oauth1auth" },
+                { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, "image://theme/general_myservice" },
+            },
+            {
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Mail" },
+                { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "coolmail" },
+                { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, "image://theme/general_myprovider" },
+            },
+        };
+    filters.clear();
+
 }
 
 void FunctionalTests::testGetAccountsFiltering()

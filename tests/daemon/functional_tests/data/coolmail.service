@@ -2,7 +2,6 @@
 <service id="coolmail">
   <type>e-mail</type>
   <name>Cool Mail</name>
-  <icon>general_myservice</icon>
   <provider>cool</provider>
 
   <template>

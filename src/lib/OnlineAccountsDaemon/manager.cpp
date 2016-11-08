@@ -359,6 +359,25 @@ ManagerPrivate::buildServiceList(const Accounts::Application &app) const
         QString displayName = translate(service.displayName(),
                                         service.trCatalog());
         QString icon = service.iconName();
+
+        bool displayNameValid = !displayName.isEmpty() &&
+            // sometimes we use a '.' as display name placeholder
+            displayName != ".";
+        bool iconValid = !icon.isEmpty();
+
+        if (!displayNameValid || !iconValid) {
+            // Get the data from the provider file
+            Accounts::Provider provider =
+                m_manager.provider(service.provider());
+            if (!displayNameValid) {
+                displayName = translate(provider.displayName(),
+                                        provider.trCatalog());
+            }
+            if (!iconValid) {
+                icon = provider.iconName();
+            }
+        }
+
         QString iconSource;
         if (icon.startsWith('/')) {
             iconSource = QStringLiteral("file:/") + icon;

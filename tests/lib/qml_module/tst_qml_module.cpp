@@ -188,7 +188,6 @@ void ModuleTest::testServices_data()
 
 void ModuleTest::testServices()
 {
-    QSKIP("fails under Qt 5.4"); // FIXME temporary
     QFETCH(QString, reply);
     QFETCH(QList<QVariantMap>, expectedServices);
 
@@ -205,10 +204,15 @@ void ModuleTest::testServices()
                       "  applicationId: \"foo\"\n"
                       "  function getServices() {\n"
                       "    var ret = [];\n"
+                      "    console.log(\"serviceList: \" + serviceList)\n"
+                      "    console.log(\"serviceList as string: \" + JSON.stringify(serviceList))\n"
+                      "    console.log(\"serviceList.length: \" + serviceList.length)\n"
                       "    for (var i = 0; i < serviceList.length; i++) {\n"
                       "      var s = serviceList[i];\n"
                       "      var service = {};\n"
                       "      for (var key in s) { service[key] = s[key]; }\n"
+                      "      console.log(\"pushing service \" + service)\n"
+                      "      console.log(\"pushing service (str) \" + JSON.stringify(service))\n"
                       "      ret.push(service);\n"
                       "    }\n"
                       "    return ret;\n"

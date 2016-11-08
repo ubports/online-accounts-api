@@ -399,7 +399,11 @@ QJSValue AccountModel::serviceList() const
     QJSValue ret = engine->newArray();
     int i = 0;
     Q_FOREACH(const auto &service, d->m_manager->availableServices()) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
         QJSValue v = engine->toScriptValue(service);
+#else
+        QJSValue v = engine->toScriptValue(service.toMap());
+#endif
         ret.setProperty(i++, v);
     }
     return ret;

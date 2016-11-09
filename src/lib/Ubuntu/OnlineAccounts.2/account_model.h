@@ -48,7 +48,7 @@ class AccountModel: public QAbstractListModel, public QQmlParserStatus
     Q_PROPERTY(QList<QObject*> accountList READ accountList \
                NOTIFY accountListChanged)
     Q_PROPERTY(QJSValue serviceList READ serviceList \
-               CONSTANT)
+               NOTIFY isReadyChanged)
 
 public:
     enum Roles {

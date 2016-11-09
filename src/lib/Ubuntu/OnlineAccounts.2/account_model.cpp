@@ -397,6 +397,7 @@ QJSValue AccountModel::serviceList() const
     Q_D(const AccountModel);
     QJSEngine *engine = qmlEngine(this);
     QJSValue ret = engine->newArray();
+    if (!d->m_manager) return ret;
     int i = 0;
     Q_FOREACH(const auto &service, d->m_manager->availableServices()) {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)

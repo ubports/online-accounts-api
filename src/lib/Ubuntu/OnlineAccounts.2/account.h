@@ -96,4 +96,7 @@ private:
 
 } // namespace
 
+Q_DECLARE_METATYPE(OnlineAccountsModule::Account::AuthenticationMethod)
+Q_DECLARE_METATYPE(OnlineAccountsModule::Account::ErrorCode)
+
 #endif // ONLINE_ACCOUNTS_MODULE_ACCOUNT_H

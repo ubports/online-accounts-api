@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<service id="missing-provider">
+  <type>sharing</type>
+  <name>Orphan</name>
+  <icon>icon_missing_provider</icon>
+  <provider>missing</provider>
+
+  <template>
+    <group name="auth">
+      <setting name="method">password</setting>
+      <setting name="mechanism">password</setting>
+    </group>
+  </template>
+</service>

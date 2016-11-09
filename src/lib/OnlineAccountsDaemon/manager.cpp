@@ -360,22 +360,24 @@ ManagerPrivate::buildServiceList(const Accounts::Application &app) const
                                         service.trCatalog());
         QString icon = service.iconName();
 
-        bool displayNameValid = !displayName.isEmpty() &&
-            // sometimes we use a '.' as display name placeholder
-            displayName != ".";
-        bool iconValid = !icon.isEmpty();
+        /* Applications might declare support for a service while the provider
+         * (and account plugin) for that account is not installed. We probably
+         * don't want to include these services in the list, as it would lead
+         * to empty/invalid UI elements. */
+        Accounts::Provider provider = m_manager.provider(service.provider());
+        if (!provider.isValid()) continue;
 
-        if (!displayNameValid || !iconValid) {
-            // Get the data from the provider file
-            Accounts::Provider provider =
-                m_manager.provider(service.provider());
-            if (!displayNameValid) {
-                displayName = translate(provider.displayName(),
-                                        provider.trCatalog());
-            }
-            if (!iconValid) {
-                icon = provider.iconName();
-            }
+        /* Now check the service data; if either display name or icon are
+         * empty, fetch this information from the provider file, as a fallback
+         */
+        if (displayName.isEmpty() ||
+            // sometimes we use a '.' as display name placeholder
+            displayName == ".") {
+            displayName = translate(provider.displayName(),
+                                    provider.trCatalog());
+        }
+        if (icon.isEmpty()) {
+            icon = provider.iconName();
         }
 
         QString iconSource;

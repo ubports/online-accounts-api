@@ -44,7 +44,6 @@ ManagerPrivate::ManagerPrivate(Manager *q, const QString &applicationId,
 {
     qRegisterMetaType<Account*>();
     qRegisterMetaType<Service>("OnlineAccounts::Service");
-    //qRegisterMetaType<QList<Service>>("QList<OnlineAccounts::Service>");
 
     QObject::connect(&m_daemon,
                      SIGNAL(accountChanged(const QString&, const OnlineAccounts::AccountInfo&)),

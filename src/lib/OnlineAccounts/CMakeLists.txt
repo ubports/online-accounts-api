@@ -22,6 +22,7 @@ add_library(${CLIENT_LIB} SHARED
     manager.cpp
     pending_call.cpp
     request_access_reply.cpp
+    service.cpp
 )
 set_target_properties(${CLIENT_LIB} PROPERTIES
     VERSION 1.0.0
@@ -52,5 +53,6 @@ install(FILES
     PasswordData
     PendingCall pending_call.h
     PendingCallWatcher
+    Service service.h
     DESTINATION include/${CLIENT_LIB}/OnlineAccounts
 )

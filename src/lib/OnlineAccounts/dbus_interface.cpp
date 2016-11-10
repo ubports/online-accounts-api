@@ -22,6 +22,7 @@
 
 #include <QDBusMetaType>
 #include <QDebug>
+#include <QVariantMap>
 #include <climits>
 
 using namespace OnlineAccounts;
@@ -37,6 +38,7 @@ DBusInterface::DBusInterface(const QString &service,
 
     qDBusRegisterMetaType<AccountInfo>();
     qDBusRegisterMetaType<QList<AccountInfo>>();
+    qDBusRegisterMetaType<QList<QVariantMap>>();
 
     bool ok = connect("AccountChanged", "s(ua{sv})",
                       this, SLOT(onAccountChanged(const QString&,const OnlineAccounts::AccountInfo&)));

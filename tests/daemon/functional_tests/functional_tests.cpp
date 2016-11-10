@@ -60,7 +60,27 @@ char *toString(const QVariantMap &map)
     return qstrdup(doc.toJson(QJsonDocument::Compact).data());
 }
 
+template<>
+char *toString(const QSet<QVariantMap> &set)
+{
+    QByteArray ba = "QSet<QVariantMap>(";
+    QStringList list;
+    Q_FOREACH(const QVariantMap &map, set) {
+        list.append(QJsonDocument::fromVariant(map).toJson(QJsonDocument::Compact));
+    }
+    ba += list.join(", ");
+    ba += ")";
+    return qstrdup(ba.data());
+}
+
 } // QTest namespace
+
+static inline uint qHash(const QVariantMap &m, uint seed = 0)
+{
+    QString signature = QStringList(m.keys()).join(' ') +
+        m.value(ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID).toString();
+    return ::qHash(signature, seed);
+}
 
 class TestProcess: public QProcess
 {
@@ -90,6 +110,12 @@ public:
     void quit() { write("\n"); waitForFinished(); }
 
     QList<AccountInfo> getAccounts(const QVariantMap &filters) {
+        QList<QVariantMap> services;
+        return getAccounts(filters, services);
+    }
+
+    QList<AccountInfo> getAccounts(const QVariantMap &filters,
+                                   QList<QVariantMap> &services) {
         QJsonDocument doc(QJsonObject::fromVariantMap(filters));
         m_replyExpected = true;
         write("GetAccounts -f ");
@@ -97,14 +123,29 @@ public:
 
         waitForReadyRead();
         doc = QJsonDocument::fromJson(readLine());
+        qDebug() << "Got Json:" << doc;
         m_replyExpected = false;
         QList<AccountInfo> accountInfos;
-        Q_FOREACH(const QJsonValue &v, doc.array()) {
+        if (checkError(doc)) return accountInfos;
+        const QJsonArray accountsJson = doc.array().at(0).toArray();
+        const QJsonArray servicesJson = doc.array().at(1).toArray();
+        Q_FOREACH(const QJsonValue &v, accountsJson) {
             QJsonArray a = v.toArray();
             accountInfos.append(AccountInfo(a.at(0).toInt(),
                                             a.at(1).toObject().toVariantMap()));
         }
+        Q_FOREACH(const QJsonValue &v, servicesJson) {
+            services.append(v.toObject().toVariantMap());
+        }
         return accountInfos;
+    }
+
+    QString errorName() const { return m_errorName; }
+
+protected:
+    bool checkError(const QJsonDocument &doc) {
+        m_errorName = doc.object().value("error").toString();
+        return !m_errorName.isEmpty();
     }
 
 private Q_SLOTS:
@@ -128,6 +169,7 @@ Q_SIGNALS:
 
 private:
     QString m_uniqueName;
+    QString m_errorName;
     bool m_replyExpected;
 };
 
@@ -275,35 +317,113 @@ void FunctionalTests::cleanup()
     delete m_dbus;
 }
 
+
 void FunctionalTests::testGetAccountsFiltering_data()
 {
     QTest::addColumn<QVariantMap>("filters");
     QTest::addColumn<QString>("securityContext");
+    QTest::addColumn<QString>("expectedError");
     QTest::addColumn<QList<int> >("expectedAccountIds");
+    QTest::addColumn<QList<QVariantMap> >("expectedServices");
 
     QVariantMap filters;
     QTest::newRow("empty filters") <<
         filters <<
         "unconfined" <<
-        (QList<int>() << 1 << 2 << 3);
+        QString() <<
+        (QList<int>() << 1 << 2 << 3) <<
+        QList<QVariantMap> {};
 
     QTest::newRow("empty filters, confined") <<
         filters <<
         "com.ubuntu.tests_application_0.2" <<
-        (QList<int>() << 2);
+        QString() <<
+        (QList<int>() << 2) <<
+        QList<QVariantMap> {
+            {
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
+                { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "com.ubuntu.tests_coolshare" },
+                { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, "image://theme/general_otherservice" },
+            },
+        };
 
     filters[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = "coolmail";
-    QTest::newRow("by service ID") <<
+    QTest::newRow("unconfined, by service ID") <<
         filters <<
         "unconfined" <<
-        (QList<int>() << 1 << 3);
+        QString() <<
+        (QList<int>() << 1 << 3) <<
+        QList<QVariantMap> {};
+    filters.clear();
+
+    filters[ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID] = "coolmail";
+    QTest::newRow("confined, by service ID") <<
+        filters <<
+        "com.ubuntu.tests_application_0.2" <<
+        QString() <<
+        (QList<int>()) <<
+        QList<QVariantMap> {
+            {
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
+                { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "com.ubuntu.tests_coolshare" },
+                { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, "image://theme/general_otherservice" },
+            },
+        };
+    filters.clear();
+
+    filters["applicationId"] = "com.ubuntu.tests_application";
+    QTest::newRow("by app ID") <<
+        filters <<
+        "unconfined" <<
+        QString() <<
+        (QList<int>() << 2) <<
+        QList<QVariantMap> {
+            {
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Share" },
+                { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "com.ubuntu.tests_coolshare" },
+                { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, "image://theme/general_otherservice" },
+            },
+        };
+    filters.clear();
+
+    filters["applicationId"] = "mailer";
+    QTest::newRow("confined app requesting other app ID") <<
+        filters <<
+        "com.ubuntu.tests_application_0.2" <<
+        ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED <<
+        (QList<int>()) <<
+        QList<QVariantMap> {};
+    filters.clear();
+
+    filters["applicationId"] = "mailer";
+    QTest::newRow("by app ID, with service fallback") <<
+        filters <<
+        "unconfined" <<
+        QString() <<
+        QList<int>{ 3, 1 } <<
+        QList<QVariantMap> {
+            {
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "OAuth 1 test" },
+                { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "oauth1auth" },
+                { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, "image://theme/general_myservice" },
+            },
+            {
+                { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, "Cool Mail" },
+                { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, "coolmail" },
+                { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, "image://theme/general_myprovider" },
+            },
+        };
+    filters.clear();
+
 }
 
 void FunctionalTests::testGetAccountsFiltering()
 {
     QFETCH(QVariantMap, filters);
     QFETCH(QString, securityContext);
+    QFETCH(QString, expectedError);
     QFETCH(QList<int>, expectedAccountIds);
+    QFETCH(QList<QVariantMap>, expectedServices);
 
     DaemonInterface *daemon = new DaemonInterface(m_dbus->sessionConnection());
 
@@ -313,7 +433,10 @@ void FunctionalTests::testGetAccountsFiltering()
     };
     m_dbus->dbusApparmor().setCredentials(testProcess.uniqueName(), credentials);
 
-    QList<AccountInfo> accountInfos = testProcess.getAccounts(filters);
+    QList<QVariantMap> services;
+    QList<AccountInfo> accountInfos = testProcess.getAccounts(filters, services);
+    QCOMPARE(testProcess.errorName(), expectedError);
+    QCOMPARE(services.toSet(), expectedServices.toSet());
     QList<int> accountIds;
     Q_FOREACH(const AccountInfo &info, accountInfos) {
         accountIds.append(info.id() + m_firstAccountId);

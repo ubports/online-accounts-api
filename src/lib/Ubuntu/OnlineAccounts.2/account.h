@@ -21,9 +21,12 @@
 #ifndef ONLINE_ACCOUNTS_MODULE_ACCOUNT_H
 #define ONLINE_ACCOUNTS_MODULE_ACCOUNT_H
 
+#include <QJSValue>
 #include <QObject>
 #include <QString>
 #include <QVariantMap>
+
+class QJSEngine;
 
 namespace OnlineAccounts {
 class Account;
@@ -40,6 +43,7 @@ class Account: public QObject
     Q_PROPERTY(QString displayName READ displayName NOTIFY accountChanged)
     Q_PROPERTY(int accountId READ accountId CONSTANT)
     Q_PROPERTY(QString serviceId READ serviceId CONSTANT)
+    Q_PROPERTY(QJSValue service READ service CONSTANT)
     Q_PROPERTY(AuthenticationMethod authenticationMethod \
                READ authenticationMethod CONSTANT)
     Q_PROPERTY(QVariantMap settings READ settings NOTIFY accountChanged)
@@ -64,13 +68,15 @@ public:
         ErrorCodeInteractionRequired,
     };
 
-    explicit Account(OnlineAccounts::Account *account, QObject *parent = 0);
+    explicit Account(OnlineAccounts::Account *account, QJSEngine *engine,
+                     QObject *parent = 0);
     ~Account();
 
     bool isValid() const;
     QString displayName() const;
     int accountId() const;
     QString serviceId() const;
+    QJSValue service() const;
     AuthenticationMethod authenticationMethod() const;
     QVariantMap settings() const;
 
@@ -89,5 +95,8 @@ private:
 };
 
 } // namespace
+
+Q_DECLARE_METATYPE(OnlineAccountsModule::Account::AuthenticationMethod)
+Q_DECLARE_METATYPE(OnlineAccountsModule::Account::ErrorCode)
 
 #endif // ONLINE_ACCOUNTS_MODULE_ACCOUNT_H

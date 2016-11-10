@@ -26,6 +26,7 @@
 
 #include "global.h"
 #include "pending_call.h"
+#include "service.h"
 
 namespace OnlineAccounts {
 
@@ -42,6 +43,8 @@ public:
 
     /* Returns false if account deleted or disabled */
     bool isValid() const;
+
+    Service service() const;
 
     AccountId id() const;
     QString displayName() const;

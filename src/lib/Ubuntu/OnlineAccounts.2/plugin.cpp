@@ -20,6 +20,7 @@
 
 #include "plugin.h"
 
+#include "account.h"
 #include "account_model.h"
 
 #include <QDebug>
@@ -32,4 +33,8 @@ void Plugin::registerTypes(const char* uri)
     qDebug() << Q_FUNC_INFO << uri;
 
     qmlRegisterType<AccountModel>(uri, 2, 0, "AccountModel");
+    qmlRegisterUncreatableType<Account>(uri, 2, 0, "Account",
+                                        "Cannot be created from QML");
+    qmlRegisterUncreatableType<OnlineAccounts::Service>(uri, 2, 0, "Service",
+                                                        "Cannot be created from QML");
 }

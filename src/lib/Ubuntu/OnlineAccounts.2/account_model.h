@@ -21,8 +21,12 @@
 #ifndef ONLINE_ACCOUNTS_MODULE_ACCOUNT_MODEL_H
 #define ONLINE_ACCOUNTS_MODULE_ACCOUNT_MODEL_H
 
+#include "OnlineAccounts/Service"
+
 #include <QAbstractListModel>
 #include <QQmlParserStatus>
+#include <QQmlListProperty>
+#include <QJSValue>
 #include <QString>
 #include <QVariant>
 
@@ -43,6 +47,8 @@ class AccountModel: public QAbstractListModel, public QQmlParserStatus
                WRITE setServiceId NOTIFY serviceIdChanged)
     Q_PROPERTY(QList<QObject*> accountList READ accountList \
                NOTIFY accountListChanged)
+    Q_PROPERTY(QJSValue serviceList READ serviceList \
+               NOTIFY isReadyChanged)
 
 public:
     enum Roles {
@@ -53,6 +59,7 @@ public:
         AuthenticationMethodRole,
         SettingsRole,
         AccountRole,
+        ServiceRole,
     };
 
     explicit AccountModel(QObject *parent = 0);
@@ -67,6 +74,8 @@ public:
     QString serviceId() const;
 
     QList<QObject*> accountList() const;
+
+    QJSValue serviceList() const;
 
     Q_INVOKABLE void requestAccess(const QString &service,
                                    const QVariantMap &params);

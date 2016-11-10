@@ -36,6 +36,7 @@
 #include "authenticator.h"
 #include "client_registry.h"
 #include "dbus_constants.h"
+#include "i18n.h"
 #include "manager_adaptor.h"
 #include "state_saver.h"
 
@@ -78,8 +79,10 @@ public:
                                     const QStringList &clients);
 
     AccountInfo readAccountInfo(const Accounts::AccountService *as);
+    QList<QVariantMap> buildServiceList(const Accounts::Application &app) const;
     QList<AccountInfo> getAccounts(const QVariantMap &filters,
-                                   const CallContext &context);
+                                   const CallContext &context,
+                                   QList<QVariantMap> &services);
     void authenticate(uint accountId, const QString &serviceId,
                       bool interactive, bool invalidate,
                       const QVariantMap &parameters,
@@ -88,6 +91,8 @@ public:
                        const QVariantMap &parameters,
                        const CallContext &context);
     bool canAccess(const QString &context, const QString &serviceId);
+
+    static QString applicationIdFromLabel(const QString &label);
 
     void notifyAccountChange(const ActiveAccount &account, uint change);
 
@@ -344,22 +349,82 @@ AccountInfo ManagerPrivate::readAccountInfo(const Accounts::AccountService *as)
     return AccountInfo(as->account()->id(), info);
 }
 
+QList<QVariantMap>
+ManagerPrivate::buildServiceList(const Accounts::Application &app) const
+{
+    QList<QVariantMap> services;
+
+    const auto serviceList = m_manager.serviceList(app);
+    for (const Accounts::Service &service: serviceList) {
+        QString displayName = translate(service.displayName(),
+                                        service.trCatalog());
+        QString icon = service.iconName();
+
+        /* Applications might declare support for a service while the provider
+         * (and account plugin) for that account is not installed. We probably
+         * don't want to include these services in the list, as it would lead
+         * to empty/invalid UI elements. */
+        Accounts::Provider provider = m_manager.provider(service.provider());
+        if (!provider.isValid()) continue;
+
+        /* Now check the service data; if either display name or icon are
+         * empty, fetch this information from the provider file, as a fallback
+         */
+        if (displayName.isEmpty() ||
+            // sometimes we use a '.' as display name placeholder
+            displayName == ".") {
+            displayName = translate(provider.displayName(),
+                                    provider.trCatalog());
+        }
+        if (icon.isEmpty()) {
+            icon = provider.iconName();
+        }
+
+        QString iconSource;
+        if (icon.startsWith('/')) {
+            iconSource = QStringLiteral("file:/") + icon;
+        } else {
+            iconSource = QStringLiteral("image://theme/") + icon;
+        }
+
+        services.append({
+            { ONLINE_ACCOUNTS_INFO_KEY_SERVICE_ID, service.name() },
+            { ONLINE_ACCOUNTS_INFO_KEY_DISPLAY_NAME, displayName },
+            { ONLINE_ACCOUNTS_INFO_KEY_ICON_SOURCE, iconSource },
+        });
+    }
+
+    return services;
+}
+
 QList<AccountInfo> ManagerPrivate::getAccounts(const QVariantMap &filters,
-                                               const CallContext &context)
+                                               const CallContext &context,
+                                               QList<QVariantMap> &services)
 {
     QString desiredApplicationId = filters.value("applicationId").toString();
     QString desiredServiceId = filters.value("serviceId").toString();
     Accounts::AccountId desiredAccountId = filters.value("accountId").toUInt();
 
-    Accounts::Application application = desiredApplicationId.isEmpty() ?
-        Accounts::Application() : m_manager.application(desiredApplicationId);
+    QString applicationId = desiredApplicationId.isEmpty() ?
+        applicationIdFromLabel(context.securityContext()) : desiredApplicationId;
 
-    if (application.isValid() &&
-        canAccess(context.securityContext(), desiredApplicationId)) {
+    Accounts::Application application = m_manager.application(applicationId);
+
+    QList<AccountInfo> accounts;
+
+    if (!application.isValid() ||
+        !canAccess(context.securityContext(), applicationId)) {
+        if (!desiredApplicationId.isEmpty()) {
+            context.sendError(ONLINE_ACCOUNTS_ERROR_PERMISSION_DENIED,
+                              QString("App '%1' cannot act as '%2'").
+                              arg(applicationId).arg(desiredApplicationId));
+            return accounts;
+        }
+    } else {
         m_clients.insert(context.clientName(), application);
     }
 
-    QList<AccountInfo> accounts;
+    services = buildServiceList(application);
 
     Q_FOREACH(Accounts::AccountId accountId, m_manager.accountListEnabled()) {
         if (desiredAccountId != 0 && accountId != desiredAccountId) {
@@ -473,6 +538,16 @@ bool ManagerPrivate::canAccess(const QString &context,
     return serviceId.left(pos) == pkgname;
 }
 
+QString ManagerPrivate::applicationIdFromLabel(const QString &label)
+{
+    QStringList parts = label.split('_');
+    if (parts.count() == 3) {
+        return QStringList(parts.mid(0, 2)).join('_');
+    } else {
+        return QString();
+    }
+}
+
 void ManagerPrivate::onAccountServiceEnabled(bool enabled)
 {
     auto as = qobject_cast<Accounts::AccountService*>(sender());
@@ -553,10 +628,11 @@ bool Manager::isIdle() const
 }
 
 QList<AccountInfo> Manager::getAccounts(const QVariantMap &filters,
-                                        const CallContext &context)
+                                        const CallContext &context,
+                                        QList<QVariantMap> &services)
 {
     Q_D(Manager);
-    return d->getAccounts(filters, context);
+    return d->getAccounts(filters, context, services);
 }
 
 void Manager::authenticate(uint accountId, const QString &serviceId,

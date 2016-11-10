@@ -85,6 +85,7 @@ class ManagerAdaptor: public QDBusAbstractAdaptor
 "    <method name=\"GetAccounts\">\n"
 "      <arg direction=\"in\" type=\"a{sv}\" name=\"filters\"/>\n"
 "      <arg direction=\"out\" type=\"a(ua{sv})\" name=\"accounts\"/>\n"
+"      <arg direction=\"out\" type=\"aa{sv}\" name=\"services\"/>\n"
 "    </method>\n"
 "    <method name=\"Authenticate\">\n"
 "      <arg direction=\"in\" type=\"u\" name=\"accountId\"/>\n"
@@ -123,7 +124,9 @@ public Q_SLOTS:
     QVariantMap Authenticate(uint accountId, const QString &serviceId,
                              bool interactive, bool invalidate,
                              const QVariantMap &parameters);
-    QList<AccountInfo> GetAccounts(const QVariantMap &filters);
+    void GetAccounts(const QVariantMap &filters,
+                     QList<AccountInfo> &accounts,
+                     QList<QVariantMap> &services);
     AccountInfo RequestAccess(const QString &serviceId,
                               const QVariantMap &parameters,
                               QVariantMap &credentials);

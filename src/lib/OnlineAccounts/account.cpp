@@ -53,6 +53,11 @@ void AccountPrivate::update(const AccountInfo &info)
     }
 }
 
+Service AccountPrivate::service() const
+{
+    return m_manager->d_ptr->service(m_info.service());
+}
+
 Account::Account(AccountPrivate *priv, QObject *parent):
     QObject(parent),
     d_ptr(priv)
@@ -70,6 +75,12 @@ bool Account::isValid() const
 {
     Q_D(const Account);
     return d->m_isValid;
+}
+
+Service Account::service() const
+{
+    Q_D(const Account);
+    return d->service();
 }
 
 AccountId Account::id() const

@@ -26,6 +26,9 @@
 #include "OnlineAccounts/AuthenticationReply"
 #include "OnlineAccounts/PendingCall"
 
+#include <QDebug>
+#include <QJSEngine>
+
 using namespace OnlineAccountsModule;
 
 namespace OnlineAccountsModule {
@@ -36,20 +39,25 @@ class AccountPrivate: public QObject
     Q_DECLARE_PUBLIC(Account)
 
 public:
-    AccountPrivate(OnlineAccounts::Account *account, Account *q);
+    AccountPrivate(OnlineAccounts::Account *account, QJSEngine *engine,
+                   Account *q);
 
 private Q_SLOTS:
     void onAuthenticationFinished();
 
 private:
     OnlineAccounts::Account *m_account;
+    QJSEngine *m_engine;
     mutable Account *q_ptr;
 };
 
 } // namespace
 
-AccountPrivate::AccountPrivate(OnlineAccounts::Account *account, Account *q):
+AccountPrivate::AccountPrivate(OnlineAccounts::Account *account,
+                               QJSEngine *engine,
+                               Account *q):
     m_account(account),
+    m_engine(engine),
     q_ptr(q)
 {
     QObject::connect(account, SIGNAL(changed()),
@@ -122,9 +130,10 @@ void AccountPrivate::onAuthenticationFinished()
  * \endlist
  */
 
-Account::Account(OnlineAccounts::Account *account, QObject *parent):
+Account::Account(OnlineAccounts::Account *account, QJSEngine *engine,
+                 QObject *parent):
     QObject(parent),
-    d_ptr(new AccountPrivate(account, this))
+    d_ptr(new AccountPrivate(account, engine, this))
 {
 }
 
@@ -184,6 +193,27 @@ QString Account::serviceId() const
 {
     Q_D(const Account);
     return d->m_account->serviceId();
+}
+
+/*!
+ * \qmlproperty int Account::service
+ *
+ * Service data associated with this account. This is an object containing the
+ * following properties:
+ * \list
+ *   \li \c serviceId - same service ID returned by Account::serviceId
+ *   \li \c displayName - the localized display name for the service
+ *   \li \c iconSource - URL for the icon; can be a "file://" URL to a local
+ *   file, or an icon from the theme if the URL starts with "image://theme/"
+ */
+QJSValue Account::service() const
+{
+    Q_D(const Account);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+    return d->m_engine->toScriptValue(d->m_account->service());
+#else
+    return d->m_engine->toScriptValue(d->m_account->service().toMap());
+#endif
 }
 
 /*!

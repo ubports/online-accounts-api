@@ -45,6 +45,7 @@ ManagerPrivate::ManagerPrivate(Manager *q, const QString &applicationId,
     q_ptr(q)
 {
     qRegisterMetaType<Account*>();
+    qRegisterMetaType<Service>("OnlineAccounts::Service");
 
     QObject::connect(&m_daemon,
                      SIGNAL(accountChanged(const QString&, const OnlineAccounts::AccountInfo&)),
@@ -125,7 +126,7 @@ void ManagerPrivate::onGetAccountsFinished()
 
     Q_ASSERT(m_getAccountsCall);
 
-    QDBusPendingReply<QList<AccountInfo> > reply = *m_getAccountsCall;
+    QDBusPendingReply<QList<AccountInfo>,QList<QVariantMap>> reply = *m_getAccountsCall;
     if (Q_UNLIKELY(reply.isError())) {
         qCWarning(DBG_ONLINE_ACCOUNTS) << "GetAccounts call failed:" <<
             reply.error();
@@ -135,6 +136,12 @@ void ManagerPrivate::onGetAccountsFinished()
         QList<AccountInfo> accountInfos = reply.argumentAt<0>();
         Q_FOREACH(const AccountInfo &info, accountInfos) {
             m_accounts.insert({info.id(), info.service()}, AccountData(info));
+        }
+
+        QList<QVariantMap> services = reply.argumentAt<1>();
+        for (const QVariantMap &data: services) {
+            Service service(new Service::ServiceData(data));
+            m_services.insert(service.id(), service);
         }
     }
     m_getAccountsCall->deleteLater();
@@ -195,6 +202,12 @@ void Manager::waitForReady()
     if (d->m_getAccountsCall) {
         d->m_getAccountsCall->waitForFinished();
     }
+}
+
+QList<Service> Manager::availableServices() const
+{
+    Q_D(const Manager);
+    return d->m_services.values();
 }
 
 QList<Account*> Manager::availableAccounts(const QString &service)

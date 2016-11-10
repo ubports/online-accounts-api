@@ -49,6 +49,7 @@
     -->
     <method name="GetAccounts">
       <arg name="filters" type="a{sv}" direction="in" />
+
       <!--
         The return value is a list of account IDs paired with a dictionary of account data.
         This will always include:
@@ -61,9 +62,22 @@
         the framework level.
       -->
       <arg name="accounts" type="a(ua{sv})" direction="out" />
+
+      <!--
+        The returned "services" is a list of dictionaries of the services' data.
+        This will always include:
+        - "serviceId" (s)
+        - "displayName" (s): the translated display name
+        - "iconSource" (s): URL to the service icon; if the URL starts with
+          "image://theme/", then what follows is the symbolic icon name
+      -->
+      <arg name="services" type="aa{sv}" direction="out" />
+
       <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
       <annotation name="org.qtproject.QtDBus.QtTypeName.Out0"
                   value="QList&lt;AccountInfo&gt;"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.Out1"
+                  value="QList&lt;QVariantMap&gt;"/>
     </method>
 
     <!--

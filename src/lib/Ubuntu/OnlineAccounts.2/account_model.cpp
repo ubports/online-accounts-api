@@ -30,6 +30,7 @@
 #include <QDebug>
 #include <QQmlEngine>
 #include <QVariantMap>
+#include <QtQml>
 
 using namespace OnlineAccountsModule;
 
@@ -85,6 +86,7 @@ AccountModelPrivate::AccountModelPrivate(AccountModel *q):
     roleNames[AccountModel::AuthenticationMethodRole] = "authenticationMethod";
     roleNames[AccountModel::SettingsRole] = "settings";
     roleNames[AccountModel::AccountRole] = "account";
+    roleNames[AccountModel::ServiceRole] = "service";
 }
 
 void AccountModelPrivate::queueUpdate()
@@ -122,13 +124,17 @@ void AccountModelPrivate::updateAccountList()
 
 Account *AccountModelPrivate::handleAccount(OnlineAccounts::Account *account)
 {
+    Q_Q(AccountModel);
+
     /* First, check if the account is already handled */
     Q_FOREACH(Account *a, m_accounts) {
         if (account == a->internalObject()) {
             return a;
         }
     }
-    Account *a = new Account(account, this);
+
+    QQmlEngine *engine = qmlEngine(q);
+    Account *a = new Account(account, engine, this);
     QQmlEngine::setObjectOwnership(a, QQmlEngine::CppOwnership);
     QObject::connect(a, SIGNAL(validChanged()),
                      this, SLOT(onAccountValidChanged()));
@@ -386,6 +392,24 @@ QList<QObject*> AccountModel::accountList() const
     return objects;
 }
 
+QJSValue AccountModel::serviceList() const
+{
+    Q_D(const AccountModel);
+    QJSEngine *engine = qmlEngine(this);
+    QJSValue ret = engine->newArray();
+    if (!d->m_manager) return ret;
+    int i = 0;
+    Q_FOREACH(const auto &service, d->m_manager->availableServices()) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 5, 0)
+        QJSValue v = engine->toScriptValue(service);
+#else
+        QJSValue v = engine->toScriptValue(service.toMap());
+#endif
+        ret.setProperty(i++, v);
+    }
+    return ret;
+}
+
 /*!
  * \qmlsignal AccountModel::accessReply(jsobject reply, jsobject authenticationData)
  *
@@ -494,6 +518,9 @@ QVariant AccountModel::data(const QModelIndex &index, int role) const
         break;
     case AccountRole:
         ret = QVariant::fromValue<QObject*>(account);
+        break;
+    case ServiceRole:
+        ret = QVariant::fromValue(account->service());
         break;
     }
 

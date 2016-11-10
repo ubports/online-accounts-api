@@ -27,12 +27,14 @@
 #include "error.h"
 #include "global.h"
 #include "pending_call.h"
+#include "service.h"
 
 class QDBusConnection;
 
 namespace OnlineAccounts {
 
 class Account;
+class AccountPrivate;
 class AuthenticationData;
 class RequestAccessReplyPrivate;
 
@@ -44,11 +46,13 @@ class ONLINE_ACCOUNTS_EXPORT Manager: public QObject
 public:
     explicit Manager(const QString &applicationId, QObject *parent = 0);
     Manager(const QString &applicationId, const QDBusConnection &bus,
-            QObject *parent = 0); 
+            QObject *parent = 0);
     ~Manager();
 
     bool isReady() const;
     void waitForReady();
+
+    QList<Service> availableServices() const;
 
     QList<Account*> availableAccounts(const QString &service = QString());
     Account *account(AccountId accountId);
@@ -63,6 +67,7 @@ Q_SIGNALS:
 
 private:
     friend class Account;
+    friend class AccountPrivate;
     friend class RequestAccessReplyPrivate;
     Q_DECLARE_PRIVATE(Manager)
     Q_DISABLE_COPY(Manager)

@@ -30,8 +30,11 @@ class TestProcess:
         filters = dbus.Dictionary(signature='sv')
         if args.filters:
             filters.update(json.loads(args.filters))
-        print('%s' % json.dumps(self.manager.GetAccounts(filters), sort_keys=True),
-                flush=True)
+        try:
+            print('%s' % json.dumps(self.manager.GetAccounts(filters), sort_keys=True),
+                    flush=True)
+        except dbus.exceptions.DBusException as err:
+            print('{ "error": "%s" }' % err.get_dbus_name(), flush=True)
 
     def on_account_changed(self, serviceId, accountInfo):
         info = json.dumps(accountInfo, sort_keys=True)

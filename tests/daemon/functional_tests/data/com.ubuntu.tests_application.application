@@ -5,8 +5,11 @@
   <desktop-entry>mailer.desktop</desktop-entry>
 
   <services>
-    <service id="coolshare">
+    <service id="com.ubuntu.tests_coolshare">
       <description>Mailer can even share stuff on CoolShare</description>
+    </service>
+    <service id="missing-provider">
+      <description>service exists, provider does not</description>
     </service>
   </services>
 	<profile>com.ubuntu.tests_application_0.3</profile>

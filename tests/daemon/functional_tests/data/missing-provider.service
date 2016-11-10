@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<service id="com.ubuntu.tests_coolshare">
+<service id="missing-provider">
   <type>sharing</type>
-  <name>Cool Share</name>
-  <icon>general_otherservice</icon>
-  <provider>cool</provider>
+  <name>Orphan</name>
+  <icon>icon_missing_provider</icon>
+  <provider>missing</provider>
 
   <template>
     <group name="auth">

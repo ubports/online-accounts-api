@@ -1,10 +1,10 @@
-online-accounts-api (0.1+17.04.20161110-0ubuntu2) UNRELEASED; urgency=medium
+online-accounts-api (0.1+17.04.20161122.1-0ubuntu1) zesty; urgency=medium
 
   * debian/control:
     - libonline-accounts-qt1 should depend on the service-side library of the
       same version, and recommend online-accounts-daemon (LP: #1643421)
 
- -- Alberto Mardegan <alberto.mardegan@canonical.com>  Tue, 22 Nov 2016 11:45:54 +0200
+ -- Alberto Mardegan <mardy@users.sourceforge.net>  Tue, 22 Nov 2016 13:11:09 +0000
 
 online-accounts-api (0.1+17.04.20161110-0ubuntu1) zesty; urgency=medium
 

@@ -55,6 +55,8 @@ Architecture: any
 Multi-Arch: same
 Depends: ${misc:Depends},
          ${shlibs:Depends},
+         libonline-accounts-daemon1 (= ${binary:Version}),
+Recommends: online-accounts-daemon,
 Pre-Depends: ${misc:Pre-Depends},
 Description: Library for the simplified Online Accounts API
  The OnlineAccounts library offers an Qt-based API for applications to use

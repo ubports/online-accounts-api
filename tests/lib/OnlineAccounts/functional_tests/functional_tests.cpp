@@ -81,6 +81,7 @@ public:
     }
 
 private Q_SLOTS:
+    void cleanup();
     void testConstructor();
     void testManagerReady_data();
     void testManagerReady();
@@ -114,6 +115,14 @@ FunctionalTests::FunctionalTests():
                               ONLINE_ACCOUNTS_MANAGER_INTERFACE,
                               QDBusConnection::SessionBus);
     m_dbus.startServices();
+}
+
+void FunctionalTests::cleanup()
+{
+    /* Iterate the main loop in order to execute the delayed cleanup methods
+     * and avoid memory leaks.
+     */
+    QTest::qWait(10);
 }
 
 void FunctionalTests::testConstructor()
@@ -460,9 +469,6 @@ void FunctionalTests::testPendingCallWatcher()
     QVERIFY(otherCall.isFinished());
 
     delete watcher;
-
-    // Iterate the main loop for delayed cleanups
-    QTest::qWait(10);
 }
 
 void FunctionalTests::testAccountChanges()
@@ -579,9 +585,6 @@ void FunctionalTests::testMultipleServices()
 
     account = manager.account(3);
     QVERIFY(account == nullptr);
-
-    // Iterate the main loop for delayed cleanups
-    QTest::qWait(10);
 }
 
 void FunctionalTests::testAuthentication()
@@ -719,9 +722,6 @@ void FunctionalTests::testAuthentication()
     copy.setClientId("new client");
     QCOMPARE(copy.clientId(), QByteArray("new client"));
     QCOMPARE(oauth2data.clientId(), QByteArray("a client"));
-
-    // Iterate the main loop for delayed cleanups
-    QTest::qWait(10);
 }
 
 void FunctionalTests::testAuthenticationErrors_data()
@@ -788,9 +788,6 @@ void FunctionalTests::testAuthenticationErrors()
     QVERIFY(r.hasError());
     QCOMPARE(int(r.error().code()), errorCode);
     QCOMPARE(r.error().text(), errorMessage);
-
-    // Iterate the main loop for delayed cleanups
-    QTest::qWait(10);
 }
 
 QTEST_MAIN(FunctionalTests)

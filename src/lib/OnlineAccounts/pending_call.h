@@ -69,7 +69,7 @@ Q_SIGNALS:
 
 private:
     Q_DECLARE_PRIVATE(PendingCallWatcher)
-    PendingCallWatcherPrivate *d_ptr;
+    QScopedPointer<PendingCallWatcherPrivate> d_ptr;
 };
 
 } // namespace

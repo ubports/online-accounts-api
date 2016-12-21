@@ -460,6 +460,9 @@ void FunctionalTests::testPendingCallWatcher()
     QVERIFY(otherCall.isFinished());
 
     delete watcher;
+
+    // Iterate the main loop for delayed cleanups
+    QTest::qWait(10);
 }
 
 void FunctionalTests::testAccountChanges()
@@ -576,6 +579,9 @@ void FunctionalTests::testMultipleServices()
 
     account = manager.account(3);
     QVERIFY(account == nullptr);
+
+    // Iterate the main loop for delayed cleanups
+    QTest::qWait(10);
 }
 
 void FunctionalTests::testAuthentication()
@@ -713,6 +719,9 @@ void FunctionalTests::testAuthentication()
     copy.setClientId("new client");
     QCOMPARE(copy.clientId(), QByteArray("new client"));
     QCOMPARE(oauth2data.clientId(), QByteArray("a client"));
+
+    // Iterate the main loop for delayed cleanups
+    QTest::qWait(10);
 }
 
 void FunctionalTests::testAuthenticationErrors_data()
@@ -779,6 +788,9 @@ void FunctionalTests::testAuthenticationErrors()
     QVERIFY(r.hasError());
     QCOMPARE(int(r.error().code()), errorCode);
     QCOMPARE(r.error().text(), errorMessage);
+
+    // Iterate the main loop for delayed cleanups
+    QTest::qWait(10);
 }
 
 QTEST_MAIN(FunctionalTests)

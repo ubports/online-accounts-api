@@ -23,6 +23,7 @@
 
 #include <QExplicitlySharedDataPointer>
 #include <QObject>
+#include <QScopedPointer>
 
 #include "global.h"
 

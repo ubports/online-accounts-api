@@ -92,6 +92,7 @@ public:
 
 private Q_SLOTS:
     void initTestCase();
+    void cleanup();
     void testModuleImport();
     void testModelProperties();
     void testServices_data();
@@ -127,6 +128,14 @@ ModuleTest::ModuleTest():
 void ModuleTest::initTestCase()
 {
     qputenv("QML2_IMPORT_PATH", TEST_QML_IMPORT_PATH);
+}
+
+void ModuleTest::cleanup()
+{
+    /* Iterate the main loop in order to execute the delayed cleanup methods
+     * and avoid memory leaks.
+     */
+    QTest::qWait(10);
 }
 
 void ModuleTest::testModuleImport()

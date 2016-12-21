@@ -31,4 +31,4 @@ QString translate(const QString &text, const QString &domain)
                                       text.toUtf8().constData()));
 }
 
-}; // namespace
+}  // namespace

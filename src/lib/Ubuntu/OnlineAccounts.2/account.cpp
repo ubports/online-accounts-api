@@ -205,6 +205,7 @@ QString Account::serviceId() const
  *   \li \c displayName - the localized display name for the service
  *   \li \c iconSource - URL for the icon; can be a "file://" URL to a local
  *   file, or an icon from the theme if the URL starts with "image://theme/"
+ * \endlist
  */
 QJSValue Account::service() const
 {

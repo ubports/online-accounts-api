@@ -95,4 +95,5 @@ PendingCallWatcher::PendingCallWatcher(const PendingCall &call,
 
 PendingCallWatcher::~PendingCallWatcher()
 {
+    delete d_ptr;
 }

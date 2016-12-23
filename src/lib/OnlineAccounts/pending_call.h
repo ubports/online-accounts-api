@@ -23,6 +23,7 @@
 
 #include <QExplicitlySharedDataPointer>
 #include <QObject>
+#include <QScopedPointer>
 
 #include "global.h"
 
@@ -69,7 +70,7 @@ Q_SIGNALS:
 
 private:
     Q_DECLARE_PRIVATE(PendingCallWatcher)
-    PendingCallWatcherPrivate *d_ptr;
+    QScopedPointer<PendingCallWatcherPrivate> d_ptr;
 };
 
 } // namespace

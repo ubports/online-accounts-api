@@ -1,3 +1,13 @@
+online-accounts-api (0.1+17.04.20161223-0ubuntu1) zesty; urgency=medium
+
+  [ Alberto Mardegan ]
+  * Tests: run main loop to avoid memory leaks (LP: #1617180)
+
+  [ Michi Henning ]
+  * Fixed memory leak in PendingCallWatcher. (LP: #1617180)
+
+ -- Alberto Mardegan <mardy@users.sourceforge.net>  Fri, 23 Dec 2016 11:46:12 +0000
+
 online-accounts-api (0.1+17.04.20161122.1-0ubuntu1) zesty; urgency=medium
 
   * debian/control:

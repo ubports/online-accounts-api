@@ -81,6 +81,7 @@ public:
     }
 
 private Q_SLOTS:
+    void cleanup();
     void testConstructor();
     void testManagerReady_data();
     void testManagerReady();
@@ -114,6 +115,14 @@ FunctionalTests::FunctionalTests():
                               ONLINE_ACCOUNTS_MANAGER_INTERFACE,
                               QDBusConnection::SessionBus);
     m_dbus.startServices();
+}
+
+void FunctionalTests::cleanup()
+{
+    /* Iterate the main loop in order to execute the delayed cleanup methods
+     * and avoid memory leaks.
+     */
+    QTest::qWait(10);
 }
 
 void FunctionalTests::testConstructor()

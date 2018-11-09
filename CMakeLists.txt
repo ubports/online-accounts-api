@@ -3,6 +3,8 @@ project(OnlineAccountsApi CXX)
 
 set(PROJECT_VERSION 0.1)
 
+option(ENABLE_DOC "Build documentation" ON)
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_MODULE_PATH}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -std=c++11")
 
@@ -22,7 +24,9 @@ add_subdirectory(src/daemon)
 add_subdirectory(src/lib/OnlineAccounts)
 add_subdirectory(src/lib/Ubuntu/OnlineAccounts.2)
 
-add_subdirectory(doc)
+if(ENABLE_DOC)
+    add_subdirectory(doc)
+endif()
 
 if(cmake_build_type_lower MATCHES coverage)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage" )
